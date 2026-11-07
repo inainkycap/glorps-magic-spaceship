@@ -117,10 +117,25 @@ def test_endpoint_ok_and_deterministic():
     assert a.json() == b.json()  # same layout -> same futures
 
 
-def test_endpoint_unknown_species():
-    body = {"domes": [{"id": "a", **GOOD, "residents": [{"species_id": "unicorn", "count": 3}]}]}
+def test_endpoint_drops_unknown_species():
+    body = {"domes": [{"id": "a", **GOOD, "residents": [{"species_id": "unicorn", "count": 3},
+                                                        {"species_id": "dodo", "count": 5}]}]}
     r = client.post("/api/sanctuary/simulate", json=body)
-    assert r.status_code == 422 and "unicorn" in r.json()["detail"]
+    assert r.status_code == 200
+    assert [s["species_id"] for s in r.json()["per_species"]] == ["dodo"]
+
+
+def test_counts_and_conditions_are_clamped():
+    d = DomeInput(id="a", terrain="forest", temperature=999, humidity=-5, oxygen=0, pressure=1e6,
+                  residents=[{"species_id": "dodo", "count": 10_000}, {"species_id": "dodo", "count": -3},
+                             {"species_id": "dodo", "count": 4.6}])
+    assert (d.temperature, d.humidity, d.oxygen, d.pressure) == (50, 0, 10, 200)
+    assert [r.count for r in d.residents] == [50, 0, 5]
+
+
+def test_endpoint_rejects_garbage_types():
+    body = {"domes": [{"id": "a", **{**GOOD, "temperature": "hot"}, "residents": []}]}
+    assert client.post("/api/sanctuary/simulate", json=body).status_code == 422
 
 
 def test_endpoint_bad_terrain():

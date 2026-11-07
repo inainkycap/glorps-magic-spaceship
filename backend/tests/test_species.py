@@ -64,3 +64,12 @@ def test_bad_threat_id_rejected():
     data["interventions"][0]["mitigates"] = {"aliens": 0.5}
     with pytest.raises(ValidationError, match="unknown threat"):
         Species.model_validate(data)
+
+
+def test_legacy_fields_are_optional():
+    data = SPECIES["dodo"].model_dump(exclude_unset=True)
+    for key in ("threats", "interventions", "goal_survival", "max_interventions", "sim"):
+        data.pop(key, None)
+    for h in data["hotspots"]:
+        h.pop("unlocks", None)
+    assert Species.model_validate(data).dna_required == data["dna_required"]

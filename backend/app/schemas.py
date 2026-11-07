@@ -100,12 +100,13 @@ class SimConfig(BaseModel):
 
 class Species(SpeciesSummary):
     hotspots: list[Hotspot]
-    threats: list[Threat]
-    interventions: list[Intervention]
-    goal_survival: float
-    max_interventions: int
     dna_required: int
-    sim: SimConfig
+    # Legacy (the dropped "protect it in the past" Lab). Accepted, not required.
+    threats: list[Threat] = []
+    interventions: list[Intervention] = []
+    goal_survival: Optional[float] = None
+    max_interventions: Optional[int] = None
+    sim: Optional[SimConfig] = None
     # PROPOSED content fields, all optional:
     intro: Optional[str] = None  # <= 2 sentences in Glorp's voice
     description: Optional[str] = None
