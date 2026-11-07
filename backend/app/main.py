@@ -40,9 +40,9 @@ def get_species(species_id: str):
 
 @app.post("/api/sanctuary/simulate", response_model=SanctuarySimResponse)
 def sanctuary_simulate(req: SanctuarySimRequest):
-    unknown = sorted({r.species_id for d in req.domes for r in d.residents} - SPECIES.keys())
-    if unknown:
-        raise HTTPException(status_code=422, detail=f"Unknown species: {', '.join(unknown)}")
+    # Untrusted input: drop residents of species we don't know (CLAUDE.md asks for this).
+    for d in req.domes:
+        d.residents = [r for r in d.residents if r.species_id in SPECIES]
     # Seed from the request itself: the same sanctuary layout always gives the same futures,
     # so when the player changes something, the difference is their change, not luck.
     seed = int(hashlib.sha256(req.model_dump_json().encode()).hexdigest()[:16], 16)

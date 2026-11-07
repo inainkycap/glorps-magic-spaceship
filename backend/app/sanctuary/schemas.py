@@ -1,29 +1,52 @@
 """Request/response for POST /api/sanctuary/simulate. Mirrors SanctuarySimRequest /
-SanctuarySimResponse in frontend/src/types.ts (CLAUDE.md "Proposed: sanctuary sim")."""
-from pydantic import BaseModel, Field
+SanctuarySimResponse in frontend/src/types.ts (CLAUDE.md "Sanctuary sim").
+
+The request comes from the browser, so it's untrusted: counts and dome conditions are
+clamped to sane ranges rather than rejected (CLAUDE.md asks for this).
+"""
+from typing import Annotated
+
+from pydantic import BaseModel, BeforeValidator, Field
 
 from ..schemas import DomeTerrain
+
+MAX_COUNT = 50  # per species per dome
+
+
+def clamp(lo: float, hi: float, whole: bool = False):
+    """A validator that clamps a number into [lo, hi] (and rounds it if `whole`)."""
+
+    def f(v):
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            return v  # let the normal type check reject it
+        v = min(max(v, lo), hi)
+        return round(v) if whole else v
+
+    return BeforeValidator(f)
+
+
+Count = Annotated[int, clamp(0, MAX_COUNT, whole=True)]
 
 
 class SpeciesCount(BaseModel):
     species_id: str
-    count: int = Field(ge=0, le=10_000)
+    count: Count
 
 
 class DomeInput(BaseModel):
     id: str
     terrain: DomeTerrain
-    temperature: float  # °C
-    humidity: float  # %
-    oxygen: float  # %
-    pressure: float  # kPa
+    temperature: Annotated[float, clamp(-30, 50)]  # °C
+    humidity: Annotated[float, clamp(0, 100)]  # %
+    oxygen: Annotated[float, clamp(10, 35)]  # %
+    pressure: Annotated[float, clamp(50, 200)]  # kPa
     residents: list[SpeciesCount] = []
 
 
 class SanctuarySimRequest(BaseModel):
     domes: list[DomeInput] = Field(min_length=1, max_length=12)
-    years: int = Field(default=50, ge=1, le=200)
-    runs: int = Field(default=1000, ge=10, le=5000)
+    years: Annotated[int, clamp(1, 200, whole=True)] = 50
+    runs: Annotated[int, clamp(10, 5000, whole=True)] = 1000
 
 
 class Percentiles(BaseModel):

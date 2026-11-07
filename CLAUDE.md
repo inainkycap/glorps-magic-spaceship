@@ -12,12 +12,12 @@ Glorp's spaceship travels through time to rescue extinct species (first world: M
    for the field guide, and **collect DNA** fragments.
 3. **DNA Lab**: a quick pairing minigame (frontend-only); its result is the **number of
    individuals rescued** (4–20) for that species. See "Game rules".
-4. **Sanctuary** (*sim PROPOSED, pending backend*): domes on Glorp's home planet (1 built,
+4. **Sanctuary**: domes on Glorp's home planet (1 built,
    up to 6; more cost fuel). **Set each dome's conditions** (terrain, temperature,
    humidity, oxygen, pressure), **place rescued individuals**, then **run 1,000 futures**
    (Monte Carlo) for all domes together. Growth depends on how well a dome's conditions fit
    each species' needs. **Disasters strike per dome**, so splitting a species across domes
-   is safer. The sim contract isn't agreed yet: see "Proposed: sanctuary sim".
+   is safer. See "Sanctuary sim" and `backend/MODEL.md`.
 
 The old Lab loop (protecting a species *in the past* by picking interventions against
 threats, then simulating) is **dropped**.
@@ -49,43 +49,33 @@ Adding a species = adding one file. Fields:
   (lat -90…90, lon -180…180). Used to place its pin on the world map.
 - `era_year` (number, required): the year Glorp travels to, e.g. `1600`. Drives the era
   timeline. `era` stays as the display string.
-- `hotspots[]`: `{ id, label, sprite, x, y, fact, dna, unlocks }`
+- `hotspots[]`: `{ id, label, sprite, x, y, fact, dna, reveals? }`
   - `x`, `y` are % positions (0–100) in the explore scene
   - `dna`: boolean — scanning it gives a DNA fragment
-  - `unlocks`: intervention id or `null`
-- `threats[]`: `{ id, name, description, effect }`
-  - `effect`: object with any of `mortality` (extra annual death fraction),
-    `habitat_decline` (annual carrying-capacity loss fraction),
-    `shock_prob` + `shock_severity` (chance per year of a shock, fraction killed)
-- `interventions[]`: `{ id, name, description, mitigates }`
-  - `mitigates`: `{ [threat_id]: fraction_removed (0–1) }`
-- `goal_survival` (e.g. 0.8), `max_interventions` (e.g. 2), `dna_required` (e.g. 3)
-- `sim`: `{ model, start_year, years, start_population, carrying_capacity, growth_rate }`
-  - `model`: "logistic" (later "predator_prey")
+  - `reveals`: need key or array of need keys (see "Species content + needs")
+- `dna_required` (e.g. 3): DNA fragments needed before the DNA Lab opens
+- Content fields (`intro`, `description`, `facts`, `habitat`, `needs`, `sources`): see
+  "Species content + needs".
+- **Legacy, optional** (from the dropped "protect it in the past" Lab; nothing uses them):
+  `hotspots[].unlocks`, `threats[]`, `interventions[]`, `goal_survival`, `max_interventions`,
+  `sim`. The backend accepts but doesn't require them; new species files should leave them
+  out. To do (frontend): drop them from `types.ts` along with the legacy `simulate()` in
+  `api.ts` and the `simulate_*.json` mocks.
+
+The backend validates every species file at startup (the server won't start on a bad file):
+types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
+`dna_required` DNA hotspots.
 
 ### API
 | Method | Path | Returns |
 |---|---|---|
 | GET | `/api/health` | `{ "status": "ok" }` |
 | GET | `/api/species` | `SpeciesSummary[]`: the basic-info fields only, which **must include `lat`, `lon`, `era_year`** (the map needs them) |
-| GET | `/api/species/{id}` | full species file |
-| POST | `/api/simulate` body `{ species_id, interventions: string[], runs }` | `SimulateResponse` |
+| GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
+| POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
 | GET | `/api/wiki/{title}` (stretch) | `{ title, summary, image_url }` |
 
-`SimulateResponse`:
-```json
-{
-  "years": [1600, 1601, ...],
-  "percentiles": { "p5": [...], "p25": [...], "p50": [...], "p75": [...], "p95": [...] },
-  "sample_paths": [[...], ...],          // 25 paths, each same length as years
-  "survival_probability": 0.83,          // fraction of runs with population > 0 at the end
-  "success": true,                       // survival_probability >= goal_survival
-  "advice": [                            // one per threat you did NOT tackle
-    { "threat_id": "rats", "threat_name": "...", "intervention_id": "rat_control",
-      "survival_probability": 0.91 }
-  ]
-}
-```
+The old `POST /api/simulate` (single species, interventions) was never built and is gone.
 
 TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 
@@ -109,8 +99,8 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
     temperature/humidity/oxygen/pressure dials; the interior reacts live), placement
     steppers to/from the pool, a fit bar per resident species (computed from discovered
     needs only; undiscovered needs show as a grey "?" segment and give no hint), and this
-    dome's last-run results. The sim is PROPOSED, pending backend; mock
-    mode runs a client-side mock (`frontend/src/mocks/mockSanctuarySim.ts`).
+    dome's last-run results. Mock mode runs a client-side mock
+    (`frontend/src/mocks/mockSanctuarySim.ts`) instead of the backend sim.
   - Dome state, rescued individuals and the last two runs persist in progress.
 - Map projection is equirectangular: `x% = (lon+180)/360`, `y% = (90−lat)/180`.
   Glorp's current location (lat/lon/era_year) is part of the persisted progress.
@@ -174,11 +164,10 @@ within the same era costs the base 8; staying put (same place and era) is free. 
 2026→1600 = 42, 2026→1870 = 15, 1600→1870 = 35. Thickness reaches 0 at year 2126, so the
 formula assumes eras up to about the present.
 
-## Proposed: species content + needs (frontend, needs backend ok)
-**Status: proposal.** The frontend already reads these fields (from mocks) and copes with
-any of them being missing. They are NOT part of the agreed contract until the backend
-confirms. TypeScript: `Species`, `Need`, `SpeciesFacts`, `Habitat`, `Source`, `NeedKey` in
-`frontend/src/types.ts`.
+## Species content + needs
+**Status: agreed** (backend implements it since PR #6). The frontend copes with any of
+these fields being missing. TypeScript: `Species`, `Need`, `SpeciesFacts`, `Habitat`,
+`Source`, `NeedKey` in `frontend/src/types.ts`.
 
 All fields optional, added to the species file:
 - `intro`: string, at most 2 sentences in Glorp's voice (shown in Glorp's speech bubble on
@@ -219,22 +208,22 @@ Example `needs` (dodo):
 }
 ```
 
-Notes for the backend:
-- These fields belong in every `backend/data/species/<id>.json` and in
-  `GET /api/species/{id}`. The `/api/species` summaries don't need them.
-- `needs` will drive the sanctuary sim: growth depends on how well a sanctuary's
+Notes:
+- These fields live in every `backend/data/species/<id>.json` and in
+  `GET /api/species/{id}`. The `/api/species` summaries don't include them.
+- `needs` drives the sanctuary sim: growth depends on how well a dome's
   terrain/temperature/humidity/oxygen/pressure fit each species' needs. Most real species
-  share near-normal oxygen and sea-level pressure; those matter mainly for alien sanctuary
-  domes.
-- The frontend mocks in `frontend/src/mocks/` (`dodo.json`, `passenger_pigeon.json`) hold the
-  draft content for the dodo and passenger pigeon; copy it into the real files. To parse an
-  uncertain bound, strip a leading `~`; treat `"?"` as missing.
+  share near-normal oxygen and sea-level pressure; those matter mainly for alien domes.
+- To parse an uncertain bound, strip a leading `~`; treat `"?"` as missing.
+- The frontend mocks (`frontend/src/mocks/<id>.json`) are copies of the backend files.
+  The backend files are the source of truth: edit there, then copy to the mocks.
 
-## Proposed: sanctuary sim (frontend, needs backend ok)
-**Status: proposal.** Replaces the old `/api/simulate`. TypeScript: `SanctuarySimRequest`,
+## Sanctuary sim
+**Status: agreed** (backend implements it since PR #7). TypeScript: `SanctuarySimRequest`,
 `SanctuarySimResponse` and related types in `frontend/src/types.ts`. With
 `VITE_USE_MOCKS=true` the frontend runs a client-side **mock** model instead
-(`frontend/src/mocks/mockSanctuarySim.ts`; mock only, not the real model).
+(`frontend/src/mocks/mockSanctuarySim.ts`; mock only, not the real model). The real model
+is explained in `backend/MODEL.md`.
 
 `POST /api/sanctuary/simulate`
 
@@ -276,24 +265,23 @@ Response:
 - `expected_species_saved`: mean species alive at the end. `worst_case_species_saved`: the
   5th percentile of that, as a whole number of species (lower nearest rank).
 
-Notes for the backend:
+How the backend behaves:
 - **Disasters are per dome**: dome breach, power failure, meteor strike, disease outbreak.
   They are **correlated within a dome** (one event hits every resident of that dome at once)
-  and **independent between domes**. That is what makes splitting a species across domes
-  safer, and the player should see that in `worst_case_species_saved`.
-- Growth should depend on how well each dome fits each species' `needs` (see the proposed
-  content section, including `needs.terrain.types`); poor fit should shrink a population,
-  and small populations should be able to collapse. The frontend's fit proposal is in
-  `frontend/src/game/fit.ts` (1 inside the ideal range, bell-curve falloff outside;
-  geometric mean across needs); the backend can use it or replace it.
-- **Treat `residents[].count` as untrusted input and clamp it** to a sane range (e.g. 0–50
-  per species per dome). It comes from the client, from the frontend-only DNA Lab (4–20
-  individuals rescued per species, split across domes by the player). Also ignore unknown
-  `species_id`s and dome conditions outside the control-panel ranges (terrain one of the 4;
-  temperature −30–50 °C, humidity 0–100 %, oxygen 10–35 %, pressure 50–200 kPa).
-- The mock's tuning (disaster chances, growth, carrying capacity) is just a starting point.
-  Its unit test (`mockSanctuarySim.test.ts`) checks that splitting beats concentrating on
-  the worst case; the real model should keep that property.
+  and **independent between domes**, so splitting a species across domes raises
+  `worst_case_species_saved` (the backend tests check this across several seeds).
+- **Fit** uses the same formula as `frontend/src/game/fit.ts` (1 inside the ideal range,
+  bell-curve falloff outside, geometric mean across needs), so the fit bars match the sim.
+  Poor fit means fewer births and more deaths; small populations can collapse.
+- **Same request, same result**: the random seed comes from the request, so re-running an
+  unchanged sanctuary gives identical numbers, and compare mode shows the player's change,
+  not luck.
+- **Untrusted input is sanitised, not rejected**: `residents[].count` is clamped to 0–50 per
+  species per dome; unknown `species_id`s are dropped; dome conditions are clamped to the
+  control-panel ranges (temperature −30–50 °C, humidity 0–100 %, oxygen 10–35 %, pressure
+  50–200 kPa). An unknown `terrain`, or more than 12 domes, is a 422.
+- All tuning (birth/death rates, dome capacity, disaster chances and kill fractions) lives
+  in `backend/data/sanctuary.json`.
 
 ## Git workflow
 - `main` is protected. Never commit to it directly.
@@ -320,3 +308,8 @@ Notes for the backend:
   then implement; the frontend uses a mock until then.
 - 2026-11-07: DNA Lab minigame (frontend-only) sets individuals rescued; fit bar hides undiscovered
   needs; fuel rebalanced. Backend: clamp residents[].count.
+- 2026-11-07: AGREED species content + needs and the sanctuary sim (backend PRs #6, #7).
+  Backend now clamps residents/conditions and drops unknown species instead of a 422.
+  Legacy fields (`threats`, `interventions`, `goal_survival`, `max_interventions`, `sim`,
+  `hotspots[].unlocks`) are optional; `POST /api/simulate` removed from the contract.
+  Frontend: drop the legacy types, `simulate()` and `simulate_*.json` when convenient.
