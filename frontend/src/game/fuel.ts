@@ -60,9 +60,13 @@ export function travelCost(from: Place, to: Place): number {
 export const FUEL_COSTS = {
   /** Retrying a failed DNA scan. TODO: wire up when Explore has retries. */
   dnaRetry: 5,
-  /** Opening a sanctuary. TODO: wire up when sanctuaries can be opened. */
-  openSanctuary: 10,
+  /** Building one more sanctuary dome on Glorp's planet (the first is free). */
+  buildDome: 15,
 } as const;
+
+/** Dome sites on Glorp's planet, and how many come built. */
+export const DOME_SITES = 6;
+export const FREE_DOMES = 1;
 
 // --- Helpers -------------------------------------------------------------------
 

@@ -53,6 +53,20 @@ change is needed.
 
 The Explore scan bubble and Glorp's arrival bubble reuse `bubble.png` and `bubble-tail.png` (above).
 
+### Sanctuary (Glorp's home planet)
+
+| File | Frame size (px) | Frames | Drawn at | Used where | Notes |
+|---|---|---|---|---|---|
+| `planet-terrain.png` | **320×180** | 1 | stretched to 16:9 (~3×) | Background of the Sanctuary overview and behind the big dome in the dome screen (`.planet` in `src/index.css`) | Glorp's alien home planet: sky, moons, rocky ground. 6 domes sit on it at fixed spots (3 per row at ~30% and ~72% height), so keep those areas fairly flat and calm. |
+| `dome-glass.png` | **64×64** | 1 | scaled to the dome (132 px overview, 360 px detail) | The glass over every dome (`sanctuary/DomeView.tsx`) | Rim and highlights only: **keep the inside transparent**, because the interior (sky, ground, plants, residents) is drawn underneath. Circle fills the whole canvas. |
+| `dome-site.png` | 32×32 | 1 | 2× | Empty building site on the overview, next to the "Build ⛽15" button | Foundation ring, flag, scaffold… |
+| `dome-ground-<terrain>.png` (`forest`, `grassland`, `wetland`, `tundra`) | 64×20 | 1 | stretched across the dome's bottom ~30% | Dome interior ground | Tiles horizontally across the dome width. A flat colour shows if missing. |
+| `dome-plants-<terrain>.png` (same 4 terrains) | 64×24 | 1 | stretched across the dome, sitting on the ground | Dome interior plants (trees / grass / reeds / shrubs) | Transparent background. The sky tint (temperature, humidity, oxygen, pressure) is done in CSS, so draw plants in neutral daylight. |
+| `control-panel.png` | 16×16 | 1 | 2× (9-slice) | Glorp's control panel in the dome screen (`.control-panel`) | **9-slice with 6 px corners.** Dark metal, light text on it. |
+| `dial-knob.png` | 16×16 | 1 | 1.5× (24 px) | The knob of each control dial (temperature, humidity, oxygen, pressure) | Used as the range-slider thumb; it slides along a straight track. |
+| `disaster-breach.png`, `disaster-power.png`, `disaster-meteor.png`, `disaster-disease.png` | 16×16 | 1 | 2× | "Dome disasters" list in the dome screen | Dome breach, power failure, meteor strike, disease outbreak. |
+| `resident-<species id>.png` (now: `resident-dodo.png`, `resident-passenger_pigeon.png`) | 16×16 | 2 (4 fps) | 1× in overview domes, 2× in the big dome; frame 1 as a still icon in lists | Animals wandering inside domes, and icons in the pool / placement / results lists | Walk cycle, facing **right**. One per species, named by species id. A small square shows if missing. |
+
 ## Nice to have later
 
 - `zib.png`: the "zib zib zib" trail is text right now; it could become a small sprite.

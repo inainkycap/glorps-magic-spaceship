@@ -472,3 +472,191 @@ if (want("bg-explore-passenger_pigeon"))
       return c;
     })(),
   ]);
+
+// --- Sanctuary (Glorp's home planet) ---------------------------------------------
+
+const P = {
+  sky0: hex("#1f1a33"),
+  sky1: hex("#2a2440"),
+  sky2: hex("#3a2f55"),
+  ground: hex("#5b4a6e"),
+  groundLo: hex("#4a3c5c"),
+  groundHi: hex("#6f5c84"),
+  crater: hex("#3f3352"),
+  teal: hex("#5f9a92"),
+  tealDark: hex("#3f6f6a"),
+  moon: hex("#d8d3c4"),
+  moon2: hex("#d99a9a"),
+  star: hex("#ece6d6"),
+  glass: hex("#dcebf5", 150),
+  glassHi: hex("#ffffff", 200),
+  rim: hex("#8f9ab0"),
+  rimDark: hex("#5d6680"),
+};
+
+if (want("planet-terrain"))
+  save("planet-terrain", [
+    (() => {
+      // 320×180: alien sky with two moons, purple rocky plain, craters, teal crystal plants
+      const c = canvas(320, 180);
+      bands(c, 0, [P.sky0, P.sky1, P.sky2], 24);
+      speckle(c, 0, 0, 320, 64, P.star, 97, 7);
+      c.disc(262, 22, 12, P.moon);
+      c.disc(258, 19, 3, hex("#bfb9a8"));
+      c.disc(52, 34, 6, P.moon2);
+      for (let x = 0; x < 320; x++) {
+        const ridge = Math.round(64 + 6 * Math.sin(x / 17) + 4 * Math.sin(x / 7 + 1));
+        c.rect(x, ridge, 1, 72 - ridge + 6, P.groundLo); // distant ridge
+      }
+      c.rect(0, 72, 320, 108, P.ground);
+      speckle(c, 0, 72, 320, 108, P.groundHi, 9, 21);
+      speckle(c, 0, 72, 320, 108, P.groundLo, 7, 33);
+      for (const [x, y, r] of [[40, 150, 10], [150, 166, 7], [292, 140, 12], [210, 98, 6], [110, 104, 5]]) {
+        c.disc(x, y, r, P.crater);
+        c.disc(x - 1, y - 1, r - 2, P.groundLo);
+      }
+      for (const [x, y] of [[8, 120], [128, 132], [306, 104], [190, 150], [66, 92]]) {
+        c.rect(x, y - 8, 2, 8, P.teal); // crystal sprouts
+        c.rect(x + 3, y - 5, 2, 5, P.tealDark);
+        c.rect(x - 3, y - 4, 2, 4, P.tealDark);
+      }
+      return c;
+    })(),
+  ]);
+
+if (want("dome-glass"))
+  save("dome-glass", [
+    (() => {
+      // 64×64: rim + highlights only; the interior stays transparent
+      const c = canvas(64, 64);
+      for (let y = 0; y < 64; y++)
+        for (let x = 0; x < 64; x++) {
+          const d = Math.hypot(x - 31.5, y - 31.5);
+          if (d > 31.5) continue;
+          if (d > 30) c.set(x, y, P.rimDark);
+          else if (d > 28.5) c.set(x, y, P.rim);
+        }
+      for (let i = 0; i < 14; i++) c.rect(12 + i, 14 - Math.round(i * 0.45), 2, 1, P.glassHi); // shine
+      c.rect(14, 18, 2, 6, P.glass);
+      c.rect(48, 44, 3, 2, P.glass);
+      return c;
+    })(),
+  ]);
+
+if (want("dome-site"))
+  save("dome-site", [
+    (() => {
+      // 32×32: dashed foundation ring with a little flag
+      const c = canvas(32, 32);
+      for (let a = 0; a < 32; a++) {
+        if (a % 4 >= 2) continue;
+        const t = (a / 32) * Math.PI * 2;
+        c.rect(Math.round(15.5 + Math.cos(t) * 13), Math.round(18 + Math.sin(t) * 9), 2, 2, X.cream);
+      }
+      c.rect(15, 4, 1, 14, X.cream); // pole
+      c.rect(16, 4, 6, 4, C.mint); // flag
+      return c.outline();
+    })(),
+  ]);
+
+/** Interior ground (64×20) and plants (64×24) per terrain. */
+const TERRAIN_ART = {
+  forest: { ground: "#4f6a44", groundHi: "#5f7a52", plant: "#3f5a3a", plantHi: "#6f8a5a", trunk: "#5e4632", kind: "trees" },
+  grassland: { ground: "#7c9a5a", groundHi: "#8fab6a", plant: "#9fbb72", plantHi: "#c2c98a", trunk: "#7c9a5a", kind: "grass" },
+  wetland: { ground: "#4f7a78", groundHi: "#6b9aa0", plant: "#5f8a5a", plantHi: "#8faa6a", trunk: "#4f6a44", kind: "reeds" },
+  tundra: { ground: "#c8ccc4", groundHi: "#e2e4dc", plant: "#8f9a8a", plantHi: "#aab2a2", trunk: "#6e7180", kind: "shrubs" },
+};
+for (const [t, a] of Object.entries(TERRAIN_ART)) {
+  if (want(`dome-ground-${t}`)) {
+    const c = canvas(64, 20);
+    c.rect(0, 0, 64, 20, hex(a.ground));
+    speckle(c, 0, 0, 64, 20, hex(a.groundHi), 5, t.length * 7);
+    if (t === "wetland") for (const x of [6, 30, 48]) c.rect(x, 6, 10, 3, hex("#6b9ab4")); // pools
+    save(`dome-ground-${t}`, [c]);
+  }
+  if (want(`dome-plants-${t}`)) {
+    const c = canvas(64, 24);
+    for (let i = 0; i < 6; i++) {
+      const x = 4 + i * 11;
+      if (a.kind === "trees") {
+        c.rect(x + 2, 14, 2, 10, hex(a.trunk));
+        c.disc(x + 3, 10, 5, hex(a.plant));
+        c.disc(x + 2, 9, 3, hex(a.plantHi));
+      } else if (a.kind === "grass") {
+        for (let k = 0; k < 4; k++) c.rect(x + k * 2, 18 - (k % 2) * 3, 1, 6 + (k % 2) * 3, hex(k % 2 ? a.plantHi : a.plant));
+      } else if (a.kind === "reeds") {
+        for (let k = 0; k < 3; k++) c.rect(x + k * 3, 8 + k * 2, 1, 16 - k * 2, hex(a.plant));
+        c.rect(x + 3, 7, 2, 3, X.brown); // seed head
+      } else {
+        c.disc(x + 3, 21, 3, hex(a.plant));
+        c.rect(x + 2, 19, 2, 1, hex(a.plantHi));
+      }
+    }
+    save(`dome-plants-${t}`, [c]);
+  }
+}
+
+if (want("control-panel"))
+  save("control-panel", [
+    (() => {
+      // 16×16, 9-slice with 6px corners: dark metal with rivets
+      const c = panel(16, 16, C.panel, C.outline);
+      c.rect(2, 2, 12, 1, C.panelHi);
+      c.rect(2, 13, 12, 1, C.panelLo);
+      for (const [x, y] of [[2, 2], [13, 2], [2, 13], [13, 13]]) c.rect(x, y, 1, 1, X.grey);
+      return c;
+    })(),
+  ]);
+
+if (want("dial-knob"))
+  save("dial-knob", [
+    icon((c) => {
+      c.disc(7.5, 7.5, 6, C.sand);
+      c.disc(7.5, 7.5, 4, hex("#c9b48c"));
+      c.rect(7, 2, 2, 5, C.outline); // pointer
+    }),
+  ]);
+
+const DISASTER_ART = {
+  breach: (c) => {
+    c.disc(7.5, 8.5, 6, P.glass);
+    for (const [x, y] of [[7, 3], [8, 4], [7, 5], [6, 6], [7, 7], [8, 8], [9, 9], [8, 10], [7, 11]]) c.rect(x, y, 1, 1, C.outline); // crack
+  },
+  power: (c) => {
+    for (const [x, y, w] of [[8, 1, 3], [7, 3, 3], [6, 5, 3], [5, 7, 6], [7, 9, 3], [6, 11, 3], [5, 13, 2]]) c.rect(x, y, w, 2, C.sand);
+  },
+  meteor: (c) => {
+    c.disc(10, 10, 4, X.brown);
+    c.rect(9, 8, 2, 2, X.brownDark);
+    for (let i = 0; i < 6; i++) c.rect(1 + i, 1 + i, 2, 1, i < 3 ? C.sand : C.thruster); // trail
+  },
+  disease: (c) => {
+    c.disc(7.5, 7.5, 4.5, C.mintDark);
+    for (const [x, y] of [[7, 1], [7, 13], [1, 7], [13, 7], [3, 3], [11, 3], [3, 11], [11, 11]]) c.rect(x, y, 2, 2, C.mint);
+    c.rect(6, 6, 2, 2, C.outline);
+  },
+};
+for (const [id, draw] of Object.entries(DISASTER_ART)) {
+  if (want(`disaster-${id}`)) save(`disaster-${id}`, [icon(draw)]);
+}
+
+/** Residents: 16×16, 2-frame walk (feet alternate). */
+function resident({ body, belly, beak, frame, tall }) {
+  const c = canvas(16, 16);
+  const top = tall ? 3 : 6;
+  c.rect(4, top + 2, 8, 16 - top - 5, body); // body
+  c.rect(9, top, 4, 4, body); // head
+  c.rect(13, top + 1, 2, 2, beak); // beak
+  c.rect(11, top + 1, 1, 1, C.outline); // eye
+  c.rect(5, top + 5, 5, 16 - top - 9, belly);
+  c.rect(frame ? 5 : 6, 13, 1, 2, beak); // feet
+  c.rect(frame ? 9 : 8, 13, 1, 2, beak);
+  return c.outline();
+}
+const RESIDENTS = {
+  dodo: { body: hex("#9a958c"), belly: hex("#c8c2b4"), beak: hex("#d6c39d"), tall: true },
+  passenger_pigeon: { body: hex("#7d8aa0"), belly: hex("#c98a7a"), beak: hex("#3a3a44"), tall: false },
+};
+for (const [id, look] of Object.entries(RESIDENTS)) {
+  if (want(`resident-${id}`)) save(`resident-${id}`, [0, 1].map((frame) => resident({ ...look, frame })));
+}
