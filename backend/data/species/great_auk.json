@@ -1,0 +1,78 @@
+{
+  "id": "great_auk",
+  "name": "Great auk",
+  "scientific_name": "Pinguinus impennis",
+  "status": "extinct",
+  "era": "1800",
+  "era_year": 1800,
+  "location": "Funk Island, Newfoundland",
+  "lat": 49.75,
+  "lon": -53.18,
+  "kind": "bird",
+  "intro": "Zib! Funk Island, off Newfoundland, 1800. Brrr! These black-and-white birds look like penguins, but this is the North Atlantic. Meet the great auk.",
+  "description": "The great auk was a large, flightless seabird of the North Atlantic. It stood upright on land, black above and white below, and was a superb swimmer and diver. It was the original \"penguin\": sailors gave it that name, and later used it for the southern birds that looked similar. Great auks came ashore only to breed, crowding onto a few rocky islands where each pair laid a single egg on the bare rock. On land they were slow and easy to catch, so sailors killed huge numbers for meat, eggs, oil and feathers. As they grew rare, collectors paid for skins and eggs. The last known pair was killed on Eldey Island, Iceland, in 1844.",
+  "facts": {
+    "height": "~75–85 cm",
+    "weight": "~5 kg",
+    "diet": "Fish such as capelin and herring, plus crustaceans",
+    "lifespan": "?",
+    "extinct_year": 1844,
+    "cause": "Hunted for meat, eggs, oil and feathers; then by collectors"
+  },
+  "habitat": {
+    "biome": "Cold North Atlantic seas; bare rocky islands for breeding",
+    "climate": "Cold, windy and often foggy",
+    "elevation": "Sea level (rocky shores)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Bare, rocky islands with no trees, next to the sea",
+      "types": ["tundra"],
+      "why": "It nested on bare rock on cold, treeless islands, where it could waddle straight into the sea."
+    },
+    "temperature": {
+      "min": "~-5", "max": "~15", "unit": "°C",
+      "why": "It lived in the cold North Atlantic, with thick fat and dense feathers to keep warm."
+    },
+    "humidity": {
+      "min": "~70", "max": "~95", "unit": "%",
+      "why": "Its islands were wrapped in sea spray and fog."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Sea-level air; it held its breath on long dives for fish."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "A seabird that lived right at sea level (~101 kPa)."
+    }
+  },
+  "sources": [
+    { "title": "Great auk (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Great_auk" },
+    { "title": "Funk Island (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Funk_Island" }
+  ],
+  "hotspots": [
+    { "id": "egg", "label": "Egg on bare rock", "sprite": "egg-rock", "x": 30, "y": 70,
+      "fact": "No nest, no trees: each pair laid a single egg straight onto the bare rock of a cold island.",
+      "dna": true, "reveals": "terrain" },
+    { "id": "fish", "label": "Silver fish", "sprite": "fish", "x": 62, "y": 82,
+      "fact": "Great auks dived deep in the icy North Atlantic for fish, kept warm by fat and thick feathers.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "fog", "label": "Sea fog", "sprite": "cloud", "x": 46, "y": 18,
+      "fact": "Fog rolls in off the sea most days, and the rocks are always wet with spray.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "shore", "label": "Rocky shore", "sprite": "shore", "x": 84, "y": 78,
+      "fact": "They waddled from the rocks straight into the sea. Everything here breathes sea-level air.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "feather", "label": "Black feather", "sprite": "feather", "x": 50, "y": 60,
+      "fact": "Sailors called these birds \"penguins\" long before anyone used the word for the birds of the south.",
+      "dna": true },
+    { "id": "bones", "label": "Pile of bones", "sprite": "bones", "x": 16, "y": 84,
+      "fact": "Slow on land, great auks were easy to catch. Sailors killed them by the thousand for meat, eggs, oil and feathers.",
+      "dna": true },
+    { "id": "boat", "label": "Sailing ship", "sprite": "ship", "x": 82, "y": 40,
+      "fact": "As they grew rare, collectors paid for their skins and eggs. The last known pair was killed in Iceland in 1844.",
+      "dna": false }
+  ],
+  "dna_required": 3
+}
