@@ -1,0 +1,17 @@
+{
+  "_comment": "Tuning for the sanctuary sim. Rates are per individual per year. See app/sanctuary/engine.py.",
+  "birth_rate": 0.5,
+  "death_rate_min": 0.12,
+  "death_rate_poor_fit": 0.5,
+  "dome_capacity": 30,
+  "allee": 2,
+  "fit_tolerance": { "temperature": 6, "humidity": 15, "oxygen": 2, "pressure": 10 },
+  "wrong_terrain_fit": 0.4,
+  "no_needs_fit": 0.5,
+  "disasters": {
+    "breach":  { "name": "Dome breach",       "chance": 0.006, "kill": 0.8 },
+    "power":   { "name": "Power failure",     "chance": 0.015, "kill": 0.35 },
+    "meteor":  { "name": "Meteor strike",     "chance": 0.003, "kill": 0.97 },
+    "disease": { "name": "Disease outbreak",  "chance": 0.01,  "kill": 0.55 }
+  }
+}
