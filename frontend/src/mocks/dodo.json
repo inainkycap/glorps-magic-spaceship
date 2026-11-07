@@ -1,0 +1,60 @@
+{
+  "id": "dodo",
+  "name": "Dodo",
+  "scientific_name": "Raphus cucullatus",
+  "status": "extinct",
+  "era": "1600",
+  "location": "Mauritius",
+  "kind": "bird",
+  "hotspots": [
+    { "id": "egg", "label": "Ground nest", "sprite": "egg", "x": 22, "y": 70,
+      "fact": "Dodos laid a single egg in a nest on the ground, so anything that walked by could eat it.",
+      "dna": true, "unlocks": "nest_guard" },
+    { "id": "feather", "label": "Grey feather", "sprite": "feather", "x": 48, "y": 58,
+      "fact": "The dodo was a giant flightless pigeon. Its closest living relative is the Nicobar pigeon.",
+      "dna": true, "unlocks": null },
+    { "id": "rat", "label": "Ship rat", "sprite": "rat", "x": 70, "y": 76,
+      "fact": "Ships brought rats, pigs and monkeys to Mauritius. They raided dodo nests.",
+      "dna": false, "unlocks": "rat_control" },
+    { "id": "stump", "label": "Felled ebony tree", "sprite": "stump", "x": 82, "y": 48,
+      "fact": "Settlers cut down Mauritius's ebony forests for timber, shrinking the dodo's habitat.",
+      "dna": false, "unlocks": "forest_reserve" },
+    { "id": "sailor", "label": "Dutch sailor", "sprite": "sailor", "x": 35, "y": 40,
+      "fact": "Dutch sailors reached Mauritius in 1598. The dodo had never met humans and wasn't afraid of them.",
+      "dna": false, "unlocks": "hunting_ban" },
+    { "id": "bones", "label": "Old bones", "sprite": "feather", "x": 60, "y": 30,
+      "fact": "The last widely accepted sighting of a dodo was in 1662, less than 70 years after humans arrived.",
+      "dna": true, "unlocks": null }
+  ],
+  "threats": [
+    { "id": "hunting", "name": "Hunting", "description": "Sailors kill fearless dodos for food.",
+      "effect": { "mortality": 0.06 } },
+    { "id": "invasives", "name": "Invasive species", "description": "Rats, pigs and monkeys eat eggs and chicks.",
+      "effect": { "mortality": 0.1 } },
+    { "id": "deforestation", "name": "Deforestation", "description": "Forests are cleared for timber and farms.",
+      "effect": { "habitat_decline": 0.02 } },
+    { "id": "storms", "name": "Cyclones", "description": "Rare cyclones hit the island hard.",
+      "effect": { "shock_prob": 0.05, "shock_severity": 0.3 } }
+  ],
+  "interventions": [
+    { "id": "rat_control", "name": "Pest control", "description": "Trap invasive rats and pigs near nesting grounds.",
+      "mitigates": { "invasives": 0.8 } },
+    { "id": "nest_guard", "name": "Nest guards", "description": "Fence and guard nesting sites.",
+      "mitigates": { "invasives": 0.5, "hunting": 0.2 } },
+    { "id": "hunting_ban", "name": "Hunting ban", "description": "Ban hunting dodos on the island.",
+      "mitigates": { "hunting": 0.9 } },
+    { "id": "forest_reserve", "name": "Forest reserve", "description": "Protect a block of native forest.",
+      "mitigates": { "deforestation": 0.85 } }
+  ],
+  "goal_survival": 0.8,
+  "max_interventions": 2,
+  "dna_required": 3,
+  "sim": {
+    "model": "logistic",
+    "start_year": 1600,
+    "years": 100,
+    "start_population": 3000,
+    "carrying_capacity": 5000,
+    "growth_rate": 0.08
+  }
+}
