@@ -1,0 +1,78 @@
+{
+  "id": "moa",
+  "name": "South Island giant moa",
+  "scientific_name": "Dinornis robustus",
+  "status": "extinct",
+  "era": "1350",
+  "era_year": 1350,
+  "location": "Canterbury, New Zealand",
+  "lat": -43.5,
+  "lon": 171.7,
+  "kind": "bird",
+  "intro": "Zib! New Zealand, 1350. That bird is browsing leaves higher than a basketball hoop. Meet the giant moa!",
+  "description": "Moa were giant flightless birds found only in New Zealand, and the South Island giant moa was the biggest. Females, much larger than males, could reach about 3.6 metres with their necks stretched up and weighed around 230 kilograms. Moa had no wings at all, not even tiny ones. They browsed leaves, twigs and fruit, and swallowed stones to help grind food in their gizzards. With no land mammals on the islands, their only predator was Haast's eagle. Polynesian settlers, the ancestors of Māori, arrived around 1300. Moa bred slowly, and within roughly 150 years hunting and forest fires had wiped out every species.",
+  "facts": {
+    "height": "~3.6 m with the neck raised (females)",
+    "weight": "~230 kg (females; males much smaller)",
+    "diet": "Leaves, twigs, seeds and fruit",
+    "lifespan": "?",
+    "extinct_year": "~1445",
+    "cause": "Hunting by the first human settlers, and forest burning"
+  },
+  "habitat": {
+    "biome": "Forest, shrubland and grassland",
+    "climate": "Cool temperate: frosty winters, mild summers",
+    "elevation": "Lowlands up to subalpine slopes (~0–? m)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Forest and shrubland with leafy plants to browse",
+      "types": ["forest", "grassland"],
+      "why": "It browsed leaves and twigs from shrubs and low trees, and wandered into open grassland."
+    },
+    "temperature": {
+      "min": "~-5", "max": "~25", "unit": "°C",
+      "why": "The South Island has frosty winters and mild summers."
+    },
+    "humidity": {
+      "min": "~50", "max": "~90", "unit": "%",
+      "why": "New Zealand's forests are damp, though the east of the island is drier."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, like any other bird."
+    },
+    "pressure": {
+      "min": "~85", "max": "~102", "unit": "kPa",
+      "why": "Moa lived from the coast up onto mountain slopes, where the air is thinner."
+    }
+  },
+  "sources": [
+    { "title": "South Island giant moa (Wikipedia)", "url": "https://en.wikipedia.org/wiki/South_Island_giant_moa" },
+    { "title": "Moa (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Moa" }
+  ],
+  "hotspots": [
+    { "id": "ferns", "label": "Browsed ferns", "sprite": "fern", "x": 20, "y": 60,
+      "fact": "Leaves stripped from these shrubs, high up. Moa browsed forest and shrubland.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "frost", "label": "Frosty morning", "sprite": "snowflake", "x": 72, "y": 26,
+      "fact": "Frost this morning! The South Island has cold winters and mild summers.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "mist", "label": "Valley mist", "sprite": "cloud", "x": 48, "y": 16,
+      "fact": "Mist hangs in the valleys. These forests are damp most of the year.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "slopes", "label": "Mountain slopes", "sprite": "mountain", "x": 86, "y": 36,
+      "fact": "Moa wandered from the coast up onto these slopes, where the air is thinner.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "gizzard", "label": "Gizzard stones", "sprite": "pebbles", "x": 40, "y": 80,
+      "fact": "Moa swallowed stones like these to help grind up tough leaves in their gizzards.",
+      "dna": true },
+    { "id": "feather", "label": "Long feather", "sprite": "feather", "x": 62, "y": 66,
+      "fact": "Moa had no wings at all, not even tiny ones. Females stood up to 3.6 m tall.",
+      "dna": true },
+    { "id": "bones", "label": "Moa bones", "sprite": "bones", "x": 84, "y": 78,
+      "fact": "People arrived around 1300. Moa bred slowly, and within about 150 years they were all gone.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

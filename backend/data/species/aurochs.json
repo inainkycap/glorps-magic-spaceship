@@ -1,0 +1,78 @@
+{
+  "id": "aurochs",
+  "name": "Aurochs",
+  "scientific_name": "Bos primigenius",
+  "status": "extinct",
+  "era": "50 BCE",
+  "era_year": -50,
+  "location": "Hercynian Forest, Germany",
+  "lat": 50.5,
+  "lon": 10.5,
+  "kind": "mammal",
+  "intro": "Zib! Central Europe, 50 BCE, deep in an ancient forest. Something enormous is crashing through the trees: a wild bull taller than Glorp's ship!",
+  "description": "The aurochs was a huge wild ox, the ancestor of every cow alive today. Bulls stood up to about 1.8 metres at the shoulder, were black with a pale stripe down the back, and had long, forward-curving horns; cows were smaller and reddish-brown. Aurochs roamed forests, river valleys and grassland across Europe, Asia and North Africa. Around 10,000 years ago people began taming them, and over thousands of years they became domestic cattle. Julius Caesar described wild aurochs in the forests of Germania as being \"a little below the elephant in size\". As forests were cleared for farms and the animals were hunted, they slowly vanished. The very last aurochs, a cow, died in Jaktorów Forest in Poland in 1627.",
+  "facts": {
+    "height": "~1.5–1.8 m at the shoulder (bulls bigger than cows)",
+    "weight": "~700–1,000 kg for bulls?",
+    "diet": "Grasses, sedges, leaves and acorns",
+    "lifespan": "~20 years?",
+    "extinct_year": "1627 (the last one, a cow, in Jaktorów Forest, Poland)",
+    "cause": "Hunting, forests cleared for farms, and diseases caught from farm cattle"
+  },
+  "habitat": {
+    "biome": "Temperate forest, river valleys and wet grassland",
+    "climate": "Cold winters, warm summers",
+    "elevation": "Mostly lowlands (~0–? m)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Open forest with clearings, river meadows and marshes",
+      "types": ["forest", "grassland"],
+      "why": "It grazed in clearings and wet meadows and sheltered in the forest."
+    },
+    "temperature": {
+      "min": "~-10", "max": "~25", "unit": "°C",
+      "why": "European winters bring frost and snow; summers are warm but not hot."
+    },
+    "humidity": {
+      "min": "~50", "max": "~85", "unit": "%",
+      "why": "It liked damp river valleys and marshy meadows full of lush grass."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, like the cattle it gave rise to."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "It lived mostly in lowland river valleys, close to sea-level air pressure."
+    }
+  },
+  "sources": [
+    { "title": "Aurochs (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Aurochs" },
+    { "title": "Hercynian Forest (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Hercynian_Forest" }
+  ],
+  "hotspots": [
+    { "id": "clearing", "label": "Forest clearing", "sprite": "leaves", "x": 24, "y": 62,
+      "fact": "Aurochs grazed sunny clearings and wet meadows, then slipped back into the forest for shelter.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "frost", "label": "Frosty leaves", "sprite": "snowflake", "x": 74, "y": 30,
+      "fact": "Winters here bring frost and snow; summers are warm but never hot.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "marsh", "label": "Marshy meadow", "sprite": "puddle", "x": 52, "y": 82,
+      "fact": "Damp river meadows grow the lushest grass, and aurochs loved them.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "valley", "label": "River valley", "sprite": "shore", "x": 86, "y": 74,
+      "fact": "This lowland river valley isn't far above sea level, so the air pressure is just like at the coast.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "horns", "label": "Huge horns", "sprite": "horns", "x": 40, "y": 70,
+      "fact": "A bull's horns curved forwards and could be up to about 80 cm long. Every cow alive today is descended from aurochs.",
+      "dna": true },
+    { "id": "hoofprints", "label": "Giant hoofprints", "sprite": "hoofprints", "x": 64, "y": 66,
+      "fact": "Hoofprints bigger than Glorp's hand. Bulls were black with a pale stripe down the back; cows were reddish-brown.",
+      "dna": true },
+    { "id": "scroll", "label": "Roman scroll", "sprite": "scroll", "x": 14, "y": 82,
+      "fact": "Julius Caesar wrote that these wild oxen were \"a little below the elephant in size\". The last one died in Poland in 1627.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

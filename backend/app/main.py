@@ -8,6 +8,7 @@ from .sanctuary.engine import simulate as simulate_sanctuary
 from .sanctuary.schemas import SanctuarySimRequest, SanctuarySimResponse
 from .schemas import Species, SpeciesSummary
 from .species import SPECIES
+from .timeline import Timeline, build_timeline
 from .wiki import WikiError, WikiSummary, get_summary
 
 app = FastAPI(title="Glorp's Magic Spaceship API")
@@ -32,6 +33,12 @@ def list_species():
 
 # exclude_unset: optional fields missing from the JSON file are left out of the response
 # (not sent as null), but an explicit `"unlocks": null` in the file is kept.
+@app.get("/api/timeline", response_model=Timeline)
+def timeline():
+    """Every species' era, sorted, with BCE-aware labels and log-scale positions (0..1)."""
+    return build_timeline(list(SPECIES.values()))
+
+
 @app.get("/api/species/{species_id}", response_model=Species, response_model_exclude_unset=True)
 def get_species(species_id: str):
     if species_id not in SPECIES:
