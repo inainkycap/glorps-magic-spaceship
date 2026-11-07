@@ -6,11 +6,12 @@ import type {
   DomeConditions,
   DomeState,
   DomeTerrain,
+  NeedKey,
   SanctuarySimRequest,
   SanctuaryState,
   Species,
 } from "../types";
-import { overallFit } from "./fit";
+import { knownFit } from "./fit";
 
 export const TERRAINS: DomeTerrain[] = ["forest", "grassland", "wetland", "tundra"];
 
@@ -108,15 +109,25 @@ export function runLabel(domes: DomeState[]): string {
   return `${used} dome${used === 1 ? "" : "s"} · ${placed} placed`;
 }
 
-/** Count-weighted average fit of a dome's residents (null if empty). */
-export function domeFit(dome: DomeState, speciesById: Record<string, Pick<Species, "needs">>): number | null {
+/**
+ * Count-weighted average fit of a dome's residents, as the player knows it:
+ * only discovered needs count (see knownFit). Null if empty or nothing is
+ * discovered for any resident.
+ */
+export function domeFit(
+  dome: DomeState,
+  speciesById: Record<string, Pick<Species, "needs">>,
+  discoveredFor: (speciesId: string) => readonly NeedKey[],
+): number | null {
   let total = 0;
   let weighted = 0;
   for (const [id, n] of Object.entries(dome.residents)) {
     const s = speciesById[id];
     if (!s || n <= 0) continue;
+    const { fit } = knownFit(s, dome, discoveredFor(id));
+    if (fit === null) continue;
     total += n;
-    weighted += n * overallFit(s, dome);
+    weighted += n * fit;
   }
   return total > 0 ? weighted / total : null;
 }

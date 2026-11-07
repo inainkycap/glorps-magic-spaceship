@@ -66,13 +66,44 @@ export function needFits(species: Pick<Species, "needs">, dome: DomeConditions):
   return out;
 }
 
+const geometricMean = (fits: number[]) =>
+  Math.exp(fits.reduce((s, f) => s + Math.log(Math.max(f, 1e-6)), 0) / fits.length);
+
 /**
- * Overall fit, 0..1: the geometric mean of the per-need fits, so one bad need
- * drags it down hard. A species with no need data scores a neutral 0.5.
+ * Overall fit, 0..1, from ALL of the species' real needs: the geometric mean of
+ * the per-need fits, so one bad need drags it down hard. A species with no need
+ * data scores a neutral 0.5. This is what the sim uses (mock and real).
  */
 export function overallFit(species: Pick<Species, "needs">, dome: DomeConditions): number {
   const fits = needFits(species, dome);
-  if (fits.length === 0) return 0.5;
-  const logSum = fits.reduce((s, f) => s + Math.log(Math.max(f.fit, 1e-6)), 0);
-  return Math.exp(logSum / fits.length);
+  return fits.length === 0 ? 0.5 : geometricMean(fits.map((f) => f.fit));
+}
+
+export interface FitSegment {
+  key: NeedKey;
+  /** null = not discovered yet: shown as a grey "?" and gives no hint. */
+  fit: number | null;
+  verdict: FitVerdict | null;
+}
+
+/**
+ * What the PLAYER is shown: fit computed only from the needs they've
+ * discovered, plus one segment per need the species has (undiscovered ones are
+ * null). `fit` is null when nothing scoreable has been discovered.
+ */
+export function knownFit(
+  species: Pick<Species, "needs">,
+  dome: DomeConditions,
+  discovered: readonly NeedKey[],
+): { fit: number | null; segments: FitSegment[] } {
+  const real = new Map(needFits(species, dome).map((f) => [f.key, f]));
+  const keys = (["terrain", "temperature", "humidity", "oxygen", "pressure"] as const).filter(
+    (k) => species.needs?.[k] !== undefined,
+  );
+  const segments = keys.map((key): FitSegment => {
+    const f = discovered.includes(key) ? real.get(key) : undefined;
+    return { key, fit: f ? f.fit : null, verdict: f ? f.verdict : null };
+  });
+  const known = segments.filter((s) => s.fit !== null).map((s) => s.fit!);
+  return { fit: known.length > 0 ? geometricMean(known) : null, segments };
 }

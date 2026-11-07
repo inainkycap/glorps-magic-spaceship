@@ -15,6 +15,18 @@ export const FUEL_MAX = 100;
 /** At or below this the gauge shows a warning colour. */
 export const FUEL_LOW = 25;
 
+// --- Budget target (checked by fuel.test.ts) -------------------------------------
+// Starting from 100 fuel, with the 2 current species (dodo 1600, passenger
+// pigeon 1870), visiting newest era first (the cheapest route) and allowing
+// one DNA retry per species:
+//   ✓ 2 species + 2 extra domes          (94)
+//   ✓ 3 species + 1 extra dome           (88; 3rd = a hypothetical ~1750 species)
+//   ✗ 3 species + 2 extra domes          (106)
+//   ✗ 2 species + all 5 extra domes      (148)
+// i.e. the player has to choose between more species and more domes. Route
+// order matters: jumping to 1600 first and back to 1870 re-crosses thick time
+// (77 instead of 50 for the two trips), which costs about a dome.
+
 // --- Travel ------------------------------------------------------------------
 // cost = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K × ∫ thickness(year) d(year)
 // over the years crossed, where time gets "thicker" the further back it is:
@@ -22,9 +34,9 @@ export const FUEL_LOW = 25;
 // so a decade in 1600 costs more fuel than a decade in 2010.
 
 /** Flat cost of any trip (even one that stays in the same era). */
-export const TRAVEL_BASE_COST = 10;
+export const TRAVEL_BASE_COST = 8;
 /** Fuel per unit of integrated time thickness. */
-export const TRAVEL_TIME_COST_K = 0.03;
+export const TRAVEL_TIME_COST_K = 0.025;
 /** "Now" for the thickness curve: thickness is 1 here and grows going back. */
 export const PRESENT_YEAR = 2026;
 
@@ -55,13 +67,13 @@ export function travelCost(from: Place, to: Place): number {
   return Math.max(0, Math.ceil(travelCostExact(from, to) - 1e-9));
 }
 
-// --- Other costs (not wired up yet) ------------------------------------------
+// --- Other costs ---------------------------------------------------------------
 
 export const FUEL_COSTS = {
-  /** Retrying a failed DNA scan. TODO: wire up when Explore has retries. */
-  dnaRetry: 5,
+  /** Replaying the DNA Lab minigame for a species (the first attempt is free). */
+  dnaRetry: 4,
   /** Building one more sanctuary dome on Glorp's planet (the first is free). */
-  buildDome: 15,
+  buildDome: 18,
 } as const;
 
 /** Dome sites on Glorp's planet, and how many come built. */

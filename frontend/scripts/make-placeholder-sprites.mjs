@@ -660,3 +660,36 @@ const RESIDENTS = {
 for (const [id, look] of Object.entries(RESIDENTS)) {
   if (want(`resident-${id}`)) save(`resident-${id}`, [0, 1].map((frame) => resident({ ...look, frame })));
 }
+
+// --- DNA Lab --------------------------------------------------------------------
+
+/** 5×7 pixel glyphs for the base tiles. */
+const GLYPHS = {
+  A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+  T: ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+  C: ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+  G: ["01111", "10000", "10000", "10011", "10001", "10001", "01110"],
+  "?": ["01110", "10001", "00001", "00110", "00100", "00000", "00100"],
+};
+/** 16×16 rounded tile with a letter; colours match .base-fallback in index.css. */
+function baseTile(letter, fill, ink, cracked = false) {
+  const c = panel(16, 16, fill, C.outline);
+  c.rect(1, 1, 14, 1, [255, 255, 255, 70]); // top highlight
+  GLYPHS[letter].forEach((row, y) =>
+    [...row].forEach((bit, x) => {
+      if (bit === "1") c.rect(5 + x, 4 + y, 1, 1, ink);
+    }),
+  );
+  if (cracked) for (const [x, y] of [[2, 12], [3, 13], [12, 2], [13, 3], [11, 13]]) c.set(x, y, C.outline);
+  return c;
+}
+const BASE_TILES = {
+  a: ["A", hex("#d99a9a")],
+  t: ["T", hex("#e2c991")],
+  c: ["C", hex("#9fd3b4")],
+  g: ["G", hex("#8fb0d8")],
+};
+for (const [id, [letter, fill]] of Object.entries(BASE_TILES)) {
+  if (want(`dna-base-${id}`)) save(`dna-base-${id}`, [baseTile(letter, fill, C.outline)]);
+}
+if (want("dna-base-degraded")) save("dna-base-degraded", [baseTile("?", hex("#6e7180"), C.ink, true)]);

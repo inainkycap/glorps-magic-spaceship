@@ -10,8 +10,8 @@ Glorp's spaceship travels through time to rescue extinct species (first world: M
 2. **Explore**: a pixel scene of the species' world. Scan hotspots to learn facts,
    **discover the species' needs** (ideal terrain, temperature, humidity, oxygen, pressure)
    for the field guide, and **collect DNA** fragments.
-3. **DNA Lab**: a minigame (next branch); its **score is the number of individuals
-   rescued**.
+3. **DNA Lab**: a quick pairing minigame (frontend-only); its result is the **number of
+   individuals rescued** (4–20) for that species. See "Game rules".
 4. **Sanctuary** (*sim PROPOSED, pending backend*): domes on Glorp's home planet (1 built,
    up to 6; more cost fuel). **Set each dome's conditions** (terrain, temperature,
    humidity, oxygen, pressure), **place rescued individuals**, then **run 1,000 futures**
@@ -99,16 +99,17 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
     (jump, fuel cost), and confirming plays the travel animation.
   - Explore `/explore/:speciesId`: Glorp's arrival intro, scan hotspots (facts, DNA, needs),
     field guide; "Go to DNA Lab" once DNA ≥ `dna_required`.
-  - DNA Lab `/lab/:speciesId`: minigame (placeholder page for now); score = individuals
-    rescued.
+  - DNA Lab `/lab/:speciesId`: base-pairing minigame (A↔T, C↔G) against the clock; Glorp
+    announces the individuals rescued, then "Send to Sanctuary". Retries cost fuel.
   - Sanctuary `/sanctuary`: Glorp's home planet with up to 6 dome sites (1 built; building
     more costs fuel), the pool of rescued individuals not yet placed, and "Run 1,000
     futures" for all domes together (fan chart of species alive, per-species survival,
     expected and worst-case species saved; compare mode overlays the previous run).
   - Dome `/sanctuary/:domeId`: the dome large, with Glorp's control panel (name, terrain,
     temperature/humidity/oxygen/pressure dials; the interior reacts live), placement
-    steppers to/from the pool, a fit bar per resident species (undiscovered needs show
-    "???"), and this dome's last-run results. The sim is PROPOSED, pending backend; mock
+    steppers to/from the pool, a fit bar per resident species (computed from discovered
+    needs only; undiscovered needs show as a grey "?" segment and give no hint), and this
+    dome's last-run results. The sim is PROPOSED, pending backend; mock
     mode runs a client-side mock (`frontend/src/mocks/mockSanctuarySim.ts`).
   - Dome state, rescued individuals and the last two runs persist in progress.
 - Map projection is equirectangular: `x% = (lon+180)/360`, `y% = (90−lat)/180`.
@@ -118,14 +119,44 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
   90% band (p5–p95), median line (p50).
 
 ## Game rules
-Frontend-only for now; all constants live in `frontend/src/game/fuel.ts` (tests in
-`fuel.test.ts`, run with `npm test` in `frontend/`). If the backend takes these over, add
-them to the contract above and keep the frontend constants as fallbacks.
+Frontend-only for now; fuel constants live in `frontend/src/game/fuel.ts`, DNA Lab rules in
+`frontend/src/game/dna.ts` (tests next to them, run with `npm test` in `frontend/`). If the
+backend takes these over, add them to the contract above and keep the frontend constants
+as fallbacks.
 
 **Fuel.** Glorp starts with 100 fuel (also the tank size), saved in the player's progress.
-Low-fuel warning at 25. Costs: travel (below) and **building a sanctuary dome: 15**
-(`FUEL_COSTS.buildDome`; the first dome is free, 6 sites in all). A placeholder cost for
-DNA retries (5) is defined but unused. There is no way to earn fuel back yet.
+Low-fuel warning at 25. Costs: travel (below), **building a sanctuary dome: 18**
+(`FUEL_COSTS.buildDome`; the first dome is free, 6 sites in all), and **retrying the DNA
+Lab: 4** (`FUEL_COSTS.dnaRetry`; the first attempt per species is free). There is no way to
+earn fuel back yet.
+
+**Fuel budget target** (enforced by the "fuel budget" tests in `fuel.test.ts`). Starting
+fresh with the 2 current species, visiting the newest era first and allowing one DNA retry
+per species:
+- affordable: **2 species + 2 extra domes** (94) or **3 species + 1 extra dome** (88, with a
+  hypothetical ~1750 third species)
+- not affordable: 3 species + 2 extra domes (106), or 2 species + all 5 extra domes (148)
+
+So the player has to choose between more species and more domes. Route order matters:
+going to 1600 first and back to 1870 re-crosses "thick" time (77 instead of 50 for the two
+trips), which costs about a dome. Retune the constants together, and keep those tests
+passing.
+
+**DNA Lab (frontend-only).** A pairing minigame: for each base of a strand the player picks
+its partner (A↔T, C↔G) before time runs out. Older species are harder; the one difficulty
+formula is `dnaDifficulty(era_year)` in `game/dna.ts`:
+- bases = 10 + 1 per 150 years before 2026 (max 16)
+- degraded bases ("?", their letter flashes briefly on their turn) = 1 per 120 years (max 6,
+  at most a third of the strand)
+- time = 20 s, plus 1 s per base beyond 12
+
+So the passenger pigeon (1870) gets 11 bases, 1 degraded, 20 s; the dodo (1600) gets 13 bases,
+3 degraded, 21 s. Quality = fraction matched correctly; **individuals rescued = 4 + 16 ×
+quality, rounded (4–20)**. The best run per species is kept (`Progress.dnaBest`) and its
+individuals become that species' rescued total, which fills the Sanctuary's unplaced pool.
+**The backend never sees the minigame:** its only effect on the backend is
+`residents[].count` in `POST /api/sanctuary/simulate` (how many of those individuals the
+player placed in each dome).
 
 **Travel cost.** Clicking a pin (or its timeline diamond) opens a bubble showing the jump
 ("1600 → 1870 · 270 years into the future") and the fuel it costs; Travel is disabled if
@@ -135,12 +166,12 @@ fuel is short. Time is "thicker" the further back you go:
     cost = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K × ∫ thickness(year) d(year) over the years crossed
          = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K × |b − a| × thickness((a + b) / 2)
 
-with `TRAVEL_BASE_COST = 10` and `TRAVEL_TIME_COST_K = 0.03`. The closed form holds because
+with `TRAVEL_BASE_COST = 8` and `TRAVEL_TIME_COST_K = 0.025`. The closed form holds because
 thickness is linear: the integral is the span times the thickness at the midpoint. The charge
 is the exact cost rounded **up** to a whole unit. Properties: direction doesn't matter
-(A→B = B→A); a decade further back costs more (1610→1600 = 12 > 2020→2010 = 11); a trip
-within the same era costs the base 10; staying put (same place and era) is free. Examples:
-2026→1600 = 51, 2026→1870 = 19, 1600→1870 = 42. Thickness reaches 0 at year 2126, so the
+(A→B = B→A); a decade further back costs more (1610→1600 = 10 > 2020→2010 = 9); a trip
+within the same era costs the base 8; staying put (same place and era) is free. Examples:
+2026→1600 = 42, 2026→1870 = 15, 1600→1870 = 35. Thickness reaches 0 at year 2126, so the
 formula assumes eras up to about the present.
 
 ## Proposed: species content + needs (frontend, needs backend ok)
@@ -255,6 +286,11 @@ Notes for the backend:
   and small populations should be able to collapse. The frontend's fit proposal is in
   `frontend/src/game/fit.ts` (1 inside the ideal range, bell-curve falloff outside;
   geometric mean across needs); the backend can use it or replace it.
+- **Treat `residents[].count` as untrusted input and clamp it** to a sane range (e.g. 0–50
+  per species per dome). It comes from the client, from the frontend-only DNA Lab (4–20
+  individuals rescued per species, split across domes by the player). Also ignore unknown
+  `species_id`s and dome conditions outside the control-panel ranges (terrain one of the 4;
+  temperature −30–50 °C, humidity 0–100 %, oxygen 10–35 %, pressure 50–200 kPa).
 - The mock's tuning (disaster chances, growth, carrying capacity) is just a starting point.
   Its unit test (`mockSanctuarySim.test.ts`) checks that splitting beats concentrating on
   the worst case; the real model should keep that property.
@@ -282,3 +318,5 @@ Notes for the backend:
   plus `needs.terrain.types`. Disasters (breach, power failure, meteor, disease) are per
   dome: correlated within a dome, independent between domes. Backend: confirm or change,
   then implement; the frontend uses a mock until then.
+- 2026-11-07: DNA Lab minigame (frontend-only) sets individuals rescued; fit bar hides undiscovered
+  needs; fuel rebalanced. Backend: clamp residents[].count.

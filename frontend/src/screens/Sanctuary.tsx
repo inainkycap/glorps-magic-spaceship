@@ -33,7 +33,7 @@ function domeSurvival(result: SanctuarySimResponse | undefined, id: string): num
 }
 
 export default function Sanctuary() {
-  const { rescued, sanctuary, fuel, buildDome, recordRun } = useProgress();
+  const { rescued, sanctuary, fuel, buildDome, recordRun, discoveredFor } = useProgress();
   const { domes, lastRun, prevRun } = sanctuary;
   const ids = [...Object.keys(rescued), ...domes.flatMap((d) => Object.keys(d.residents))];
   const species = useSanctuarySpecies(ids);
@@ -95,7 +95,7 @@ export default function Sanctuary() {
             );
           }
 
-          const fit = domeFit(dome, byId);
+          const fit = domeFit(dome, byId, discoveredFor);
           const survival = domeSurvival(lastRun?.result, dome.id);
           const residents = Object.entries(dome.residents).filter(([, n]) => n > 0);
           return (
@@ -114,7 +114,7 @@ export default function Sanctuary() {
                     : residents.map(([id, n]) => `${n} ${nameOf(id).toLowerCase()}`).join(" · ")}
                 </span>
                 {fit !== null && (
-                  <span className="mini-fit" title="Average fit of residents to this dome">
+                  <span className="mini-fit" title="Average fit of residents, from the needs you have discovered">
                     fit <span className="bar small"><span className="bar-fill" style={{ width: pct(fit) }} /></span> {pct(fit)}
                   </span>
                 )}

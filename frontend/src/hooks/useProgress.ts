@@ -3,6 +3,7 @@ import { canAfford, clampFuel, FUEL_COSTS, FUEL_START } from "../game/fuel";
 import { defaultSanctuary, isSite, newDome, poolOf, TERRAINS } from "../game/sanctuary";
 import { HOME, isPlace } from "../geo";
 import type {
+  DnaResult,
   DomeConditions,
   DomeState,
   DomeTerrain,
@@ -62,6 +63,11 @@ const isRun = (v: unknown) => isObject(v) && typeof v.key === "string" && isObje
  */
 function sanitizeOptional(p: Record<string, unknown>) {
   if (p.rescued !== undefined && !isCountMap(p.rescued)) delete p.rescued;
+  if (
+    p.dnaBest !== undefined &&
+    !(isObject(p.dnaBest) && Object.values(p.dnaBest).every((r) => isObject(r) && isFiniteNum(r.quality) && isFiniteNum(r.individuals)))
+  )
+    delete p.dnaBest;
   if (p.sanctuary !== undefined) {
     const s = p.sanctuary;
     if (!isObject(s) || !Array.isArray(s.domes) || !s.domes.every(isDome)) delete p.sanctuary;
@@ -160,13 +166,25 @@ const sanctuaryOf = (p: Progress): SanctuaryState => p.sanctuary ?? DEFAULT_SANC
 const updateSanctuary = (fn: (s: SanctuaryState) => SanctuaryState) =>
   setState((p) => ({ ...p, sanctuary: fn(sanctuaryOf(p)) }));
 
-/** DNA Lab result: add rescued individuals (and mark the species as saved on the map). */
-const addRescued = (speciesId: string, count: number) =>
-  setState((p) => ({
-    ...p,
-    rescued: { ...p.rescued, [speciesId]: (p.rescued?.[speciesId] ?? 0) + Math.max(0, Math.round(count)) },
-    saved: p.saved.includes(speciesId) ? p.saved : [...p.saved, speciesId],
-  }));
+/**
+ * Record a DNA Lab run. The BEST run per species counts: its individuals become
+ * the species' rescued total (so a worse retry never takes animals away), and
+ * the species is marked as rescued/saved. Returns whether this run is the new best.
+ */
+const recordDnaResult = (speciesId: string, result: DnaResult): boolean => {
+  const prev = state.dnaBest?.[speciesId];
+  const isBest = !prev || result.individuals > prev.individuals || (result.individuals === prev.individuals && result.quality > prev.quality);
+  setState((p) => {
+    const best = isBest ? result : p.dnaBest![speciesId];
+    return {
+      ...p,
+      dnaBest: { ...p.dnaBest, [speciesId]: best },
+      rescued: { ...p.rescued, [speciesId]: Math.max(p.rescued?.[speciesId] ?? 0, best.individuals) },
+      saved: p.saved.includes(speciesId) ? p.saved : [...p.saved, speciesId],
+    };
+  });
+  return isBest;
+};
 
 /** Build a dome on an empty site, paying fuel. Returns false if taken, invalid or unaffordable. */
 const buildDome = (site: number): boolean => {
@@ -244,7 +262,7 @@ export function useProgress() {
     markSaved,
     setGlorp,
     spendFuel,
-    addRescued,
+    recordDnaResult,
     buildDome,
     updateDome,
     moveResidents,
