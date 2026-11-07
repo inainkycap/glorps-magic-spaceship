@@ -1,0 +1,78 @@
+{
+  "id": "stellers_sea_cow",
+  "name": "Steller's sea cow",
+  "scientific_name": "Hydrodamalis gigas",
+  "status": "extinct",
+  "era": "1741",
+  "era_year": 1741,
+  "location": "Bering Island, Commander Islands",
+  "lat": 55.0,
+  "lon": 166.2,
+  "kind": "mammal",
+  "intro": "Zib! Bering Island, 1741, in the freezing North Pacific. Those huge dark backs in the kelp aren't rocks: they're sea cows as long as a bus!",
+  "description": "Steller's sea cow was a giant relative of manatees and dugongs, far bigger than either: up to about 8 metres long. It lived in shallow, cold coastal water around the Commander Islands in the Bering Sea, grazing on kelp. It had no teeth, only rough plates for crushing seaweed, and thick, bark-like skin. The naturalist Georg Steller described it in 1741, after his ship, Vitus Bering's St. Peter, was wrecked on the island. Fur hunters who followed killed sea cows for meat to feed their crews. Only 27 years after Steller first described it, the sea cow was gone.",
+  "facts": {
+    "height": "Up to ~8 m long",
+    "weight": "~8–10 tonnes?",
+    "diet": "Kelp and other seaweed",
+    "lifespan": "?",
+    "extinct_year": 1768,
+    "cause": "Hunted for meat by sailors and fur traders"
+  },
+  "habitat": {
+    "biome": "Shallow, cold coastal water with kelp forests",
+    "climate": "Sub-Arctic: cold, windy and foggy",
+    "elevation": "Sea level (shallow coastal water)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Shallow coastal shallows with thick kelp beds",
+      "types": ["wetland"],
+      "why": "It grazed kelp in shallow water near the shore, and probably couldn't dive deep."
+    },
+    "temperature": {
+      "min": "~-5", "max": "~12", "unit": "°C",
+      "why": "It lived in the freezing Bering Sea, wrapped in a thick layer of blubber."
+    },
+    "humidity": {
+      "min": "~75", "max": "~100", "unit": "%",
+      "why": "It spent its whole life in or at the surface of the sea, in fog and spray."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "A mammal: it came up to breathe ordinary sea-level air."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "It floated near the surface, right at sea level."
+    }
+  },
+  "sources": [
+    { "title": "Steller's sea cow (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Steller%27s_sea_cow" },
+    { "title": "Bering Island (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Bering_Island" }
+  ],
+  "hotspots": [
+    { "id": "kelp", "label": "Kelp forest", "sprite": "kelp", "x": 40, "y": 72,
+      "fact": "Thick kelp in shallow water near the shore: the sea cow's favourite food. It probably couldn't dive deep.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "ice", "label": "Ice on the rocks", "sprite": "snowflake", "x": 18, "y": 56,
+      "fact": "Ice on the rocks! The Bering Sea is freezing, and sea cows kept warm with thick blubber.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "fog", "label": "Sea fog", "sprite": "cloud", "x": 62, "y": 16,
+      "fact": "Fog and spray everywhere. A sea cow spent its whole life in the water.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "shore", "label": "Pebble shore", "sprite": "shore", "x": 84, "y": 84,
+      "fact": "Sea cows floated near the surface by the shore, breathing ordinary sea-level air.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "back", "label": "Huge dark back", "sprite": "sea-cow", "x": 58, "y": 66,
+      "fact": "Up to about 8 m long, with thick, rough skin like tree bark. It was a giant cousin of the manatee.",
+      "dna": true },
+    { "id": "plate", "label": "Chewing plate", "sprite": "bones", "x": 26, "y": 84,
+      "fact": "Sea cows had no teeth at all, just rough plates for crushing kelp.",
+      "dna": true },
+    { "id": "wreck", "label": "Shipwreck", "sprite": "ship", "x": 86, "y": 44,
+      "fact": "Georg Steller was shipwrecked here in 1741 and described the sea cow. Hunters killed them for meat, and by 1768 they were gone.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

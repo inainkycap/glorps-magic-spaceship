@@ -1,0 +1,78 @@
+{
+  "id": "woolly_mammoth",
+  "name": "Woolly mammoth",
+  "scientific_name": "Mammuthus primigenius",
+  "status": "extinct",
+  "era": "~2000 BCE",
+  "era_year": -2000,
+  "location": "Wrangel Island, Arctic Ocean",
+  "lat": 71.2,
+  "lon": -179.5,
+  "kind": "mammal",
+  "intro": "Zib! Wrangel Island in the Arctic, about 2000 BCE. While people far away are building pyramids, the last woolly mammoths on Earth are still wandering here!",
+  "description": "The woolly mammoth was an elephant built for the Ice Age, with a thick coat of shaggy hair, small ears, a short tail and long curved tusks. Herds roamed the \"mammoth steppe\", a cold, dry grassland that stretched across northern Europe, Asia and North America. As the Ice Age ended about 10,000 years ago, the climate warmed, the grasslands shrank, and human hunters spread; mammoths vanished from the mainland. But a small population survived on Wrangel Island in the Arctic Ocean until about 4,000 years ago. They became inbred over many generations, and then they were gone too.",
+  "facts": {
+    "height": "~2.7–3.4 m at the shoulder",
+    "weight": "~4–6 tonnes",
+    "diet": "Grasses, sedges and other tundra plants",
+    "lifespan": "~60 years?",
+    "extinct_year": "~2000 BCE (on Wrangel Island; ~10,000 years ago on the mainland)",
+    "cause": "Warming climate and shrinking grasslands, human hunting; on Wrangel, a small inbred population"
+  },
+  "habitat": {
+    "biome": "Mammoth steppe and tundra: cold, dry, treeless grassland",
+    "climate": "Very cold winters, short cool summers, dry",
+    "elevation": "Lowland plains (~0–? m)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Cold, dry, treeless grassland and tundra",
+      "types": ["tundra", "grassland"],
+      "why": "Herds grazed huge open grasslands where only grasses, sedges and low plants could grow."
+    },
+    "temperature": {
+      "min": "~-30", "max": "~10", "unit": "°C",
+      "why": "Its shaggy coat, fat and small ears were built for freezing Arctic winters."
+    },
+    "humidity": {
+      "min": "~30", "max": "~70", "unit": "%",
+      "why": "The mammoth steppe was dry: cold air holds little moisture, and there was little rain or snow."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, like modern elephants."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "It roamed lowland plains close to sea level."
+    }
+  },
+  "sources": [
+    { "title": "Woolly mammoth (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Woolly_mammoth" },
+    { "title": "Wrangel Island (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Wrangel_Island" }
+  ],
+  "hotspots": [
+    { "id": "steppe", "label": "Tundra grass", "sprite": "grass", "x": 30, "y": 74,
+      "fact": "Cold, dry grassland with no trees. Mammoths grazed grasses and sedges all day.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "snow", "label": "Snowdrift", "sprite": "snowflake", "x": 70, "y": 80,
+      "fact": "Snow on the ground in summer! Mammoths had shaggy coats, thick fat and small ears to stay warm.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "wind", "label": "Dry wind", "sprite": "wind", "x": 50, "y": 20,
+      "fact": "This icy wind is bone dry: cold air holds very little water, and it rarely rains here.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "shore", "label": "Icy shore", "sprite": "shore", "x": 86, "y": 60,
+      "fact": "Wrangel Island is a low, flat island in the Arctic Ocean, close to sea level.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "tusk", "label": "Curved tusk", "sprite": "tusk", "x": 22, "y": 58,
+      "fact": "Mammoth tusks could grow over 3 m long, curving up and inwards. They used them to sweep snow off grass.",
+      "dna": true },
+    { "id": "hair", "label": "Tuft of fur", "sprite": "fur", "x": 46, "y": 64,
+      "fact": "Long, shaggy hair over a soft woolly undercoat. These are the last mammoths on Earth.",
+      "dna": true },
+    { "id": "bones", "label": "Old bones", "sprite": "bones", "x": 64, "y": 70,
+      "fact": "On the mainland, mammoths died out about 10,000 years ago. Here they lasted until about 4,000 years ago.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

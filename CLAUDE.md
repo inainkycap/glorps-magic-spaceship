@@ -322,3 +322,12 @@ How the backend behaves:
 - 2026-11-07: `GET /api/wiki/{title}` implemented (cached, works offline for text); response
   gains `url`. New `WikiSummary` type in `types.ts`. New species: `lord_howe_stick_insect`
   (Lord Howe Island, 1915), which needs sprites from the frontend.
+- 2026-11-07: Species pack (no contract change): `quagga` (1870), `golden_toad` (1987),
+  `pyrenean_ibex` (1910), `thylacine` (1900), `great_auk` (1800), `stellers_sea_cow` (1741),
+  `woolly_mammoth` (-2000). Placeholder sprites for these and the stick insect (residents,
+  Explore backgrounds, 34 hotspot icons) were added as new files in
+  `frontend/public/sprites/` by `frontend/scripts/make-species-sprites.mjs`; no frontend
+  code changed. Frontend to-dos: the mammoth (era -2000) costs ~2,135 fuel with the current
+  travel formula, so it's unreachable until travel cost is capped or reworked for deep time;
+  the era timeline now spans -2000 to 1987; quagga and passenger pigeon share 1870; the
+  mocks and `api.ts` mock list only have the dodo and pigeon.

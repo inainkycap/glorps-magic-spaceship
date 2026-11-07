@@ -1,0 +1,78 @@
+{
+  "id": "golden_toad",
+  "name": "Golden toad",
+  "scientific_name": "Incilius periglenes",
+  "status": "extinct",
+  "era": "1987",
+  "era_year": 1987,
+  "location": "Monteverde, Costa Rica",
+  "lat": 10.3,
+  "lon": -84.8,
+  "kind": "amphibian",
+  "intro": "Zib! Monteverde, Costa Rica, 1987. It's so misty up here Glorp can barely see, but somewhere in these puddles are toads that glow bright orange.",
+  "description": "The golden toad lived only in a tiny patch, about 4 km², of misty cloud forest on a mountain ridge above Monteverde, Costa Rica. Males were a shining orange-gold; females were dark olive with red-edged spots. For most of the year they hid underground, then came out for a few weeks in the spring rains to breed in small pools. In 1987 scientists counted about 1,500 adults. The next year only a handful appeared, and in 1989 a single male was seen. It was never found again. Its loss is linked to an unusually warm, dry El Niño year and to chytrid, a fungus that has killed frogs and toads around the world, though scientists still debate exactly what happened.",
+  "facts": {
+    "height": "~4–5.5 cm long",
+    "weight": "?",
+    "diet": "Small insects and other invertebrates",
+    "lifespan": "?",
+    "extinct_year": "~1989 (the last sighting: one male)",
+    "cause": "Probably a very dry, warm year plus chytrid fungus disease (still debated)"
+  },
+  "habitat": {
+    "biome": "Tropical cloud forest (elfin forest) on a mountain ridge",
+    "climate": "Cool, misty and wet almost all year",
+    "elevation": "~1,500–1,600 m?"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Mossy cloud forest floor with shallow rain pools",
+      "types": ["wetland", "forest"],
+      "why": "It hid underground in the forest and bred in small, shallow pools left by the rain."
+    },
+    "temperature": {
+      "min": "~12", "max": "~22", "unit": "°C",
+      "why": "High up on the mountain the tropics are cool, and it never had to cope with real heat."
+    },
+    "humidity": {
+      "min": "~85", "max": "~100", "unit": "%",
+      "why": "Toads breathe partly through their skin, which must stay wet, and this forest lives inside the clouds."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, which it partly breathed through its skin."
+    },
+    "pressure": {
+      "min": "~80", "max": "~88", "unit": "kPa",
+      "why": "It lived about 1,500 m up a mountain, where the air pressure is lower than at sea level."
+    }
+  },
+  "sources": [
+    { "title": "Golden toad (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Golden_toad" },
+    { "title": "Monteverde Cloud Forest Reserve (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Monteverde_Cloud_Forest_Reserve" }
+  ],
+  "hotspots": [
+    { "id": "pool", "label": "Rain pool", "sprite": "puddle", "x": 34, "y": 76,
+      "fact": "A shallow pool left by the rain. Golden toads gathered in pools like this for a few weeks each spring to breed.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "mist", "label": "Drifting mist", "sprite": "cloud", "x": 60, "y": 22,
+      "fact": "This forest sits inside the clouds. A toad's skin must stay wet, because it breathes partly through it.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "moss", "label": "Dripping moss", "sprite": "moss", "x": 16, "y": 52,
+      "fact": "Everything is covered in moss. High on the mountain it's cool, even though this is the tropics.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "ridge", "label": "Mountain ridge", "sprite": "mountain", "x": 86, "y": 34,
+      "fact": "We're about 1,500 m up, where the air pressure is lower than at sea level.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "male", "label": "Golden male", "sprite": "toad", "x": 48, "y": 68,
+      "fact": "A male golden toad, bright orange like a jelly sweet! Only the males were this colour.",
+      "dna": true },
+    { "id": "female", "label": "Spotted female", "sprite": "toad-spotted", "x": 70, "y": 72,
+      "fact": "Females looked completely different: dark olive with red-edged spots. In 1987 scientists counted about 1,500 toads here.",
+      "dna": true },
+    { "id": "spawn", "label": "Strings of eggs", "sprite": "spawn", "x": 24, "y": 84,
+      "fact": "Toad eggs, laid in strings in the pool. By 1989 only one male would turn up, and then none ever again.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}
