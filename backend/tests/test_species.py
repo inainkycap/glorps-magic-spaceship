@@ -73,3 +73,20 @@ def test_legacy_fields_are_optional():
     for h in data["hotspots"]:
         h.pop("unlocks", None)
     assert Species.model_validate(data).dna_required == data["dna_required"]
+
+
+@pytest.mark.parametrize("species_id", sorted(SPECIES))
+def test_every_need_is_revealed_by_a_hotspot(species_id):
+    """CLAUDE.md: every need a species has should be discoverable in Explore."""
+    s = SPECIES[species_id]
+    revealed = set()
+    for h in s.hotspots:
+        if h.reveals:
+            revealed |= set(h.reveals if isinstance(h.reveals, list) else [h.reveals])
+    assert set(s.needs or {}) <= revealed, f"never revealed: {set(s.needs or {}) - revealed}"
+
+
+@pytest.mark.parametrize("species_id", sorted(SPECIES))
+def test_hotspot_ids_unique(species_id):
+    ids = [h.id for h in SPECIES[species_id].hotspots]
+    assert len(ids) == len(set(ids))

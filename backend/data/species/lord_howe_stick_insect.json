@@ -1,0 +1,79 @@
+{
+  "id": "lord_howe_stick_insect",
+  "name": "Lord Howe Island stick insect",
+  "scientific_name": "Dryococelus australis",
+  "status": "critically_endangered",
+  "era": "1915",
+  "era_year": 1915,
+  "location": "Lord Howe Island, Australia",
+  "lat": -31.55,
+  "lon": 159.08,
+  "kind": "insect",
+  "intro": "Zib! Lord Howe Island, 1915. Somewhere in this forest hide insects as long as Glorp's hand, nicknamed \"tree lobsters\". Let's find them before the rats do.",
+  "description": "The Lord Howe Island stick insect (Dryococelus australis) is a large, flightless stick insect from Lord Howe Island in the Tasman Sea, between Australia and New Zealand. It's so big and heavy that locals called it the \"tree lobster\". It hides in tree hollows by day, often in pairs, and comes out at night to eat leaves. In 1918 the supply ship SS Makambo ran aground on the island and black rats came ashore; within a few years the stick insect had vanished, and it was declared extinct. In 2001 scientists climbed Ball's Pyramid, a sheer sea stack about 20 km away, and found around two dozen living under a single shrub. Zoo breeding programs have since raised thousands of them, but the wild population is still tiny.",
+  "facts": {
+    "height": "~12–15 cm long (one of the heaviest insects that can't fly)",
+    "weight": "~25 g?",
+    "diet": "Leaves of native shrubs and trees; on Ball's Pyramid, a tea tree (Melaleuca howeana)",
+    "lifespan": "~12–18 months as an adult?",
+    "extinct_year": "~1920 on Lord Howe Island (rediscovered on Ball's Pyramid in 2001)",
+    "cause": "Black rats from the shipwrecked SS Makambo (1918)"
+  },
+  "habitat": {
+    "biome": "Subtropical island forest",
+    "climate": "Mild and humid all year, with no frost",
+    "elevation": "Lowland forest (~0–? m); the survivors were found ~70 m up Ball's Pyramid"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Forest with shrubs to eat and tree hollows to hide in",
+      "types": ["forest"],
+      "why": "It can't fly, so it lives its whole life climbing in shrubs and trees, sheltering in hollows by day."
+    },
+    "temperature": {
+      "min": "~13", "max": "~28", "unit": "°C",
+      "why": "Lord Howe Island is subtropical: mild winters, warm summers, and never any frost."
+    },
+    "humidity": {
+      "min": "~60", "max": "~90", "unit": "%",
+      "why": "Its eggs develop in the soil for months and dry out if the air and ground aren't damp."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Insects breathe through tiny tubes in their bodies, and this one is used to ordinary sea-level air."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "It lived in lowland forest just above sea level (~101 kPa)."
+    }
+  },
+  "sources": [
+    { "title": "Dryococelus australis (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Dryococelus_australis" },
+    { "title": "Ball's Pyramid (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Ball%27s_Pyramid" },
+    { "title": "Lord Howe Island (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Lord_Howe_Island" }
+  ],
+  "hotspots": [
+    { "id": "hollow", "label": "Tree hollow", "sprite": "hollow", "x": 24, "y": 46,
+      "fact": "By day, pairs of stick insects squeeze into tree hollows to hide. At night they climb out to feed.",
+      "dna": true, "reveals": "terrain" },
+    { "id": "leaves", "label": "Chewed leaves", "sprite": "leaves", "x": 46, "y": 38,
+      "fact": "Something big has been munching these leaves overnight. The island is mild all year and never sees frost.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "eggs", "label": "Eggs in the soil", "sprite": "egg", "x": 34, "y": 74,
+      "fact": "Females drop their eggs onto damp soil, where they take about 6 to 9 months to hatch. Females can even lay eggs that hatch without a male.",
+      "dna": true, "reveals": "humidity" },
+    { "id": "pair", "label": "Sleeping pair", "sprite": "stick-insect", "x": 60, "y": 54,
+      "fact": "Males and females often sleep side by side, the male with his legs resting over the female. Males have huge, thick back legs.",
+      "dna": true },
+    { "id": "shore", "label": "Lagoon shore", "sprite": "shore", "x": 80, "y": 80,
+      "fact": "The forest runs almost down to the sea. Everything here breathes ordinary sea-level air.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "rat", "label": "Ship rat", "sprite": "rat", "x": 70, "y": 70,
+      "fact": "Not yet! In 1918 the ship SS Makambo ran aground here and black rats swam ashore. Within a few years the stick insects were gone.",
+      "dna": false },
+    { "id": "pyramid", "label": "Ball's Pyramid", "sprite": "pyramid", "x": 88, "y": 28,
+      "fact": "That rock spire on the horizon is Ball's Pyramid. In 2001, climbers found about two dozen stick insects still alive there, under one bush.",
+      "dna": false }
+  ],
+  "dna_required": 3
+}
