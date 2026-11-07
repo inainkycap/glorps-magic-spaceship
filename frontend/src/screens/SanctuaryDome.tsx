@@ -2,8 +2,8 @@ import { useId, type CSSProperties } from "react";
 import { Link, useParams } from "react-router";
 import Sprite from "../components/Sprite";
 import Status from "../components/Status";
-import { needFits, overallFit, type FitVerdict } from "../game/fit";
-import { formatNeed, NEED_LABEL, needKeysOf } from "../game/needs";
+import { knownFit, type FitVerdict } from "../game/fit";
+import { formatNeed, NEED_LABEL } from "../game/needs";
 import {
   CONTROLS,
   DISASTERS,
@@ -17,39 +17,65 @@ import {
 import { useProgress } from "../hooks/useProgress";
 import DomeView from "../sanctuary/DomeView";
 import { useSanctuarySpecies } from "../sanctuary/useSanctuarySpecies";
-import type { DomeState, Species } from "../types";
+import type { DomeState, NeedKey, Species } from "../types";
 
 const DOME_PX = 360;
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 const planetBg = { "--planet-bg": `url("${import.meta.env.BASE_URL}sprites/planet-terrain.png")` } as CSSProperties;
 const VERDICT_TEXT: Record<FitVerdict, string> = { good: "good", close: "close", poor: "off" };
 
-/** One resident species' fit to this dome: overall bar + each need ("???" if undiscovered). */
-function ResidentFit({ species, dome, discovered }: { species: Species; dome: DomeState; discovered: string[] }) {
-  const fit = overallFit(species, dome);
-  const perNeed = new Map(needFits(species, dome).map((f) => [f.key, f]));
+const verdictClass = (fit: number) => (fit >= 0.8 ? "good" : fit >= 0.5 ? "close" : "poor");
+
+/**
+ * One resident species' fit to this dome, AS THE PLAYER KNOWS IT: the bar has a
+ * segment per need; discovered needs are scored, undiscovered ones are a grey
+ * "?" segment that gives no hint. The % uses discovered needs only. (The sim
+ * still uses the real needs; see game/fit.ts.)
+ */
+function ResidentFit({ species, dome, discovered }: { species: Species; dome: DomeState; discovered: NeedKey[] }) {
+  const { fit, segments } = knownFit(species, dome, discovered);
+  const knownCount = segments.filter((s) => s.fit !== null).length;
   return (
     <div className="resident-fit">
       <div className="rf-head">
         <span>{species.name}</span>
-        <span className="bar" role="meter" aria-label={`${species.name} fit`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(fit * 100)}>
-          <span className={`bar-fill ${fit >= 0.8 ? "good" : fit >= 0.5 ? "close" : "poor"}`} style={{ width: pct(fit) }} />
+        <span
+          className="seg-bar"
+          role="meter"
+          aria-label={`${species.name} fit from ${knownCount} of ${segments.length} known needs`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={fit === null ? undefined : Math.round(fit * 100)}
+          aria-valuetext={fit === null ? "unknown: no needs discovered" : pct(fit)}
+        >
+          {segments.map((s) =>
+            s.fit === null ? (
+              <span key={s.key} className="seg unknown" title={`${NEED_LABEL[s.key]}: not discovered`}>
+                ?
+              </span>
+            ) : (
+              <span key={s.key} className="seg" title={`${NEED_LABEL[s.key]}: ${pct(s.fit)}`}>
+                <span className={`seg-fill ${verdictClass(s.fit)}`} style={{ height: pct(s.fit) }} />
+              </span>
+            ),
+          )}
         </span>
-        <span className="rf-pct">{pct(fit)}</span>
+        <span className="rf-pct">{fit === null ? "?" : pct(fit)}</span>
       </div>
+      <p className="rf-basis">
+        {knownCount === 0
+          ? "No needs discovered yet: scan hotspots in its world to learn them."
+          : `From ${knownCount} of ${segments.length} known needs`}
+      </p>
       <ul className="rf-needs">
-        {needKeysOf(species.needs).map((k) => {
-          const known = discovered.includes(k);
-          const f = perNeed.get(k);
-          return (
-            <li key={k} className={known ? "known" : "unknown"}>
-              <span className="rf-label">{NEED_LABEL[k]}</span>
-              <span className="rf-ideal">{known ? (formatNeed(species.needs![k]!) ?? "?") : "???"}</span>
-              {/* Undiscovered needs give no hint at all, not even whether the dome matches. */}
-              {known && f && <span className={`rf-verdict ${f.verdict}`}>{VERDICT_TEXT[f.verdict]}</span>}
-            </li>
-          );
-        })}
+        {segments.map((s) => (
+          <li key={s.key} className={s.fit === null ? "unknown" : "known"}>
+            <span className="rf-label">{NEED_LABEL[s.key]}</span>
+            <span className="rf-ideal">{s.fit === null ? "???" : (formatNeed(species.needs![s.key]!) ?? "?")}</span>
+            {/* Undiscovered needs give no hint at all, not even whether the dome matches. */}
+            {s.verdict && <span className={`rf-verdict ${s.verdict}`}>{VERDICT_TEXT[s.verdict]}</span>}
+          </li>
+        ))}
       </ul>
     </div>
   );

@@ -215,8 +215,15 @@ export interface Progress {
   glorp?: Place; // Glorp's current location; absent = home (see geo.ts)
   fuel?: number; // absent = FUEL_START (see game/fuel.ts)
   discovered?: Record<string, NeedKey[]>; // species id -> needs revealed by scanning
-  rescued?: Record<string, number>; // species id -> individuals rescued (DNA Lab score)
+  rescued?: Record<string, number>; // species id -> individuals rescued (best DNA Lab result)
+  dnaBest?: Record<string, DnaResult>; // species id -> best DNA Lab run
   sanctuary?: SanctuaryState;
+}
+
+/** A DNA Lab minigame result (frontend-only). */
+export interface DnaResult {
+  quality: number; // 0..1
+  individuals: number; // 4..20
 }
 
 /** A built dome on Glorp's planet (frontend state). */

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  DOME_SITES,
+  FREE_DOMES,
+  FUEL_COSTS,
+  FUEL_START,
   PRESENT_YEAR,
   TRAVEL_BASE_COST,
   TRAVEL_TIME_COST_K,
@@ -64,6 +68,41 @@ describe("travel cost", () => {
     const exact = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K * 426 * 3.13;
     expect(travelCostExact(at(2026), at(1600))).toBeCloseTo(exact, 9);
     expect(travelCost(at(2026), at(1600))).toBe(Math.ceil(exact));
+  });
+});
+
+describe("fuel budget (see 'Budget target' in fuel.ts)", () => {
+  const home = { lat: 51.5, lon: -0.1, era_year: PRESENT_YEAR };
+  const placeOf = (s: { lat: number; lon: number; era_year: number }) => ({ lat: s.lat, lon: s.lon, era_year: s.era_year });
+  const DODO = placeOf(dodo);
+  const PIGEON = placeOf(pigeon);
+  const THIRD = { lat: 0, lon: 0, era_year: 1750 }; // a hypothetical third species
+  const route = (...stops: Place[]) => stops.slice(1).reduce((s, to, i) => s + travelCost(stops[i], to), 0);
+  const retries = (species: number) => species * FUEL_COSTS.dnaRetry; // one retry each
+  const domes = (n: number) => n * FUEL_COSTS.buildDome;
+
+  // The cheaper of the two orders for the current species.
+  const twoSpecies = Math.min(route(home, PIGEON, DODO), route(home, DODO, PIGEON));
+  const threeSpecies = Math.min(route(home, PIGEON, DODO, THIRD), route(home, PIGEON, THIRD, DODO));
+
+  it("affords 2 species + 2 extra domes", () => {
+    expect(twoSpecies + domes(2) + retries(2)).toBeLessThanOrEqual(FUEL_START);
+  });
+
+  it("affords 3 species + 1 extra dome", () => {
+    expect(threeSpecies + domes(1) + retries(3)).toBeLessThanOrEqual(FUEL_START);
+  });
+
+  it("does not afford everything", () => {
+    expect(threeSpecies + domes(2) + retries(3)).toBeGreaterThan(FUEL_START);
+    expect(twoSpecies + domes(DOME_SITES - FREE_DOMES) + retries(2)).toBeGreaterThan(FUEL_START);
+  });
+
+  it("route order matters: re-crossing thick time costs about a dome", () => {
+    const worse = route(home, DODO, PIGEON);
+    expect(worse).toBeGreaterThan(twoSpecies);
+    expect(worse + retries(2)).toBeLessThanOrEqual(FUEL_START); // both species still reachable
+    expect(worse + domes(1) + retries(2)).toBeGreaterThan(FUEL_START);
   });
 });
 

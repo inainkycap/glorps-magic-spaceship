@@ -67,9 +67,19 @@ The Explore scan bubble and Glorp's arrival bubble reuse `bubble.png` and `bubbl
 | `disaster-breach.png`, `disaster-power.png`, `disaster-meteor.png`, `disaster-disease.png` | 16×16 | 1 | 2× | "Dome disasters" list in the dome screen | Dome breach, power failure, meteor strike, disease outbreak. |
 | `resident-<species id>.png` (now: `resident-dodo.png`, `resident-passenger_pigeon.png`) | 16×16 | 2 (4 fps) | 1× in overview domes, 2× in the big dome; frame 1 as a still icon in lists | Animals wandering inside domes, and icons in the pool / placement / results lists | Walk cycle, facing **right**. One per species, named by species id. A small square shows if missing. |
 
+### DNA Lab minigame
+
+| File | Frame size (px) | Frames | Drawn at | Used where | Notes |
+|---|---|---|---|---|---|
+| `dna-base-a.png`, `dna-base-t.png`, `dna-base-c.png`, `dna-base-g.png` | 16×16 | 1 | 2× (32 px) | The strand's bases, the player's answers and the 4 big answer buttons (`lab/DnaGame.tsx`) | A letter tile per base. **Keep the four colours clearly different** (placeholder: A rose, T sand, C mint, G blue) and the letter readable at 32 px. CSS adds the borders for current / right / wrong. |
+| `dna-base-degraded.png` | 16×16 | 1 | 2× | A degraded base, shown as "?" until its turn (older species have more) | Cracked, faded tile with a "?". |
+
+Glorp's result speech bubble reuses `glorp-talk.png` and `bubble.png`.
+
 ## Nice to have later
 
 - `zib.png`: the "zib zib zib" trail is text right now; it could become a small sprite.
+- DNA Lab: a short "zap" frame for a correct pair, and a helix backdrop behind the strand.
 - A `glorp-land` animation (a few frames played on arrival).
 - Per-era map terrain: see `src/map/eras.ts`. Each era needs a detailed and an overview image.
 - UI rule for all art: **nothing moves on hover or press.** Interactive states change colour or brightness only (done in CSS), so no separate hover/pressed frames are needed.

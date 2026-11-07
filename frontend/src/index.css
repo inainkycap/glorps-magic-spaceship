@@ -1878,8 +1878,240 @@ input.dial:focus-visible {
   }
 }
 
+/* Segmented fit bar (SanctuaryDome ResidentFit): one segment per need;
+   undiscovered needs are a grey "?" that gives no hint. */
+.seg-bar {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 16px;
+}
+.seg {
+  position: relative;
+  flex: 1;
+  background: var(--space-0);
+  border: 1px solid var(--space-2);
+}
+.seg-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--glorp);
+}
+.seg-fill.close {
+  background: var(--gold);
+}
+.seg-fill.poor {
+  background: var(--danger);
+}
+.seg.unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--dim);
+  background: #4a4f5e;
+}
+.rf-basis {
+  margin: 4px 0 0;
+  font-size: 8px;
+  color: var(--dim);
+}
+
+/* ---------- DNA Lab (screens/Lab.tsx, lab/DnaGame.tsx) ---------- */
+.lab > .px-button {
+  margin-top: 16px;
+}
+.lab-intro strong {
+  color: var(--gold);
+  font-weight: normal;
+}
+.lab-intro .px-button {
+  margin-top: 8px;
+}
+.dna-game {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--space-1);
+  border: var(--px) solid var(--space-2);
+}
+.dna-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 10px;
+}
+.dna-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dna-timer .bar {
+  width: 180px;
+}
+.dna-secs {
+  width: 3ch;
+  text-align: right;
+}
+.dna-streak {
+  min-width: 10ch;
+  text-align: right;
+  color: var(--gold);
+}
+.dna-strands {
+  margin: 18px 0 8px;
+  overflow-x: auto;
+}
+.strand-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  min-width: max-content;
+}
+.strand-row.answers {
+  margin-top: 6px;
+}
+.base-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  line-height: 0;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.base-tile.degraded {
+  background: #3b3446;
+}
+.base-tile.current {
+  border-color: var(--gold);
+  animation: tile-blink 0.8s steps(2) infinite;
+}
+@keyframes tile-blink {
+  50% {
+    filter: brightness(1.35);
+  }
+}
+.answers .base-tile.empty {
+  opacity: 0.55;
+}
+.answers .base-tile.right {
+  border-color: var(--glorp);
+  background: #2f4a3c;
+}
+.answers .base-tile.wrong {
+  border-color: var(--danger);
+  background: #4a2f36;
+}
+.base-fallback {
+  display: block;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  line-height: 32px;
+  text-align: center;
+  color: var(--space-0);
+}
+.base-fallback.b-A {
+  background: #d99a9a;
+}
+.base-fallback.b-T {
+  background: #e2c991;
+}
+.base-fallback.b-C {
+  background: #9fd3b4;
+}
+.base-fallback.b-G {
+  background: #8fb0d8;
+}
+.base-fallback.b-q {
+  color: var(--star);
+  background: #6e7180;
+}
+.dna-pad {
+  display: grid;
+  grid-template-columns: repeat(4, 76px);
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.px-button.dna-key {
+  width: 76px;
+  height: 64px;
+  padding: 0;
+}
+.dna-hint {
+  margin: 10px 0 0;
+  font-size: 8px;
+  text-align: center;
+  color: var(--dim);
+}
+.lab-result {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  margin: 20px 0;
+}
+.lab-glorp {
+  line-height: 0;
+  filter: var(--sprite-outline) var(--sprite-shadow);
+}
+.lab-bubble {
+  position: relative;
+  width: min(560px, 100%);
+  padding: 4px 6px 6px;
+  color: var(--space-0);
+  background: var(--star);
+  background-clip: padding-box;
+  border: 12px solid var(--star);
+  border-image: url("/sprites/bubble.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  filter: var(--sprite-shadow);
+}
+.lab-bubble::after {
+  content: "";
+  position: absolute;
+  left: -30px;
+  bottom: -4px;
+  width: 20px;
+  height: 16px;
+  background: var(--star);
+  clip-path: polygon(100% 0, 0 100%, 100% 60%);
+}
+.lab-bubble p {
+  margin: 0 0 6px;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.lab-bubble .error {
+  color: #8a3f47;
+}
+
+@media (max-width: 600px) {
+  .dna-pad {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .px-button.dna-key {
+    width: 100%;
+  }
+  .lab-result {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lab-bubble::after {
+    display: none;
+  }
+}
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
+  .base-tile.current {
+    animation: none;
+  }
   .blink,
   .sprite-anim,
   .map-layer.fading-in,
