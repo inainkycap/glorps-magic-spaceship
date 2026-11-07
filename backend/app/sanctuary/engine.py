@@ -23,6 +23,7 @@ from typing import Optional
 
 import numpy as np
 
+from ..economy import zorps_earned
 from ..schemas import Species
 from .config import CONFIG, SanctuaryConfig
 from .fit import overall_fit
@@ -97,6 +98,7 @@ def simulate(
     pct = {f"p{q}": np.percentile(alive, q, axis=1).tolist() for q in (5, 25, 50, 75, 95)}
     alive_anywhere = (N > 0).any(axis=1).mean(axis=0)  # [species]
     alive_in_dome = (N > 0).mean(axis=0)  # [dome, species]
+    mean_survivors = N.sum(axis=1).mean(axis=0)  # [species]: animals alive at the end, all domes
 
     per_dome = []
     for d, dome in enumerate(req.domes):
@@ -123,4 +125,8 @@ def simulate(
         per_dome=per_dome,
         expected_species_saved=float(alive[Y].mean()),
         worst_case_species_saved=int(final_sorted[math.floor((R - 1) * 0.05)]),
+        zorps=zorps_earned(
+            {sid: float(mean_survivors[i]) for i, sid in enumerate(species_ids)},
+            {sid: species_by_id[sid].era_year for sid in species_ids},
+        ),
     )

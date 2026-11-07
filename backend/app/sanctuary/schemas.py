@@ -8,6 +8,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, Field
 
+from ..economy import ZorpsEarned
 from ..schemas import DomeTerrain
 
 MAX_COUNT = 50  # per species per dome
@@ -76,3 +77,4 @@ class SanctuarySimResponse(BaseModel):
     per_dome: list[DomeResult]
     expected_species_saved: float
     worst_case_species_saved: int  # lower nearest-rank 5th percentile
+    zorps: ZorpsEarned  # PROPOSED: zorps the surviving animals produce (see app/economy.py)
