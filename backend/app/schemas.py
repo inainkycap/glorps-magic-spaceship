@@ -1,7 +1,7 @@
 """Pydantic models mirroring the contract in /CLAUDE.md and frontend/src/types.ts."""
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 Status = Literal["extinct", "extinct_in_wild", "critically_endangered", "endangered", "vulnerable"]
 
@@ -16,7 +16,16 @@ class SpeciesSummary(BaseModel):
     kind: str
     lat: float = Field(ge=-90, le=90)  # degrees, where the species lived (map pin)
     lon: float = Field(ge=-180, le=180)
-    era_year: int  # the year Glorp travels to; `era` stays the display string
+    # The year Glorp travels to; `era` stays the display string. Negative = BCE (-2000 is
+    # 2000 BCE); there is no year 0.
+    era_year: int = Field(ge=-50_000, le=2026)
+
+    @field_validator("era_year")
+    @classmethod
+    def no_year_zero(cls, v: int) -> int:
+        if v == 0:
+            raise ValueError("there is no year 0: use 1 (1 CE) or -1 (1 BCE)")
+        return v
 
 
 # ---- PROPOSED species content (CLAUDE.md "Proposed: species content + needs") ----

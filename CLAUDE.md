@@ -47,8 +47,9 @@ Adding a species = adding one file. Fields:
   `era` (string, e.g. "1600"), `location`, `kind` ("bird" | "insect" | "plant" | ...)
 - `lat`, `lon` (numbers, required): where the species lived, in degrees
   (lat -90…90, lon -180…180). Used to place its pin on the world map.
-- `era_year` (number, required): the year Glorp travels to, e.g. `1600`. Drives the era
-  timeline. `era` stays as the display string.
+- `era_year` (integer, required): the year Glorp travels to, e.g. `1600`. Drives the era
+  timeline. **Negative means BCE** (`-2000` = 2000 BCE); there is no year 0; range
+  −50,000 to 2026. `era` stays as the display string (e.g. `"~2000 BCE"`, `"900 CE"`).
 - `hotspots[]`: `{ id, label, sprite, x, y, fact, dna, reveals? }`
   - `x`, `y` are % positions (0–100) in the explore scene
   - `dna`: boolean — scanning it gives a DNA fragment
@@ -73,9 +74,29 @@ types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
 | GET | `/api/species` | `SpeciesSummary[]`: the basic-info fields only, which **must include `lat`, `lon`, `era_year`** (the map needs them) |
 | GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
 | POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
+| GET | `/api/timeline` | `Timeline` (see below): every species' era, sorted, with labels and log-scale positions |
 | GET | `/api/wiki/{title}` | `WikiSummary`: `{ title, summary, image_url, url }` (`image_url`/`url` may be `null`); 404 if no article, 502 if Wikipedia is unreachable and it isn't cached |
 
 The old `POST /api/simulate` (single species, interventions) was never built and is gone.
+
+`/api/timeline` (new; the frontend can draw the era timeline straight from it). Eras now run
+from 2000 BCE to 1987, so positions are on a **log scale of years before now** (10, 100,
+1,000 years ago are evenly spaced; a linear axis would squash everything after 1500 into the
+last ~12%). Position 0 = the oldest species, 1 = the present (2026).
+```json
+{
+  "present_year": 2026, "scale": "log", "oldest_year": -2000,
+  "eras":  [{ "species_id": "woolly_mammoth", "name": "Woolly mammoth", "era_year": -2000,
+              "label": "2000 BCE", "position": 0.0 },
+            { "species_id": "elephant_bird", "name": "Elephant bird", "era_year": 900,
+              "label": "900 CE", "position": 0.211 }, ...],
+  "ticks": [{ "year": -1000, "label": "1000 BCE", "position": 0.047 }, ...]
+}
+```
+- `eras` is sorted oldest first (ties by id); `ticks` are suggested axis labels between
+  the oldest era and now. Labels: negative years "N BCE", 1–999 "N CE", then plain years.
+- Formula (`backend/app/timeline.py`): `years_ago = 2026 − year + 10`;
+  `position = 1 − (ln years_ago − ln 10) / (ln years_ago(oldest) − ln 10)`.
 
 `/api/wiki/{title}` uses the official Wikipedia REST API and caches every answer in
 `backend/data/wiki_cache/` (committed), so the text works offline. `title` is an article
@@ -331,3 +352,12 @@ How the backend behaves:
   travel formula, so it's unreachable until travel cost is capped or reworked for deep time;
   the era timeline now spans -2000 to 1987; quagga and passenger pigeon share 1870; the
   mocks and `api.ts` mock list only have the dodo and pigeon.
+- 2026-11-07: Deep time. `era_year` may be negative (BCE; no year 0; validated). New
+  `GET /api/timeline` (log-scale positions + BCE/CE labels) for the era timeline. Four
+  stepping-stone species between the mammoth and 1500: `aurochs` (50 BCE), `elephant_bird`
+  (900 CE), `haasts_eagle` (1300), `moa` (1350). Frontend to-dos: add a `Timeline` type to
+  `types.ts` and draw the timeline from `/api/timeline`; sprites for the four new species
+  (residents, backgrounds) and new hotspot icons `scroll`, `giant-egg`, `talon`, `pebbles`.
+  Note: stepping stones alone don't make the mammoth reachable with the current travel
+  formula (the time cost of a route is the same however you split it, plus a base cost per
+  hop); travel cost needs a cap, a log-time formula, or refuelling.
