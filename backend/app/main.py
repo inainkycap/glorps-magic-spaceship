@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .sanctuary.engine import simulate as simulate_sanctuary
 from .sanctuary.schemas import SanctuarySimRequest, SanctuarySimResponse
 from .schemas import Species, SpeciesSummary
+from .economy import Economy, TravelCost, economy, travel_cost
 from .species import SPECIES
 from .timeline import Timeline, build_timeline
 from .wiki import WikiError, WikiSummary, get_summary
@@ -33,6 +34,21 @@ def list_species():
 
 # exclude_unset: optional fields missing from the JSON file are left out of the response
 # (not sent as null), but an explicit `"unlocks": null` in the file is kept.
+@app.get("/api/economy", response_model=Economy)
+def get_economy():
+    """PROPOSED: zorps rules and numbers (prices, era multipliers), so the UI matches the backend."""
+    return economy(list(SPECIES.values()))
+
+
+@app.get("/api/travel-cost", response_model=TravelCost)
+def get_travel_cost(from_year: int, to_year: int):
+    """PROPOSED: zorps to jump from one era to another."""
+    for y in (from_year, to_year):
+        if not -50_000 <= y <= 2026:
+            raise HTTPException(status_code=422, detail="Years must be between -50000 and 2026")
+    return TravelCost(from_year=from_year, to_year=to_year, zorps=travel_cost(from_year, to_year))
+
+
 @app.get("/api/timeline", response_model=Timeline)
 def timeline():
     """Every species' era, sorted, with BCE-aware labels and log-scale positions (0..1)."""

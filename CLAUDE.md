@@ -75,6 +75,8 @@ types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
 | GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
 | POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
 | GET | `/api/timeline` | `Timeline` (see below): every species' era, sorted, with labels and log-scale positions |
+| GET | `/api/economy` (proposed) | zorps rules, prices and per-species era multipliers (see "Proposed: zorps") |
+| GET | `/api/travel-cost?from_year=&to_year=` (proposed) | `{ from_year, to_year, zorps }` |
 | GET | `/api/wiki/{title}` | `WikiSummary`: `{ title, summary, image_url, url }` (`image_url`/`url` may be `null`); 404 if no article, 502 if Wikipedia is unreachable and it isn't cached |
 
 The old `POST /api/simulate` (single species, interventions) was never built and is gone.
@@ -310,6 +312,44 @@ How the backend behaves:
 - All tuning (birth/death rates, dome capacity, disaster chances and kill fractions) lives
   in `backend/data/sanctuary.json`.
 
+## Proposed: zorps (backend, needs frontend ok)
+**Status: proposal** (implemented in the backend). Zorps replace fuel: an alien currency,
+**uncapped**, spent on travel and habitats, and earned by animals that survive sanctuary
+runs. Older species earn more. Code: `backend/app/economy.py`; numbers:
+`backend/data/economy.json`. No `types.ts` changes yet (frontend to add).
+
+Everything uses the timeline's log scale of years before now, `age(y) = log10(2026 − y + 10)`
+(1.0 for the present):
+- **Era multiplier** `= 1 + 1.535 × (age − 1)`: ×1 now, ×2.1 golden toad (1987), ×2.9
+  passenger pigeon, ×3.5 dodo, ×4.6 aurochs, ×5.0 mammoth (2000 BCE).
+- **Zorps earned by a run** `= 0.5 × Σ species (mean survivors after the run × era multiplier)`,
+  where mean survivors = animals alive at the end, averaged over all runs, summed over domes.
+  Dead species earn 0. Typical: 10 dodos in a good dome ≈ 110; 10 dodos + 10 pigeons split
+  over two good domes ≈ 187; a poor dome ≈ 20.
+- **Travel cost** `= ceil(8 + 30 × |age(a) − age(b)|)`, 0 for the same era: from 2026,
+  golden toad 29, pigeon 45, dodo 58, moa 64, aurochs 78, **mammoth 87**. Further back
+  always costs more, but each decade gets cheaper the further back it is (the opposite of
+  the old fuel rule; it's what keeps deep time affordable).
+- **Habitat (dome) cost** 25; **start** with 100 zorps. Suggested values: the frontend owns
+  how they're charged.
+
+API:
+- `POST /api/sanctuary/simulate` response gains
+  `"zorps": { "total": 110, "per_species": [{ "species_id": "dodo", "mean_survivors": 62.41,
+  "era_multiplier": 3.52, "zorps": 110 }] }` (same layout, same zorps: it's seeded).
+- `GET /api/economy`: `{ present_year, start_zorps, zorps_per_survivor, habitat_cost,
+  travel_base_cost, era_multiplier_per_decade_of_age, travel_cost_per_decade_of_age,
+  species: [{ species_id, era_year, era_label, era_multiplier, travel_cost_from_present }] }`
+  (species oldest first).
+- `GET /api/travel-cost?from_year=2026&to_year=-2000` → `{ from_year, to_year, zorps }`
+  (422 outside −50,000…2026).
+
+**Still to agree (anti-farming):** the backend reports what a run *would* earn; it doesn't
+track balances. Since the same layout always gives the same result, the frontend should
+pay out only once per layout (e.g. per `runKey`), or only the improvement over the best
+layout so far, or once per "season". Also note splitting animals across more domes earns
+more (more room to grow), so the habitat cost is a balance lever.
+
 ## Git workflow
 - `main` is protected. Never commit to it directly.
 - Branch per feature: `feat/fe-hub`, `feat/be-sim-engine`, `fix/...`.
@@ -361,3 +401,7 @@ How the backend behaves:
   Note: stepping stones alone don't make the mammoth reachable with the current travel
   formula (the time cost of a route is the same however you split it, plus a base cost per
   hop); travel cost needs a cap, a log-time formula, or refuelling.
+- 2026-11-07: PROPOSED (backend) zorps replace fuel: uncapped currency for travel and
+  habitats, earned by surviving animals, scaled by era (log scale). Sim response gains
+  `zorps`; new `GET /api/economy` and `GET /api/travel-cost`. Anti-farming rule still to
+  agree. Frontend: add types, replace the fuel UI and rules.

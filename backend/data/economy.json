@@ -1,0 +1,9 @@
+{
+  "_comment": "Zorps economy (PROPOSED). See app/economy.py and CLAUDE.md 'Proposed: zorps'.",
+  "start_zorps": 100,
+  "zorps_per_survivor": 0.5,
+  "era_multiplier_per_decade_of_age": 1.535,
+  "travel_base_cost": 8,
+  "travel_cost_per_decade_of_age": 30,
+  "habitat_cost": 25
+}
