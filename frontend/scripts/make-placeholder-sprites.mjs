@@ -83,7 +83,7 @@ function save(name, frames) {
 }
 
 // --- Glorp: 32×32 frames ----------------------------------------------------
-function glorp({ dy = 0, lightsOn = 0, flame = 0 }) {
+function glorp({ dy = 0, lightsOn = 0, flame = 0, mouthOpen = false }) {
   const c = canvas(32, 32);
   const y0 = 4 + dy;
   // dome glass behind Glorp
@@ -96,7 +96,8 @@ function glorp({ dy = 0, lightsOn = 0, flame = 0 }) {
   c.rect(11, y0 + 5, 10, 5, C.mint);
   c.rect(13, y0 + 6, 2, 2, C.eye);
   c.rect(17, y0 + 6, 2, 2, C.eye);
-  c.rect(15, y0 + 9, 2, 1, C.mintDark);
+  if (mouthOpen) c.rect(14, y0 + 8, 4, 2, C.eye);
+  else c.rect(15, y0 + 9, 2, 1, C.mintDark);
   // hull
   c.rect(8, y0 + 12, 16, 1, C.hull);
   c.rect(4, y0 + 13, 24, 3, C.hull);
@@ -264,6 +265,210 @@ if (want("button"))
       c.rect(1, 1, 10, 10, C.panel);
       c.rect(1, 1, 10, 1, C.panelHi);
       c.rect(1, 9, 10, 2, C.panelLo);
+      return c;
+    })(),
+  ]);
+
+// --- Explore -------------------------------------------------------------------
+
+const X = {
+  brown: hex("#8c6a4a"),
+  brownDark: hex("#5e4632"),
+  cream: hex("#efe6cf"),
+  grey: hex("#a3a6b5"),
+  greyDark: hex("#6e7180"),
+  pink: hex("#d99a9a"),
+  leaf: hex("#6f8a5a"),
+  leafDark: hex("#4f6a44"),
+  water: hex("#7aa0c0"),
+  red: hex("#c7655f"),
+  bone: hex("#e8e2d0"),
+  parchment: hex("#efe8d6"),
+  parchmentDark: hex("#d3c8ae"),
+  frame: hex("#8c7d6a"),
+};
+
+if (want("glorp-talk"))
+  save("glorp-talk", [0, 1].map((k) => glorp({ dy: k ? -1 : 0, lightsOn: k, mouthOpen: k === 1 })));
+
+/** Hotspot icons, 16×16, drawn at 2× in the Explore scene and scan bubble. */
+const HOTSPOTS = {
+  egg: (c) => {
+    c.rect(2, 11, 12, 3, X.brown); // nest
+    c.rect(3, 10, 2, 1, X.brownDark), c.rect(11, 10, 2, 1, X.brownDark);
+    c.disc(7.5, 7.5, 3.6, X.cream);
+    c.rect(6, 5, 1, 2, [255, 255, 255, 255]);
+  },
+  feather: (c) => {
+    for (let i = 0; i < 10; i++) c.rect(3 + i, 12 - i, 2, 2, i % 3 ? X.grey : X.greyDark);
+    c.rect(2, 13, 2, 2, X.greyDark); // quill
+  },
+  rat: (c) => {
+    c.rect(4, 8, 7, 4, X.greyDark);
+    c.rect(10, 7, 3, 4, X.greyDark); // head
+    c.rect(11, 6, 1, 1, X.pink); // ear
+    c.rect(13, 9, 1, 1, X.pink); // nose
+    c.rect(11, 8, 1, 1, C.outline); // eye
+    c.rect(1, 11, 3, 1, X.pink), c.rect(0, 10, 1, 1, X.pink); // tail
+  },
+  stump: (c) => {
+    c.rect(4, 6, 8, 8, X.brown);
+    c.rect(3, 13, 10, 2, X.brownDark);
+    c.rect(4, 5, 8, 2, X.cream);
+    c.rect(6, 5, 4, 1, X.brown); // ring
+  },
+  sailor: (c) => {
+    c.rect(3, 3, 10, 2, C.outline); // hat brim
+    c.rect(5, 1, 6, 2, C.outline); // hat
+    c.rect(5, 5, 6, 5, X.cream); // face
+    c.rect(6, 7, 1, 1, C.outline), c.rect(9, 7, 1, 1, C.outline);
+    c.rect(4, 10, 8, 5, hex("#4d5f80")); // coat
+  },
+  bones: (c) => {
+    for (let i = 0; i < 10; i++) c.rect(3 + i, 3 + i, 2, 2, X.bone), c.rect(11 - i, 3 + i, 2, 2, X.bone);
+    for (const [x, y] of [[2, 2], [12, 2], [2, 12], [12, 12]]) c.rect(x, y, 3, 3, X.bone);
+  },
+  flock: (c) => {
+    for (const [x, y] of [[2, 3], [8, 2], [5, 8], [11, 7], [7, 12]]) {
+      c.rect(x, y, 1, 1, C.outline), c.rect(x + 1, y + 1, 1, 1, C.outline), c.rect(x + 2, y, 1, 1, C.outline);
+    }
+  },
+  barrel: (c) => {
+    c.rect(4, 2, 8, 12, X.brown);
+    c.rect(3, 4, 10, 8, X.brown);
+    c.rect(3, 5, 10, 1, X.brownDark), c.rect(3, 10, 10, 1, X.brownDark);
+    c.rect(6, 2, 4, 1, X.grey); // pigeon peeking out
+  },
+  pole: (c) => {
+    c.rect(7, 1, 2, 14, X.brownDark);
+    c.rect(3, 3, 10, 2, X.brownDark);
+    c.rect(3, 2, 1, 1, X.grey), c.rect(12, 2, 1, 1, X.grey); // insulators
+    c.rect(0, 6, 7, 1, C.outline), c.rect(9, 6, 7, 1, C.outline); // wires
+  },
+  shore: (c) => {
+    // sea-level shoreline: waves over sand (reveals oxygen + pressure)
+    c.rect(1, 3, 14, 7, X.water);
+    for (const x of [2, 7, 12]) c.rect(x, 4, 3, 1, X.cream), c.rect(x + 1, 3, 1, 1, X.cream); // wave crests
+    c.rect(4, 7, 2, 1, X.cream), c.rect(9, 7, 2, 1, X.cream);
+    c.rect(1, 10, 14, 4, hex("#d6c39d")); // sand
+    c.rect(3, 12, 1, 1, X.brown), c.rect(10, 11, 1, 1, X.brown);
+  },
+};
+for (const [name, draw] of Object.entries(HOTSPOTS)) {
+  if (want(`hotspot-${name}`)) save(`hotspot-${name}`, [icon(draw)]);
+}
+
+/** Need icons for the field guide's "Ideal conditions", 16×16 at 2×. */
+const NEEDS = {
+  terrain: (c) => {
+    c.rect(7, 9, 2, 5, X.brownDark);
+    c.disc(7.5, 6.5, 5, X.leaf);
+    c.rect(1, 14, 14, 1, X.leafDark);
+  },
+  temperature: (c) => {
+    c.rect(6, 1, 4, 10, X.cream);
+    c.rect(7, 4, 2, 8, X.red);
+    c.disc(7.5, 12, 3, X.red);
+  },
+  humidity: (c) => {
+    for (let y = 2; y < 15; y++) {
+      const half = y < 8 ? Math.ceil((y - 1) / 2) : Math.round(5 - (y - 9) ** 2 / 6);
+      if (half > 0) c.rect(8 - half, y, half * 2, 1, X.water);
+    }
+    c.rect(6, 9, 1, 2, [255, 255, 255, 255]);
+  },
+  oxygen: (c) => {
+    c.disc(5, 9, 4, X.water);
+    c.disc(5, 9, 2, [0, 0, 0, 0]);
+    c.disc(12, 5, 2.5, X.water);
+  },
+  pressure: (c) => {
+    c.disc(7.5, 8.5, 6, X.cream);
+    c.rect(7, 4, 2, 5, C.outline); // needle
+    c.rect(7, 8, 2, 2, X.red);
+  },
+};
+for (const [name, draw] of Object.entries(NEEDS)) {
+  if (want(`need-${name}`)) save(`need-${name}`, [icon(draw)]);
+}
+
+if (want("field-guide-icon"))
+  save("field-guide-icon", [
+    icon((c) => {
+      c.rect(2, 2, 12, 12, X.brown); // cover
+      c.rect(3, 12, 11, 2, X.cream); // page edges
+      c.rect(4, 4, 8, 1, X.cream); // title
+      c.rect(10, 1, 2, 6, C.mint); // bookmark
+    }),
+  ]);
+if (want("field-guide-frame"))
+  save("field-guide-frame", [
+    (() => {
+      // 16×16, 9-slice with 6px corners (see .field-guide in index.css)
+      const c = panel(16, 16, X.parchment, X.frame);
+      c.rect(2, 2, 12, 1, X.parchmentDark);
+      c.rect(2, 13, 12, 1, X.parchmentDark);
+      c.rect(2, 2, 1, 12, X.parchmentDark);
+      c.rect(13, 2, 1, 12, X.parchmentDark);
+      return c;
+    })(),
+  ]);
+
+// --- Explore backgrounds, 320×180 (drawn stretched to the 16:9 scene) ----------
+
+/** Deterministic speckle, so regenerating gives the same picture. */
+function speckle(c, x0, y0, w, h, col, every, seed) {
+  let s = seed;
+  for (let y = y0; y < y0 + h; y++)
+    for (let x = x0; x < x0 + w; x++) {
+      s = (s * 1103515245 + 12345) & 0x7fffffff;
+      if (s % every === 0) c.set(x, y, col);
+    }
+}
+function bands(c, y0, colors, h) {
+  colors.forEach((col, i) => c.rect(0, y0 + i * h, c.w, h, col));
+}
+function tree(c, x, groundY, r, leaf, leafDark, trunk) {
+  c.rect(x - 2, groundY - r * 2, 4, r * 2, trunk);
+  c.disc(x, groundY - r * 2, r, leafDark);
+  c.disc(x - 2, groundY - r * 2 - 2, r - 2, leaf);
+}
+
+if (want("bg-explore-dodo"))
+  save("bg-explore-dodo", [
+    (() => {
+      const c = canvas(320, 180);
+      bands(c, 0, ["#8fa9bd", "#9bb3c3", "#a8bcc8", "#b6c6cd"].map((h) => hex(h)), 18); // sky
+      c.rect(0, 72, 320, 14, hex("#5f7f99")); // sea
+      c.rect(0, 74, 320, 1, hex("#86a2b4"));
+      c.rect(0, 86, 320, 8, hex("#d6c39d")); // beach
+      c.rect(0, 94, 320, 86, hex("#7f9471")); // forest floor
+      speckle(c, 0, 94, 320, 86, hex("#6f8a6a"), 7, 11);
+      speckle(c, 0, 94, 320, 86, hex("#90a986"), 13, 29);
+      for (const [x, r] of [[14, 16], [40, 20], [66, 14], [262, 18], [292, 22], [318, 15]])
+        tree(c, x, 104, r, hex("#5f7a52"), hex("#4b6243"), hex("#5e4632"));
+      speckle(c, 0, 50, 90, 50, hex("#c7655f"), 97, 5); // fruit
+      return c;
+    })(),
+  ]);
+if (want("bg-explore-passenger_pigeon"))
+  save("bg-explore-passenger_pigeon", [
+    (() => {
+      const c = canvas(320, 180);
+      bands(c, 0, ["#a3b8c8", "#adc0cc", "#b8c8cf", "#c4d0d2"].map((h) => hex(h)), 24); // sky (reaches below the lowest hill)
+      for (let x = 0; x < 320; x++) {
+        const hill = Math.round(70 + 8 * Math.sin(x / 23) + 5 * Math.sin(x / 9));
+        c.rect(x, hill, 1, 90 - hill + 10, hex("#7d9486")); // distant hills
+      }
+      c.rect(0, 96, 320, 84, hex("#7b8c5a")); // ground
+      speckle(c, 0, 96, 320, 84, hex("#6c7d4f"), 6, 3);
+      speckle(c, 0, 96, 320, 84, hex("#8f9f6a"), 11, 17);
+      for (const [x, r] of [[120, 20], [158, 24], [196, 18], [236, 22], [276, 20], [312, 24]])
+        tree(c, x, 108, r, hex("#6f8c5a"), hex("#56704a"), hex("#8a8d84"));
+      for (const x of [16, 38, 62, 84]) {
+        c.rect(x, 104, 8, 6, hex("#8c6a4a")); // stumps: cleared land
+        c.rect(x, 103, 8, 1, hex("#d6c39d"));
+      }
       return c;
     })(),
   ]);

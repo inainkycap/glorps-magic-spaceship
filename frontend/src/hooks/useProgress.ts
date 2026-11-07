@@ -1,22 +1,25 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { canAfford, clampFuel, FUEL_START } from "../game/fuel";
 import { HOME, isPlace } from "../geo";
-import type { Place, Progress } from "../types";
+import type { NeedKey, Place, Progress } from "../types";
 
 const STORAGE_KEY = "glorp.progress.v1";
 
 const EMPTY: Progress = { scanned: {}, saved: [] };
 
+/** { [id]: string[] } */
+const isStringListMap = (v: unknown) =>
+  typeof v === "object" &&
+  v !== null &&
+  !Array.isArray(v) &&
+  Object.values(v).every((list) => Array.isArray(list) && list.every((s) => typeof s === "string"));
+
 function isProgress(x: unknown): x is Progress {
   if (typeof x !== "object" || x === null) return false;
   const p = x as Record<string, unknown>;
   return (
-    typeof p.scanned === "object" &&
-    p.scanned !== null &&
-    !Array.isArray(p.scanned) &&
-    Object.values(p.scanned).every(
-      (v) => Array.isArray(v) && v.every((s) => typeof s === "string"),
-    ) &&
+    isStringListMap(p.scanned) &&
+    (p.discovered === undefined || isStringListMap(p.discovered)) &&
     Array.isArray(p.saved) &&
     p.saved.every((s) => typeof s === "string") &&
     (p.glorp === undefined || isPlace(p.glorp)) &&
@@ -85,6 +88,14 @@ const markScanned = (speciesId: string, hotspotId: string) =>
 const markSaved = (speciesId: string) =>
   setState((p) => (p.saved.includes(speciesId) ? p : { ...p, saved: [...p.saved, speciesId] }));
 
+/** Record that a species' need was revealed. Returns true if it was new. */
+const discoverNeed = (speciesId: string, key: NeedKey): boolean => {
+  const known = state.discovered?.[speciesId] ?? [];
+  if (known.includes(key)) return false;
+  setState((p) => ({ ...p, discovered: { ...p.discovered, [speciesId]: [...known, key] } }));
+  return true;
+};
+
 const setGlorp = (place: Place) => setState((p) => ({ ...p, glorp: place }));
 
 /** Spend fuel if there's enough. Returns false (and changes nothing) if not. */
@@ -109,6 +120,11 @@ export function useProgress() {
     [progress],
   );
 
+  const discoveredFor = useCallback(
+    (speciesId: string): NeedKey[] => (progress.discovered?.[speciesId] ?? []) as NeedKey[],
+    [progress],
+  );
+
   return {
     progress,
     /** Glorp's current place in space and time (HOME before the first trip). */
@@ -116,6 +132,8 @@ export function useProgress() {
     /** Current fuel (FUEL_START before anything has been spent). */
     fuel: fuelOf(progress),
     scannedFor,
+    discoveredFor,
+    discoverNeed,
     markScanned,
     markSaved,
     setGlorp,

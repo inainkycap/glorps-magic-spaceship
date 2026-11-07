@@ -29,6 +29,44 @@ export interface Hotspot {
   fact: string;
   dna: boolean;
   unlocks: string | null; // intervention id
+  reveals?: NeedKey | NeedKey[]; // PROPOSED: scanning it discovers this need / these needs
+}
+
+// ---- PROPOSED species content (see "Proposed: species content + needs" in CLAUDE.md) ----
+// Everything here is optional: the UI shows whatever is present and skips the rest.
+// Uncertain values are marked in the text with "~" (approximate) or "?" (unknown).
+
+export type NeedKey = "terrain" | "temperature" | "humidity" | "oxygen" | "pressure";
+
+/** A bound is a number, or a string when approximate/unknown, e.g. "~18" or "?". */
+export type NeedBound = number | string;
+
+export interface Need {
+  value?: string; // terrain: a description, e.g. "Forest floor with fallen fruit"
+  min?: NeedBound; // the others: a range…
+  max?: NeedBound;
+  unit?: string; // …in °C, %, % or kPa
+  why?: string; // one sentence: why the species needs this
+}
+
+export interface SpeciesFacts {
+  height?: string;
+  weight?: string;
+  diet?: string;
+  lifespan?: string;
+  extinct_year?: string | number;
+  cause?: string;
+}
+
+export interface Habitat {
+  biome?: string;
+  climate?: string;
+  elevation?: string;
+}
+
+export interface Source {
+  title: string;
+  url: string;
 }
 
 export interface ThreatEffect {
@@ -69,6 +107,13 @@ export interface Species extends SpeciesSummary {
   max_interventions: number;
   dna_required: number;
   sim: SimConfig;
+  // PROPOSED content fields, all optional:
+  intro?: string; // ≤ 2 sentences in Glorp's voice (arrival bubble)
+  description?: string; // a paragraph (field guide)
+  facts?: SpeciesFacts;
+  habitat?: Habitat;
+  needs?: Partial<Record<NeedKey, Need>>;
+  sources?: Source[];
 }
 
 export interface SimulateRequest {
@@ -116,4 +161,5 @@ export interface Progress {
   saved: string[]; // species ids saved to the sanctuary
   glorp?: Place; // Glorp's current location; absent = home (see geo.ts)
   fuel?: number; // absent = FUEL_START (see game/fuel.ts)
+  discovered?: Record<string, NeedKey[]>; // species id -> needs revealed by scanning
 }

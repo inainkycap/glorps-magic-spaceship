@@ -23,7 +23,8 @@ change is needed.
 | File | Frame size (px) | Frames | Drawn at | Used where | Notes |
 |---|---|---|---|---|---|
 | `glorp-idle.png` | **32×32** | 4 (6 fps) | 2× (64 px) | Glorp sitting on the world map (`map/GlorpMarker.tsx`) | Gentle hover bob, blinking hull lights. Ship centred; the map point is at the top-centre of the frame. |
-| `glorp-fly.png` | **32×32** | 4 (6 fps) | 2× (64 px) | Glorp during time travel and when hovering to a clicked spot (`components/TravelAnimation.tsx`, `map/GlorpMarker.tsx`) | Thruster flames flicker. Faces **right**; it's mirrored for westward trips. |
+| `glorp-fly.png` | **32×32** | 4 (6 fps) | 2× (64 px) | Glorp during time travel and when hopping to a clicked spot on the map (`map/FlightGlorp.tsx`) | Thruster flames flicker. Faces **right**; it's mirrored for westward trips. |
+| `glorp-talk.png` | **32×32** | 2 (6 fps) | 2× (64 px) | Glorp in the Explore scene while giving the arrival intro (`screens/Explore.tsx`) | Mouth open/closed. Same framing as `glorp-idle.png`, which is shown once the intro is dismissed. |
 | `pin.png` | 16×24 | 1 | 2× | Species pin on the map (`map/PinLayer.tsx`) | Tip at the bottom centre, 2 px above the bottom edge. The current-era glow is added by CSS, so don't bake one in. |
 | `pin-saved.png` | 16×24 | 1 | 2× | Pin for a species already saved to the Sanctuary | Same shape as `pin.png`, different colour or a badge. |
 | `timeline-glorp.png` | 16×16 | 2 (3 fps) | 2× | Glorp marker on the era timeline (`components/EraTimeline.tsx`) | Sits just above the timeline line. The vertical rule and the year label are drawn by CSS. |
@@ -39,6 +40,18 @@ change is needed.
 | `bubble.png` | 16×16 | 1 | 2× (9-slice) | Travel speech bubble that opens from a pin (`map/TravelBubble.tsx`, `.travel-bubble` in `src/index.css`) | **9-slice with 6 px corners.** Light fill (dark text goes on it). |
 | `bubble-tail.png` | 16×8 | 1 | 2× | The bubble's pointer down to the pin | Points **down**; it's flipped by CSS when the bubble opens below the pin. Its top row overlaps the bubble's bottom edge, so start it with fill colour, not outline. |
 | `button.png` | 12×12 | 1 | 2× (9-slice) | Every pixel button on the map: zoom buttons, Sanctuary link, bubble Travel/Cancel (`.px-button` in `src/index.css`) | **9-slice:** 4 px corners and edges stretch around the label; the centre fills the button. Buttons have fixed widths, so don't rely on the art to size them. |
+
+### Explore screen
+
+| File | Frame size (px) | Frames | Drawn at | Used where | Notes |
+|---|---|---|---|---|---|
+| `bg-explore-<species id>.png` (now: `bg-explore-dodo.png`, `bg-explore-passenger_pigeon.png`) | **320×180** | 1 | stretched to the 16:9 scene (~3×) | Explore scene background (`screens/Explore.tsx`, `.scene`) | One per species, named by species id. Keep the middle and lower parts fairly calm: hotspots sit on top (positions come from the species file's `x`/`y` %). Missing file = plain gradient. |
+| `hotspot-<sprite>.png` (now: `egg`, `feather`, `rat`, `stump`, `sailor`, `bones`, `flock`, `barrel`, `pole`, `shore`) | 16×16 | 1 | 2× (32 px) | A scannable hotspot in the scene, and the icon in its scan bubble (`explore/ScanBubble.tsx`) | Named by the hotspot's `sprite` field. Centred on its point. CSS adds the outline/shadow and greys it out once scanned, so draw only the normal state. Missing file = "DNA"/"?" tag. |
+| `need-terrain.png`, `need-temperature.png`, `need-humidity.png`, `need-oxygen.png`, `need-pressure.png` | 16×16 | 1 | 2× (32 px) | Icons in the field guide's "Ideal conditions" list (`explore/FieldGuide.tsx`) | Drawn on the light parchment card, so use dark outlines. Shown for undiscovered needs too (next to "???"). |
+| `field-guide-icon.png` | 16×16 | 1 | 1× (button), 2× (card header) | "Field guide" button in Explore, and the field guide card's header | A book or notebook. |
+| `field-guide-frame.png` | 16×16 | 1 | 2× (9-slice) | Field guide card frame (`.field-guide` in `src/index.css`) | **9-slice with 6 px corners.** Parchment fill (dark text sits on it). |
+
+The Explore scan bubble and Glorp's arrival bubble reuse `bubble.png` and `bubble-tail.png` (above).
 
 ## Nice to have later
 
