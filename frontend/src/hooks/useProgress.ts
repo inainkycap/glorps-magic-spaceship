@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { canAfford, clampFuel, FUEL_START } from "../game/fuel";
 import { HOME, isPlace } from "../geo";
 import type { Place, Progress } from "../types";
 
@@ -18,7 +19,8 @@ function isProgress(x: unknown): x is Progress {
     ) &&
     Array.isArray(p.saved) &&
     p.saved.every((s) => typeof s === "string") &&
-    (p.glorp === undefined || isPlace(p.glorp))
+    (p.glorp === undefined || isPlace(p.glorp)) &&
+    (p.fuel === undefined || (typeof p.fuel === "number" && Number.isFinite(p.fuel)))
   );
 }
 
@@ -41,67 +43,83 @@ function persist(p: Progress) {
   }
 }
 
+// --- one shared store for the whole tab --------------------------------------
+// Every useProgress() reads the same state, so e.g. spending fuel on the map
+// updates the HUD gauge immediately. Other tabs sync via the `storage` event.
+
+let state: Progress = load();
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+
+function setState(fn: (p: Progress) => Progress) {
+  const next = fn(state);
+  if (next === state) return;
+  state = next;
+  persist(next);
+  emit();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key !== STORAGE_KEY) return;
+    state = load();
+    listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+const fuelOf = (p: Progress) => clampFuel(p.fuel ?? FUEL_START);
+
+const markScanned = (speciesId: string, hotspotId: string) =>
+  setState((p) => {
+    const done = p.scanned[speciesId] ?? [];
+    if (done.includes(hotspotId)) return p;
+    return { ...p, scanned: { ...p.scanned, [speciesId]: [...done, hotspotId] } };
+  });
+
+const markSaved = (speciesId: string) =>
+  setState((p) => (p.saved.includes(speciesId) ? p : { ...p, saved: [...p.saved, speciesId] }));
+
+const setGlorp = (place: Place) => setState((p) => ({ ...p, glorp: place }));
+
+/** Spend fuel if there's enough. Returns false (and changes nothing) if not. */
+const spendFuel = (cost: number): boolean => {
+  const fuel = fuelOf(state);
+  if (!canAfford(fuel, cost)) return false;
+  setState((p) => ({ ...p, fuel: clampFuel(fuel - cost) }));
+  return true;
+};
+
+const reset = () => setState(() => EMPTY);
+
 /**
- * Player progress (scanned hotspots, saved species), persisted to localStorage.
- * Each component gets its own copy; changes in other tabs are picked up via
- * the `storage` event.
+ * Player progress (scanned hotspots, saved species, Glorp's location, fuel),
+ * persisted to localStorage and shared by every component in the tab.
  */
 export function useProgress() {
-  const [progress, setProgress] = useState<Progress>(load);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setProgress(load());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  const update = useCallback((fn: (p: Progress) => Progress) => {
-    setProgress((prev) => {
-      const next = fn(prev);
-      persist(next);
-      return next;
-    });
-  }, []);
-
-  const markScanned = useCallback(
-    (speciesId: string, hotspotId: string) =>
-      update((p) => {
-        const done = p.scanned[speciesId] ?? [];
-        if (done.includes(hotspotId)) return p;
-        return {
-          ...p,
-          scanned: { ...p.scanned, [speciesId]: [...done, hotspotId] },
-        };
-      }),
-    [update],
-  );
-
-  const markSaved = useCallback(
-    (speciesId: string) =>
-      update((p) =>
-        p.saved.includes(speciesId)
-          ? p
-          : { ...p, saved: [...p.saved, speciesId] },
-      ),
-    [update],
-  );
-
-  const setGlorp = useCallback(
-    (place: Place) => update((p) => ({ ...p, glorp: place })),
-    [update],
-  );
-
-  const reset = useCallback(() => update(() => EMPTY), [update]);
+  const progress = useSyncExternalStore(subscribe, () => state, () => EMPTY);
 
   const scannedFor = useCallback(
     (speciesId: string) => progress.scanned[speciesId] ?? [],
     [progress],
   );
 
-  /** Glorp's current place in space and time (HOME before the first trip). */
-  const glorp = progress.glorp ?? HOME;
-
-  return { progress, glorp, scannedFor, markScanned, markSaved, setGlorp, reset };
+  return {
+    progress,
+    /** Glorp's current place in space and time (HOME before the first trip). */
+    glorp: progress.glorp ?? HOME,
+    /** Current fuel (FUEL_START before anything has been spent). */
+    fuel: fuelOf(progress),
+    scannedFor,
+    markScanned,
+    markSaved,
+    setGlorp,
+    spendFuel,
+    reset,
+  };
 }

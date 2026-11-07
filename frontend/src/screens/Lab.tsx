@@ -75,7 +75,7 @@ export default function Lab() {
         })}
       </ul>
 
-      <button className="button" onClick={run} disabled={running}>
+      <button className="button w-l" onClick={run} disabled={running}>
         {running ? "Simulating…" : "Run 1,000 futures ▶"}
       </button>
       {simError && <p className="error">Error: {simError}</p>}
@@ -93,11 +93,11 @@ export default function Lab() {
           </p>
           {result.success &&
             (progress.saved.includes(species.id) ? (
-              <Link className="button" to="/sanctuary">
+              <Link className="button w-l" to="/sanctuary">
                 View Sanctuary ▶
               </Link>
             ) : (
-              <button className="button" onClick={() => markSaved(species.id)}>
+              <button className="button w-l" onClick={() => markSaved(species.id)}>
                 Save to Sanctuary
               </button>
             ))}
