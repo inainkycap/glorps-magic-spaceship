@@ -15,6 +15,9 @@ export interface SpeciesSummary {
   era: string;
   location: string;
   kind: string;
+  lat: number; // degrees, -90 (south) to 90 (north)
+  lon: number; // degrees, -180 (west) to 180 (east)
+  era_year: number; // numeric year for the era timeline, e.g. 1600
 }
 
 export interface Hotspot {
@@ -98,8 +101,18 @@ export interface SimulateResponse {
   advice: Advice[];
 }
 
-// Frontend-only: what we persist in localStorage
+// ---- Frontend-only below (not part of the backend contract) ----
+
+/** A point in space and time: where/when Glorp's ship is. */
+export interface Place {
+  lat: number;
+  lon: number;
+  era_year: number;
+}
+
+// What we persist in localStorage
 export interface Progress {
   scanned: Record<string, string[]>; // species id -> scanned hotspot ids
   saved: string[]; // species ids saved to the sanctuary
+  glorp?: Place; // Glorp's current location; absent = home (see geo.ts)
 }

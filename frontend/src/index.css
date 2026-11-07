@@ -1,111 +1,440 @@
+/* Pixel-art base theme: dark space palette, pixel font, crisp scaling. */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --space-0: #07061a; /* deepest background */
+  --space-1: #120f2e; /* panels */
+  --space-2: #241f52; /* borders, raised */
+  --star: #e8e6ff; /* main text */
+  --dim: #8f8ac2; /* muted text */
+  --glorp: #7cf8d0; /* accent (Glorp green) */
+  --gold: #ffd166; /* highlights */
+  --danger: #ff6b8b;
+  --px: 4px; /* one "pixel" for borders/shadows */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  font-family: "Press Start 2P", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--star);
+  background: var(--space-0);
+  color-scheme: dark;
+  -webkit-font-smoothing: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  background-color: var(--space-0);
+  /* tiny pixel starfield */
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, var(--star) 100%, transparent),
+    radial-gradient(1px 1px at 140px 90px, var(--dim) 100%, transparent),
+    radial-gradient(2px 2px at 90px 160px, var(--star) 100%, transparent),
+    radial-gradient(1px 1px at 200px 220px, var(--dim) 100%, transparent);
+  background-size: 240px 240px;
+}
+
+img,
+canvas,
+svg,
+.pixelated {
+  image-rendering: pixelated;
 }
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+  color: var(--glorp);
+  font-weight: normal;
+  line-height: 1.4;
 }
-
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: 20px;
 }
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
+  font-size: 14px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+}
+
+a {
+  color: var(--gold);
+}
+
+.muted {
+  color: var(--dim);
+}
+.ok {
+  color: var(--glorp);
+}
+.error {
+  color: var(--danger);
+}
+
+/* Layout */
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+.navbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: var(--px) solid var(--space-2);
+}
+.navbar .brand {
+  color: var(--gold);
+}
+.navbar nav {
+  display: flex;
+  gap: 16px;
+}
+.navbar nav a {
+  color: var(--dim);
+  text-decoration: none;
+}
+.navbar nav a.active {
+  color: var(--glorp);
+}
+.navbar nav a.active::before {
+  content: "▶ ";
+}
+
+/* Pixel boxes: hard edges, stepped shadow */
+.card,
+.dialog,
+.scene {
+  background: var(--space-1);
+  border: var(--px) solid var(--space-2);
+  box-shadow: var(--px) var(--px) 0 0 #000;
+}
+.card-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.card {
+  padding: 16px;
+}
+.card.locked {
+  opacity: 0.5;
+}
+.dialog {
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.button,
+button {
+  display: inline-block;
+  font: inherit;
+  color: var(--space-0);
+  background: var(--glorp);
+  border: none;
+  padding: 10px 14px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 rgba(0, 0, 0, 0.35);
+}
+.button:hover,
+button:hover {
+  background: var(--gold);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.button:active,
+button:active {
+  transform: translate(2px, 2px);
+}
+
+/* Placeholder explore scene */
+.scene {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 16px 0;
+  background: linear-gradient(var(--space-1) 0 55%, #1d3b2a 55% 100%);
+}
+.scene .hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 6px 8px;
+  font-size: 10px;
+  background: var(--gold);
+}
+.scene .hotspot.scanned {
+  background: var(--dim);
+}
+.scene .hotspot:active {
+  transform: translate(calc(-50% + 2px), calc(-50% + 2px));
+}
+
+.blink {
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+  to {
+    visibility: hidden;
   }
 }
-p {
-  margin: 0;
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* ---------- World map (full screen) ---------- */
+.map-screen {
+  --ocean: #10123a; /* matches the deep-ocean pixels in world-map.png */
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ocean);
+  overflow: hidden;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.map-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--space-0);
+  border-bottom: var(--px) solid var(--space-2);
+}
+.map-hud .brand {
+  color: var(--gold);
+}
+
+/* The map box keeps the 2:1 equirectangular aspect and fits the stage,
+   so pin percentages always line up with the image. */
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+.map-box {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  width: min(100cqw, 200cqh);
+}
+.map-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  user-select: none;
+}
+.map-status {
+  position: absolute;
+  left: 16px;
+  bottom: 8px;
+  right: 16px;
+  pointer-events: none;
+}
+
+/* Pins: the button's anchor point is the pin tip */
+.pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 4px;
+  color: var(--star);
+}
+.pin:hover,
+.pin:focus-visible {
+  background: none;
+  z-index: 2;
+}
+.pin:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.pin-head {
+  width: 12px;
+  height: 12px;
+  background: var(--gold);
+  box-shadow:
+    0 0 0 var(--px) var(--space-0),
+    0 8px 0 -2px var(--gold); /* little stalk */
+  margin-bottom: 6px;
+}
+.pin.saved .pin-head {
+  background: var(--glorp);
+  box-shadow:
+    0 0 0 var(--px) var(--space-0),
+    0 8px 0 -2px var(--glorp);
+}
+.pin-label {
+  font-size: 9px;
+  white-space: nowrap;
+  padding: 4px 6px;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.pin:hover .pin-label,
+.pin:focus-visible .pin-label {
+  border-color: var(--gold);
+}
+
+/* Glorp hovers just below his point (pins grow upwards from theirs).
+   .map-glorp and .travel-glorp share this anchor so the hand-off is seamless. */
+.map-glorp,
+.travel-glorp {
+  position: absolute;
+  transform: translate(-50%, 6px);
+  pointer-events: none;
+}
+.map-glorp {
+  animation: bob 1.2s steps(2) infinite;
+}
+@keyframes bob {
+  50% {
+    margin-top: -4px;
+  }
+}
+
+/* ---------- Travel animation ---------- */
+.travel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.travel-glorp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.travel-era {
+  margin-top: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--space-0);
+  background: var(--gold);
+}
+.zib {
+  position: absolute;
+  font-size: 9px;
+  color: var(--glorp);
+  text-shadow: 2px 2px 0 var(--space-0);
+}
+
+/* ---------- Era timeline ---------- */
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 32px 28px 16px;
+  background: var(--space-0);
+  border-top: var(--px) solid var(--space-2);
+}
+.timeline-readout {
+  display: flex;
+  flex-direction: column;
+  min-width: 7ch;
+}
+.timeline-year {
+  font-size: 18px;
+  color: var(--gold);
+}
+.timeline-track {
+  position: relative;
+  flex: 1;
+  height: 24px;
+}
+.timeline-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--px);
+  background: var(--space-2);
+}
+.timeline-tick {
+  position: absolute;
+  top: 100%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--dim);
+}
+.timeline-tick::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  width: 2px;
+  height: 8px;
+  background: var(--space-2);
+}
+.timeline-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--gold);
+}
+.timeline-marker.saved {
+  background: var(--glorp);
+}
+.timeline-now {
+  position: absolute;
+  top: -6px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid var(--glorp);
+}
+
+@media (max-width: 600px) {
+  .map-hud .brand {
+    font-size: 9px;
+  }
+  .timeline {
+    gap: 12px;
+  }
+  .timeline-year {
+    font-size: 12px;
+  }
+  .pin-label {
+    font-size: 7px;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .blink,
+  .map-glorp {
+    animation: none;
+  }
+  .button:active,
+  button:active {
+    transform: none;
+  }
 }

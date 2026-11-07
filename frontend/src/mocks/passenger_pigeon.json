@@ -1,0 +1,61 @@
+{
+  "id": "passenger_pigeon",
+  "name": "Passenger pigeon",
+  "scientific_name": "Ectopistes migratorius",
+  "status": "extinct",
+  "era": "1870",
+  "location": "Michigan, USA",
+  "kind": "bird",
+  "lat": 44.5,
+  "lon": -84.7,
+  "era_year": 1870,
+  "hotspots": [
+    { "id": "flock", "label": "Passing flock", "sprite": "flock", "x": 50, "y": 18,
+      "fact": "Passenger pigeons flew in flocks of millions or even billions that could darken the sky for hours as they passed.",
+      "dna": false, "unlocks": null },
+    { "id": "nest", "label": "Twig nest", "sprite": "egg", "x": 24, "y": 52,
+      "fact": "Each pair usually raised just one chick a year, in huge nesting colonies that could stretch for miles.",
+      "dna": true, "unlocks": "colony_protection" },
+    { "id": "feather", "label": "Blue-grey feather", "sprite": "feather", "x": 40, "y": 74,
+      "fact": "Males had a slate-blue back and a rosy-copper breast. They were faster fliers than most pigeons.",
+      "dna": true, "unlocks": null },
+    { "id": "barrel", "label": "Barrel of pigeons", "sprite": "barrel", "x": 66, "y": 70,
+      "fact": "Market hunters netted and shot pigeons by the thousand and shipped them to city markets packed in barrels.",
+      "dna": true, "unlocks": null },
+    { "id": "telegraph", "label": "Telegraph pole", "sprite": "pole", "x": 84, "y": 40,
+      "fact": "Telegraph lines and new railways let professional hunters find nesting colonies fast and get the birds to market.",
+      "dna": false, "unlocks": "hunting_laws" },
+    { "id": "stump", "label": "Cleared beech forest", "sprite": "stump", "x": 12, "y": 30,
+      "fact": "The pigeons fed on beechnuts, acorns and chestnuts. As eastern forests were cleared for farms, their food vanished.",
+      "dna": false, "unlocks": "forest_protection" }
+  ],
+  "threats": [
+    { "id": "market_hunting", "name": "Market hunting", "description": "Professional hunters kill birds by the million to sell as cheap meat.",
+      "effect": { "mortality": 0.15 } },
+    { "id": "nest_raids", "name": "Nest raids", "description": "Hunters raid nesting colonies for squabs, scattering the adults.",
+      "effect": { "mortality": 0.06 } },
+    { "id": "deforestation", "name": "Deforestation", "description": "Eastern forests are cleared, taking the nut harvest with them.",
+      "effect": { "habitat_decline": 0.03 } },
+    { "id": "colony_collapse", "name": "Colony collapse", "description": "Small flocks struggle to breed; some years a whole colony fails.",
+      "effect": { "shock_prob": 0.08, "shock_severity": 0.25 } }
+  ],
+  "interventions": [
+    { "id": "hunting_laws", "name": "Hunting laws", "description": "Ban commercial hunting and shipping of wild pigeons.",
+      "mitigates": { "market_hunting": 0.9 } },
+    { "id": "colony_protection", "name": "Colony wardens", "description": "Guard nesting colonies during the breeding season.",
+      "mitigates": { "nest_raids": 0.8, "colony_collapse": 0.4, "market_hunting": 0.2 } },
+    { "id": "forest_protection", "name": "Forest protection", "description": "Set aside large beech and oak forests.",
+      "mitigates": { "deforestation": 0.85 } }
+  ],
+  "goal_survival": 0.8,
+  "max_interventions": 2,
+  "dna_required": 3,
+  "sim": {
+    "model": "logistic",
+    "start_year": 1870,
+    "years": 60,
+    "start_population": 20000,
+    "carrying_capacity": 100000,
+    "growth_rate": 0.1
+  }
+}
