@@ -73,9 +73,15 @@ types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
 | GET | `/api/species` | `SpeciesSummary[]`: the basic-info fields only, which **must include `lat`, `lon`, `era_year`** (the map needs them) |
 | GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
 | POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
-| GET | `/api/wiki/{title}` (stretch) | `{ title, summary, image_url }` |
+| GET | `/api/wiki/{title}` | `WikiSummary`: `{ title, summary, image_url, url }` (`image_url`/`url` may be `null`); 404 if no article, 502 if Wikipedia is unreachable and it isn't cached |
 
 The old `POST /api/simulate` (single species, interventions) was never built and is gone.
+
+`/api/wiki/{title}` uses the official Wikipedia REST API and caches every answer in
+`backend/data/wiki_cache/` (committed), so the text works offline. `title` is an article
+title as in the URL (`Ball's_Pyramid`); for a species' `sources[].url`, use the part after
+`/wiki/`. Every species source is pre-cached (`python -m scripts.prefetch_wiki` in
+`backend/` refreshes it). `image_url` points at Wikimedia, so images still need internet.
 
 TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 
@@ -313,3 +319,6 @@ How the backend behaves:
   Legacy fields (`threats`, `interventions`, `goal_survival`, `max_interventions`, `sim`,
   `hotspots[].unlocks`) are optional; `POST /api/simulate` removed from the contract.
   Frontend: drop the legacy types, `simulate()` and `simulate_*.json` when convenient.
+- 2026-11-07: `GET /api/wiki/{title}` implemented (cached, works offline for text); response
+  gains `url`. New `WikiSummary` type in `types.ts`. New species: `lord_howe_stick_insect`
+  (Lord Howe Island, 1915), which needs sprites from the frontend.
