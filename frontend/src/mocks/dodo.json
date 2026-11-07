@@ -9,25 +9,70 @@
   "lat": -20.3,
   "lon": 57.5,
   "era_year": 1600,
+  "intro": "Zib! We've landed on Mauritius in 1600, home of the dodo: a big, flightless pigeon that has never had a reason to be scared. Let's scan around before the ships change everything.",
+  "description": "The dodo (Raphus cucullatus) was a flightless bird found only on Mauritius, an island in the Indian Ocean east of Madagascar. It was a giant relative of pigeons and doves; its closest living relative is the Nicobar pigeon, and its closest known relative was the extinct Rodrigues solitaire. It stood about a metre tall, walked the forest floor eating fallen fruit and seeds, and laid its egg in a nest on the ground. With no land predators on the island it had no fear of people. Dutch sailors arrived in 1598, and within about 70 years the dodo was gone, wiped out by hunting, by forest clearing, and above all by the rats, pigs, cats and macaques the ships brought, which ate its eggs and chicks.",
+  "facts": {
+    "height": "~1 m",
+    "weight": "~10–18 kg (estimates vary a lot)",
+    "diet": "Fallen fruit, seeds and nuts; maybe bulbs, roots and shellfish?",
+    "lifespan": "?",
+    "extinct_year": "~1662 (last widely accepted sighting; some estimates run to ~1690)",
+    "cause": "Invasive animals eating eggs and chicks, hunting, and forest clearing"
+  },
+  "habitat": {
+    "biome": "Tropical dry and coastal forest on an oceanic island",
+    "climate": "Tropical maritime: warm and humid all year, with a cyclone season (~Nov–Apr)",
+    "elevation": "Mostly lowland (~0–? m); many bones come from the Mare aux Songes marsh near the coast"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Forest floor with fallen fruit, near fresh water",
+      "why": "It couldn't fly or climb, so it fed and nested on the ground, and many remains are found around freshwater marshes."
+    },
+    "temperature": {
+      "min": "~18", "max": "~30", "unit": "°C",
+      "why": "It lived its whole life on a tropical island that never sees frost or snow."
+    },
+    "humidity": {
+      "min": "~65", "max": "~90", "unit": "%",
+      "why": "Mauritius's lowland forests are humid all year, which keeps fruit trees fruiting."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary sea-level air, like almost every bird alive today."
+    },
+    "pressure": {
+      "min": "~95", "max": "~102", "unit": "kPa",
+      "why": "A lowland island bird: it lived close to sea-level air pressure (~101 kPa)."
+    }
+  },
+  "sources": [
+    { "title": "Dodo (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Dodo" },
+    { "title": "Mauritius (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Mauritius" },
+    { "title": "Mare aux Songes (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Mare_aux_Songes" }
+  ],
   "hotspots": [
     { "id": "egg", "label": "Ground nest", "sprite": "egg", "x": 22, "y": 70,
       "fact": "Dodos laid a single egg in a nest on the ground, so anything that walked by could eat it.",
-      "dna": true, "unlocks": "nest_guard" },
+      "dna": true, "unlocks": "nest_guard", "reveals": "terrain" },
     { "id": "feather", "label": "Grey feather", "sprite": "feather", "x": 48, "y": 58,
       "fact": "The dodo was a giant flightless pigeon. Its closest living relative is the Nicobar pigeon.",
-      "dna": true, "unlocks": null },
+      "dna": true, "unlocks": null, "reveals": "temperature" },
     { "id": "rat", "label": "Ship rat", "sprite": "rat", "x": 70, "y": 76,
       "fact": "Ships brought rats, pigs and monkeys to Mauritius. They raided dodo nests.",
       "dna": false, "unlocks": "rat_control" },
     { "id": "stump", "label": "Felled ebony tree", "sprite": "stump", "x": 82, "y": 48,
       "fact": "Settlers cut down Mauritius's ebony forests for timber, shrinking the dodo's habitat.",
-      "dna": false, "unlocks": "forest_reserve" },
+      "dna": false, "unlocks": "forest_reserve", "reveals": "humidity" },
     { "id": "sailor", "label": "Dutch sailor", "sprite": "sailor", "x": 35, "y": 40,
       "fact": "Dutch sailors reached Mauritius in 1598. The dodo had never met humans and wasn't afraid of them.",
       "dna": false, "unlocks": "hunting_ban" },
-    { "id": "bones", "label": "Old bones", "sprite": "feather", "x": 60, "y": 30,
+    { "id": "bones", "label": "Old bones", "sprite": "bones", "x": 60, "y": 30,
       "fact": "The last widely accepted sighting of a dodo was in 1662, less than 70 years after humans arrived.",
-      "dna": true, "unlocks": null }
+      "dna": true, "unlocks": null, "reveals": "pressure" },
+    { "id": "lagoon", "label": "Reef lagoon", "sprite": "shore", "x": 50, "y": 44,
+      "fact": "Coral reefs ring almost all of Mauritius. Down here at sea level the air pressure is about 101 kPa, and the air is about 21% oxygen.",
+      "dna": false, "unlocks": null, "reveals": ["oxygen", "pressure"] }
   ],
   "threats": [
     { "id": "hunting", "name": "Hunting", "description": "Sailors kill fearless dodos for food.",

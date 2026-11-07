@@ -10,6 +10,8 @@ import {
   shortestDLon,
   type Camera,
 } from "../map/camera";
+import FlightGlorp from "../map/FlightGlorp";
+import { TRAVEL_FLIGHT } from "../map/flightPath";
 import { useMapView } from "../map/MapViewContext";
 import type { Place } from "../types";
 import GlorpSprite from "./GlorpSprite";
@@ -23,7 +25,9 @@ import GlorpSprite from "./GlorpSprite";
  * the map uses for the timeline and to crossfade era terrain.
  *
  * Sequence: zoom out to fit the route → fly (shortest way, across the dateline
- * if shorter) while the year ticks over → zoom in on the destination.
+ * if shorter) while the year ticks over → zoom in on the destination. The
+ * flight itself (hop, wobble, zib trail) is <FlightGlorp> (map/FlightGlorp.tsx, map/flightPath.ts),
+ * shared with the short hop when you click empty map.
  * A zero-distance trip (pure time travel) zooms out and back in place.
  * With prefers-reduced-motion: no camera moves; Glorp appears at the
  * destination and `onDone` fires after a short pause.
@@ -36,8 +40,6 @@ export interface TravelAnimationProps {
 }
 
 const REDUCED_PAUSE_MS = 400;
-const ZIB_EVERY = 0.1; // a "zib" every 10% of the distance
-const ZIB_LIFE = 0.2; // each fades over 20% of the trip
 const GLORP_PX = 64;
 // Timeline (fractions of the trip): camera zooms out, Glorp flies, camera zooms in.
 const ZOOM_OUT_END = 0.25;
@@ -52,9 +54,10 @@ export default function TravelAnimation({ from, to, onDone, onEraChange }: Trave
 
   const dLon = shortestDLon(from.lon, to.lon);
   const dLat = to.lat - from.lat;
+  /** The flight's own time (0–1) at trip time tt: Glorp flies between FLY_START and FLY_END. */
+  const flightTime = (tt: number) => Math.min(1, Math.max(0, (tt - FLY_START) / (FLY_END - FLY_START)));
   /** Flight progress (0–1, eased) at trip time tt. */
-  const flightAt = (tt: number) => easeInOut((tt - FLY_START) / (FLY_END - FLY_START));
-  const glorpAt = (f: number) => ({ lon: from.lon + dLon * f, lat: from.lat + dLat * f });
+  const flightAt = (tt: number) => easeInOut(flightTime(tt));
   const yearAt = (f: number) => Math.round(from.era_year + (to.era_year - from.era_year) * f);
 
   const finish = useEffectEvent(() => onDone());
@@ -133,48 +136,16 @@ export default function TravelAnimation({ from, to, onDone, onEraChange }: Trave
     );
   }
 
-  /** Screen position of Glorp at flight progress f, with the hop and wobble in screen px. */
-  const screenAt = (f: number, tt: number) => {
-    const g = glorpAt(f);
-    const s = view.toScreen(g.lon, g.lat);
-    const lift = Math.sin(Math.PI * f);
-    const wobble = Math.sin(tt * Math.PI * 14);
-    return { x: s.x, y: s.y - lift * 56 + wobble * lift * 8, lift };
-  };
-
-  const f = flightAt(t);
-  const pos = screenAt(f, t);
-  const tilt = Math.cos(t * Math.PI * 14) * 12 * pos.lift;
-
-  const zibs = [];
-  for (let i = 1; i * ZIB_EVERY < f; i++) {
-    const fi = i * ZIB_EVERY;
-    // Trip time at which flight progress reached fi (inverse of the eased flight curve).
-    const ti = FLY_START + (Math.acos(1 - 2 * fi) / Math.PI) * (FLY_END - FLY_START);
-    const age = (t - ti) / ZIB_LIFE;
-    if (age >= 1) continue;
-    const z = screenAt(fi, ti);
-    zibs.push(
-      <span
-        key={i}
-        className="zib"
-        style={{ left: z.x, top: z.y, opacity: 1 - age, transform: `translate(-50%, -50%) translateY(${-age * 16}px)` }}
-      >
-        zib
-      </span>,
-    );
-  }
-
   return (
     <div className="travel">
       {announce}
-      {zibs}
-      <div className="glorp-anchor" style={{ left: pos.x, top: pos.y }}>
-        <div style={{ transform: `rotate(${tilt}deg)` }}>
-          <GlorpSprite size={GLORP_PX} variant="fly" flip={dLon < 0} />
-        </div>
-        <span className="travel-era">{formatYear(yearAt(f))}</span>
-      </div>
+      <FlightGlorp
+        from={from}
+        to={to}
+        t={flightTime(t)}
+        style={TRAVEL_FLIGHT}
+        label={<span className="travel-era">{formatYear(yearAt(flightAt(t)))}</span>}
+      />
     </div>
   );
 }

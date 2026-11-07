@@ -132,6 +132,11 @@ a {
 .card,
 .dialog,
 .scene {
+  border: var(--px) solid var(--space-2);
+  box-shadow: var(--px) var(--px) 0 0 rgba(0, 0, 0, 0.5);
+}
+.card,
+.dialog {
   background: var(--space-1);
   border: var(--px) solid var(--space-2);
   box-shadow: var(--px) var(--px) 0 0 rgba(0, 0, 0, 0.5);
@@ -248,22 +253,357 @@ a {
   }
 }
 
-/* Placeholder explore scene */
+/* ---------- Explore (screens/Explore.tsx, explore/*) ---------- */
+.explore-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.explore-head h1 {
+  margin: 16px 0 4px;
+}
+.explore-stats {
+  margin: 0;
+  font-size: 10px;
+}
+.explore-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* Same width as a .w-l px-button, so the hint ↔ button swap never shifts layout. */
+.lab-slot {
+  width: calc(20ch + 40px);
+  font-size: 10px;
+}
+.lab-hint {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+/* Scene: per-species pixel background (public/sprites/bg-explore-<id>.png, set
+   as --scene-bg) over a plain gradient that shows if the file is missing. */
 .scene {
   position: relative;
   aspect-ratio: 16 / 9;
   margin: 16px 0;
-  background: linear-gradient(var(--space-1) 0 55%, #4f6a4c 55% 100%);
+  background:
+    var(--scene-bg, none) center / 100% 100% no-repeat,
+    linear-gradient(#6b85a0 0 50%, #7c9a6e 50% 100%);
+  image-rendering: pixelated;
 }
 .scene .hotspot {
   position: absolute;
-  transform: translate(-50%, -50%);
-  padding: 6px 8px;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px; /* centred on its point without a transform */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  box-shadow: none;
+  z-index: 2;
+}
+.scene .hotspot:hover {
+  background: none;
+  filter: brightness(1.25);
+}
+.scene .hotspot:focus-visible {
+  outline: 2px dashed var(--star);
+}
+.scene .hotspot .sprite,
+.hotspot-fallback {
+  filter: var(--sprite-outline) var(--sprite-shadow);
+}
+.scene .hotspot.scanned .sprite,
+.scene .hotspot.scanned .hotspot-fallback {
+  filter: var(--sprite-outline) grayscale(0.7) brightness(0.8);
+}
+.scene .hotspot.active {
+  z-index: 6; /* stays bright above the dim overlay */
+}
+.hotspot-fallback {
+  padding: 4px 6px;
   font-size: 10px;
+  color: var(--space-0);
   background: var(--gold);
 }
-.scene .hotspot.scanned {
-  background: var(--dim);
+
+.scene-glorp {
+  position: absolute;
+  left: 2%;
+  bottom: 4%;
+  z-index: 3;
+  line-height: 0;
+}
+.scene-glorp .sprite,
+.scene-glorp svg {
+  filter: var(--sprite-outline) var(--sprite-shadow);
+}
+
+/* ~60% grey dim behind a scan bubble. */
+.scene-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(70, 72, 80, 0.6);
+  cursor: pointer;
+}
+
+/* Shared light speech-bubble frame (public/sprites/bubble.png, 9-slice, 6px corners at 2×). */
+.scan-bubble,
+.arrival-bubble {
+  position: absolute;
+  padding: 4px 6px 6px;
+  color: var(--space-0);
+  background: var(--star);
+  background-clip: padding-box;
+  border: 12px solid var(--star);
+  border-image: url("/sprites/bubble.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  filter: var(--sprite-shadow);
+  outline: none;
+}
+.scan-bubble {
+  z-index: 7;
+  width: 320px;
+  max-width: calc(100% - 24px);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+.scan-tail {
+  position: absolute;
+  z-index: 8;
+  width: 32px;
+  height: 16px;
+  margin-left: -16px;
+  line-height: 0;
+}
+.scan-tail.below {
+  scale: 1 -1; /* static flip: points up at the hotspot */
+}
+.scan-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scan-title {
+  margin: 0;
+  font-size: 12px;
+  color: var(--space-0);
+}
+.scan-fact {
+  margin: 8px 0;
+  font-size: 9px;
+  line-height: 1.7;
+}
+.scan-badge {
+  margin: 6px 0 0;
+  padding: 3px 6px;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.scan-badge.dna {
+  color: var(--star);
+  background: #3d6b52;
+}
+.scan-badge.need {
+  color: var(--space-0);
+  background: var(--era-marker, #f4d67a);
+  outline: 2px solid var(--space-0);
+}
+.scan-badge.known {
+  color: #6b6250;
+  background: #ddd5c2;
+}
+.scan-hint {
+  margin: 8px 0 0;
+  font-size: 7px;
+  color: #6b6250;
+}
+
+.arrival-bubble {
+  z-index: 7;
+  left: calc(2% + 84px);
+  bottom: calc(4% + 36px);
+  width: min(440px, calc(100% - 120px));
+}
+.arrival-bubble::after {
+  /* little tail pointing down-left at Glorp, drawn just outside the frame */
+  content: "";
+  position: absolute;
+  left: -30px;
+  bottom: -4px;
+  width: 20px;
+  height: 16px;
+  background: var(--star);
+  clip-path: polygon(100% 0, 0 100%, 100% 60%);
+}
+.arrival-text {
+  margin: 0 0 4px;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+/* Field guide card (explore/FieldGuide.tsx); frame: public/sprites/field-guide-frame.png
+   (16×16, 9-slice, 6px corners at 2×). */
+.guide-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 18, 25, 0.75);
+}
+.field-guide {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  max-height: 88vh;
+  padding: 4px 8px 8px;
+  color: var(--space-0);
+  background: #efe8d6;
+  background-clip: padding-box;
+  border: 12px solid #8c7d6a;
+  border-image: url("/sprites/field-guide-frame.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  filter: var(--sprite-shadow);
+}
+.guide-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 4px solid #d3c8ae;
+}
+.guide-head h2 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--space-0);
+}
+.guide-sci {
+  margin: 4px 0 0;
+  font-size: 9px;
+  color: #6b6250;
+}
+.guide-close {
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+}
+.guide-body {
+  overflow-y: auto;
+  padding: 0 8px 4px 0;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.guide-empty {
+  margin: 24px 0;
+  color: #6b6250;
+}
+.guide-section h3 {
+  margin: 18px 0 8px;
+  padding-bottom: 4px;
+  font-size: 12px;
+  font-weight: normal;
+  color: #3d6b52;
+  border-bottom: 2px dashed #d3c8ae;
+}
+.guide-section p {
+  margin: 0 0 10px;
+}
+.guide-intro {
+  color: #3d6b52;
+}
+.guide-rows {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.guide-row {
+  display: grid;
+  grid-template-columns: 11ch 1fr;
+  gap: 12px;
+}
+.guide-row dt {
+  color: #6b6250;
+}
+.guide-row dd {
+  margin: 0;
+}
+.guide-needs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.guide-need {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.guide-need p {
+  margin: 0;
+}
+.need-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.need-label {
+  color: #6b6250;
+  min-width: 13ch;
+}
+.need-value {
+  color: var(--space-0);
+}
+.guide-need.unknown .need-value {
+  color: #8a8070;
+  letter-spacing: 2px;
+}
+.need-why {
+  font-size: 9px;
+  color: #4d4638;
+}
+.guide-need.unknown .need-why {
+  color: #8a8070;
+}
+.need-fallback {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background: #d3c8ae;
+}
+.guide-sources {
+  margin: 0;
+  padding-left: 18px;
+}
+.guide-sources a {
+  color: #3d5c8a;
+}
+
+@media (max-width: 600px) {
+  .guide-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .arrival-bubble {
+    left: 4%;
+    bottom: calc(4% + 72px);
+    width: 92%;
+  }
+  .arrival-bubble::after {
+    display: none;
+  }
 }
 
 .blink {

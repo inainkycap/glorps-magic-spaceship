@@ -8,8 +8,11 @@ import {
   travelCost,
   travelCostExact,
 } from "./fuel";
+import dodo from "../mocks/dodo.json";
+import pigeon from "../mocks/passenger_pigeon.json";
+import { discoveryMessage, formatNeed, knownMessage, NEED_KEYS, needKeysOf, revealsOf } from "./needs";
 import { describeJump, formatJumpShort } from "./timeJump";
-import type { Place } from "../types";
+import type { NeedKey, Place, Species } from "../types";
 
 const at = (era_year: number, lat = 0, lon = 0): Place => ({ lat, lon, era_year });
 
@@ -61,6 +64,43 @@ describe("travel cost", () => {
     const exact = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K * 426 * 3.13;
     expect(travelCostExact(at(2026), at(1600))).toBeCloseTo(exact, 9);
     expect(travelCost(at(2026), at(1600))).toBe(Math.ceil(exact));
+  });
+});
+
+describe("need reveals", () => {
+  it("normalises one key, several keys, unknown keys and absence", () => {
+    expect(revealsOf({ reveals: "terrain" })).toEqual(["terrain"]);
+    expect(revealsOf({ reveals: ["pressure", "oxygen", "oxygen"] })).toEqual(["oxygen", "pressure"]);
+    expect(revealsOf({ reveals: ["bogus" as NeedKey] })).toEqual([]);
+    expect(revealsOf({})).toEqual([]);
+    expect(discoveryMessage(["oxygen", "pressure"])).toBe("New: ideal oxygen and air pressure discovered!");
+    expect(discoveryMessage(["terrain", "humidity", "pressure"])).toBe(
+      "New: ideal terrain, humidity and air pressure discovered!",
+    );
+    expect(knownMessage(["oxygen", "pressure"])).toBe("Ideal oxygen and air pressure: in your field guide");
+  });
+
+  it.each([
+    ["dodo", dodo],
+    ["passenger_pigeon", pigeon],
+  ])("every need of %s is revealed by some hotspot", (_, json) => {
+    const s = json as unknown as Species;
+    const revealable = new Set(s.hotspots.flatMap((h) => revealsOf(h)));
+    const needs = needKeysOf(s.needs);
+    expect(needs).toEqual(NEED_KEYS); // all five needs have content
+    for (const k of needs) expect(revealable.has(k), `${k} is revealable`).toBe(true);
+  });
+});
+
+describe("need formatting", () => {
+  it("formats ranges, one-sided bounds, terrain and empty needs", () => {
+    expect(formatNeed({ min: "~18", max: "~30", unit: "°C" })).toBe("~18 to ~30 °C");
+    expect(formatNeed({ min: 95, max: 102, unit: "kPa" })).toBe("95 to 102 kPa");
+    expect(formatNeed({ min: 5, unit: "%" })).toBe("at least 5 %");
+    expect(formatNeed({ max: "?", unit: "%" })).toBe("up to ? %");
+    expect(formatNeed({ value: "Forest floor" })).toBe("Forest floor");
+    expect(formatNeed({ why: "only a reason" })).toBeNull();
+    expect(discoveryMessage("pressure")).toBe("New: ideal air pressure discovered!");
   });
 });
 

@@ -53,21 +53,25 @@ function PixelGridGlorp({ size, flip }: { size: number; flip: boolean }) {
 
 const FRAME = 32; // source px per frame
 
+/** Frames in each sheet (see ART_TODO.md). */
+const SHEET_FRAMES = { idle: 4, fly: 4, talk: 2 } as const;
+
 export default function GlorpSprite({
   size = 64,
   flip = false,
   className,
   variant = "idle",
-  frames = 4,
+  frames,
   fps = 6,
 }: {
   size?: number; // width and height in CSS px (use a multiple of 32 for crisp pixels)
   flip?: boolean; // face left
   className?: string;
-  variant?: "idle" | "fly"; // which sheet: glorp-idle.png / glorp-fly.png
-  frames?: number; // frames in the sheet's horizontal strip
+  variant?: "idle" | "fly" | "talk"; // which sheet: glorp-idle.png / glorp-fly.png / glorp-talk.png
+  frames?: number; // frames in the sheet's horizontal strip (default: per variant)
   fps?: number;
 }) {
+  frames ??= SHEET_FRAMES[variant];
   return (
     <Sprite
       name={`glorp-${variant}`}
