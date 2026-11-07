@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Raw Natural Earth rasters for scripts/make-terrain-map.mjs (large; regenerate public/map/world.png from them)
+scripts/raw/
+*.tif
+*.tiff

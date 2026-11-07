@@ -1,25 +1,30 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { listSpecies } from "../api";
-import worldMap from "../assets/world-map.png";
 import EraTimeline from "../components/EraTimeline";
-import GlorpSprite from "../components/GlorpSprite";
 import Status from "../components/Status";
 import TravelAnimation from "../components/TravelAnimation";
-import { HOME, formatYear, isPlace, project, samePlace } from "../geo";
+import { HOME, isPlace, samePlace } from "../geo";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
+import GlorpMarker from "../map/GlorpMarker";
+import PinLayer from "../map/PinLayer";
+import WorldMap from "../map/WorldMap";
 import type { Place, SpeciesSummary } from "../types";
 
 interface Trip {
   from: Place;
   to: Place;
-  speciesId: string;
+  /** Where to go on arrival; null for a pure time jump from the timeline. */
+  speciesId: string | null;
 }
 
 const placeOf = (s: SpeciesSummary): Place => ({ lat: s.lat, lon: s.lon, era_year: s.era_year });
 
-/** Timeline range: every species era, Glorp's era and home, padded to whole centuries. */
+/** Keep Glorp off the very top/bottom rows of the map, where it's hard to see. */
+const MAX_HOVER_LAT = 80;
+
+/** Timeline range: all given years, padded out to whole centuries. */
 function eraRange(years: number[]): [number, number] {
   const lo = Math.min(...years);
   const hi = Math.max(...years);
@@ -32,11 +37,20 @@ export default function MapScreen() {
   const navigate = useNavigate();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [tripEra, setTripEra] = useState<number | null>(null);
+  const [targetEra, setTargetEra] = useState<number | null>(null);
 
   const all = state.status === "ok" ? state.data : [];
   // Until the backend adds lat/lon/era_year (contract 2026-11-07), skip species without them.
   const species = all.filter((s) => isPlace(placeOf(s)));
   const missing = all.length - species.length;
+
+  const currentEra = trip ? (tripEra ?? trip.from.era_year) : glorp.era_year;
+  // The era we're heading to: the trip's destination while travelling, else the
+  // era picked with Further back / Forward (default: where Glorp already is).
+  const target = trip ? trip.to.era_year : (targetEra ?? glorp.era_year);
+  const eras = [...new Set(species.map((s) => s.era_year))].sort((a, b) => a - b);
+  const earlier = eras.filter((e) => e < target).at(-1);
+  const later = eras.find((e) => e > target);
 
   const travelTo = (s: SpeciesSummary) => {
     if (trip) return;
@@ -48,61 +62,59 @@ export default function MapScreen() {
     setTrip({ from: glorp, to, speciesId: s.id });
   };
 
+  const timeTravel = () => {
+    if (trip || target === glorp.era_year) return;
+    setTrip({ from: glorp, to: { ...glorp, era_year: target }, speciesId: null });
+  };
+
+  const hoverTo = (lon: number, lat: number) => {
+    if (trip) return;
+    setGlorp({ lon, lat: Math.max(-MAX_HOVER_LAT, Math.min(MAX_HOVER_LAT, lat)), era_year: glorp.era_year });
+  };
+
   const arrive = () => {
     if (!trip) return;
     setGlorp(trip.to);
-    navigate(`/explore/${trip.speciesId}`);
+    setTrip(null);
+    setTripEra(null);
+    setTargetEra(null);
+    if (trip.speciesId) navigate(`/explore/${trip.speciesId}`);
   };
 
-  const glorpAt = project(glorp.lat, glorp.lon);
-  const range = eraRange([...species.map((s) => s.era_year), glorp.era_year, HOME.era_year]);
+  const range = eraRange([...eras, glorp.era_year, HOME.era_year, target]);
 
   return (
     <div className="map-screen">
+      <WorldMap
+        initialCenter={glorp}
+        home={glorp}
+        era={currentEra}
+        interactive={trip === null}
+        onMapClick={hoverTo}
+      >
+        <PinLayer
+          species={species}
+          currentEra={currentEra}
+          saved={progress.saved}
+          disabled={trip !== null}
+          onPick={travelTo}
+        />
+        {trip ? (
+          <TravelAnimation from={trip.from} to={trip.to} onEraChange={setTripEra} onDone={arrive} />
+        ) : (
+          <GlorpMarker at={glorp} />
+        )}
+      </WorldMap>
+
       <header className="map-hud">
         <span className="brand">Glorp's Magic Spaceship</span>
-        <Link to="/sanctuary">Sanctuary ▶</Link>
+        <span className="map-hint">Click a pin to travel · click the map to hover · drag to pan</span>
+        <Link className="px-button" to="/sanctuary">
+          Sanctuary
+        </Link>
       </header>
 
-      <div className="map-stage">
-        <div className="map-box">
-          <img className="map-img" src={worldMap} alt="World map" draggable={false} />
-
-          {species.map((s) => {
-            const p = project(s.lat, s.lon);
-            const saved = progress.saved.includes(s.id);
-            return (
-              <button
-                key={s.id}
-                className={`pin ${saved ? "saved" : ""}`}
-                style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                onClick={() => travelTo(s)}
-                disabled={trip !== null}
-                aria-label={`Travel to ${s.name}, ${s.location}, ${formatYear(s.era_year)}`}
-              >
-                <span className="pin-head" aria-hidden="true" />
-                <span className="pin-label">
-                  {s.name}
-                  <span className="muted"> · {formatYear(s.era_year)}</span>
-                </span>
-              </button>
-            );
-          })}
-
-          {trip ? (
-            <TravelAnimation
-              from={trip.from}
-              to={trip.to}
-              onEraChange={setTripEra}
-              onDone={arrive}
-            />
-          ) : (
-            <div className="map-glorp" style={{ left: `${glorpAt.x}%`, top: `${glorpAt.y}%` }}>
-              <GlorpSprite size={48} />
-            </div>
-          )}
-        </div>
-
+      {(state.status !== "ok" || missing > 0) && (
         <div className="map-status">
           <Status state={state} />
           {missing > 0 && (
@@ -111,11 +123,16 @@ export default function MapScreen() {
             </p>
           )}
         </div>
-      </div>
+      )}
 
       <EraTimeline
-        current={trip ? (tripEra ?? trip.from.era_year) : glorp.era_year}
+        current={currentEra}
+        target={target}
         range={range}
+        busy={trip !== null}
+        onBack={earlier !== undefined ? () => setTargetEra(earlier) : null}
+        onForward={later !== undefined ? () => setTargetEra(later) : null}
+        onTravel={timeTravel}
         markers={species.map((s) => ({
           id: s.id,
           year: s.era_year,
