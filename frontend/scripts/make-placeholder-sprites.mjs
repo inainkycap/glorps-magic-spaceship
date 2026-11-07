@@ -3,7 +3,7 @@
 // see ART_TODO.md. Re-running this script OVERWRITES public/sprites/*.png,
 // so pass the names you want regenerated once real art has landed:
 //   npm run sprites:placeholders                 # all
-//   npm run sprites:placeholders -- pin arrow-left
+//   npm run sprites:placeholders -- pin era-marker
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -25,6 +25,9 @@ const C = {
   light: hex("#e2c991"),
   lightOff: hex("#8c7d6a"),
   thruster: hex("#d99a9a"),
+  thrusterDark: hex("#a86b72"),
+  era: hex("#f4d67a"), // high-contrast era markers
+  eraHi: hex("#fff4d0"),
   flame: hex("#e2c991"),
   sand: hex("#e2c991"),
   sandDark: hex("#bfa47e"),
@@ -128,14 +131,26 @@ function icon(draw) {
   draw(c);
   return c.outline();
 }
-const arrow = (dir) =>
-  icon((c) => {
-    for (let i = 0; i < 6; i++) {
-      const x = dir < 0 ? 3 + i : 12 - i;
-      c.rect(x, 7 - i, 1, i * 2 + 2, C.ink);
+/** 16×16 diamond: filled, or a ring (`hole` > 0) for the outlined variant. */
+function diamond({ fill, hole = 0, highlight = null }) {
+  const c = canvas(16, 16);
+  for (let y = 0; y < 16; y++)
+    for (let x = 0; x < 16; x++) {
+      const d = Math.abs(x - 7.5) + Math.abs(y - 7.5);
+      if (d <= 7 && d > hole) c.set(x, y, fill);
     }
-    c.rect(dir < 0 ? 8 : 3, 6, 5, 4, C.ink);
-  });
+  if (highlight) c.rect(5, 5, 2, 2, highlight);
+  return c.outline();
+}
+
+/** Rounded 1px-outlined panel, for 9-slice frames. */
+function panel(w, h, fill, edge = C.outline) {
+  const c = canvas(w, h);
+  c.rect(1, 0, w - 2, h, edge);
+  c.rect(0, 1, w, h - 2, edge);
+  c.rect(1, 1, w - 2, h - 2, fill);
+  return c;
+}
 
 mkdirSync(outDir, { recursive: true });
 const only = new Set(process.argv.slice(2));
@@ -148,51 +163,96 @@ if (want("glorp-fly"))
   save("glorp-fly", [0, 1, 2, 3].map((k) => glorp({ dy: [0, 1, 0, -1][k], lightsOn: 1, flame: [2, 4, 3, 5][k] })));
 if (want("pin")) save("pin", [pin(C.sand, C.outline)]);
 if (want("pin-saved")) save("pin-saved", [pin(C.mint, C.outline)]);
-if (want("timeline-glorp"))
-  save(
-    "timeline-glorp",
-    [0, -1].map((dy) => {
-      const c = canvas(16, 16);
-      c.rect(6, 4 + dy, 4, 4, C.mint);
-      c.rect(6, 5 + dy, 1, 1, C.eye);
-      c.rect(9, 5 + dy, 1, 1, C.eye);
-      c.rect(2, 8 + dy, 12, 3, C.hull);
-      c.rect(4, 11 + dy, 8, 1, C.hullShadow);
-      c.rect(4, 9 + dy, 1, 1, C.light);
-      c.rect(11, 9 + dy, 1, 1, C.light);
-      return c.outline();
-    }),
-  );
-if (want("timeline-species"))
-  save("timeline-species", [
+/** Small timeline saucer; `ghost` = pale, see-through version for the preview target. */
+function miniGlorp(dy, ghost = false) {
+  const c = canvas(16, 16);
+  const tint = (col) => (ghost ? [...col.slice(0, 3).map((v) => Math.round(v + (255 - v) * 0.5)), 170] : col);
+  c.rect(6, 4 + dy, 4, 4, tint(C.mint));
+  c.rect(6, 5 + dy, 1, 1, tint(C.eye));
+  c.rect(9, 5 + dy, 1, 1, tint(C.eye));
+  c.rect(2, 8 + dy, 12, 3, tint(C.hull));
+  c.rect(4, 11 + dy, 8, 1, tint(C.hullShadow));
+  c.rect(4, 9 + dy, 1, 1, tint(C.light));
+  c.rect(11, 9 + dy, 1, 1, tint(C.light));
+  return c.outline(ghost ? hex("#1d2230", 120) : C.outline);
+}
+if (want("timeline-glorp")) save("timeline-glorp", [0, -1].map((dy) => miniGlorp(dy)));
+if (want("timeline-glorp-ghost")) save("timeline-glorp-ghost", [miniGlorp(0, true)]);
+if (want("timeline-arrowhead"))
+  save("timeline-arrowhead", [
     (() => {
+      // 8×8, points RIGHT (flipped by CSS for trips into the past)
       const c = canvas(8, 8);
-      for (let i = 0; i < 3; i++) c.rect(3 - i, 1 + i, 2 + i * 2, 1, C.sand), c.rect(3 - i, 6 - i, 2 + i * 2, 1, C.sand);
+      for (let i = 0; i < 4; i++) c.rect(1 + i, i + 1, 1, 6 - i * 2, C.mint);
       return c.outline();
     })(),
   ]);
-if (want("arrow-left")) save("arrow-left", [arrow(-1)]);
-if (want("arrow-right")) save("arrow-right", [arrow(1)]);
+if (want("era-marker")) save("era-marker", [diamond({ fill: C.era, hole: 3.5 })]);
+if (want("era-marker-current")) save("era-marker-current", [diamond({ fill: C.era, highlight: C.eraHi })]);
 if (want("icon-plus")) save("icon-plus", [icon((c) => (c.rect(6, 2, 4, 12, C.ink), c.rect(2, 6, 12, 4, C.ink)))]);
 if (want("icon-minus")) save("icon-minus", [icon((c) => c.rect(2, 6, 12, 4, C.ink))]);
-if (want("icon-recenter"))
-  save("icon-recenter", [
+if (want("btn_recenter_glorp"))
+  save("btn_recenter_glorp", [
     icon((c) => {
-      c.disc(7.5, 7.5, 6, C.ink);
-      c.disc(7.5, 7.5, 4, [0, 0, 0, 0]);
-      c.rect(6, 6, 4, 4, C.ink);
+      // Glorp's face: antenna, round head, eyes, smile
+      c.rect(7, 0, 2, 1, C.mint);
+      c.rect(7, 1, 2, 3, C.mintDark);
+      c.rect(4, 4, 8, 10, C.mint);
+      c.rect(3, 5, 10, 8, C.mint);
+      c.rect(5, 7, 2, 3, C.eye);
+      c.rect(9, 7, 2, 3, C.eye);
+      c.rect(5, 7, 1, 1, C.ink);
+      c.rect(9, 7, 1, 1, C.ink);
+      c.rect(6, 11, 4, 1, C.mintDark);
     }),
   ]);
-if (want("icon-time"))
-  save("icon-time", [
+if (want("fuel-icon"))
+  save("fuel-icon", [
     icon((c) => {
-      c.rect(3, 1, 10, 2, C.ink);
-      c.rect(3, 13, 10, 2, C.ink);
-      for (let i = 0; i < 5; i++) {
-        c.rect(4 + i, 3 + i, 8 - i * 2, 1, i < 2 ? C.sand : C.ink);
-        c.rect(4 + i, 12 - i, 8 - i * 2, 1, i < 3 ? C.sand : C.ink);
-      }
+      // jerrycan
+      c.rect(4, 1, 5, 1, C.thruster);
+      c.rect(4, 2, 1, 2, C.thruster);
+      c.rect(8, 2, 1, 2, C.thruster);
+      c.rect(10, 2, 3, 2, C.hullShadow); // spout
+      c.rect(3, 4, 10, 11, C.thruster);
+      c.rect(4, 5, 8, 1, C.ink); // highlight
+      c.rect(5, 8, 6, 1, C.thrusterDark);
+      c.rect(5, 11, 6, 1, C.thrusterDark);
     }),
+  ]);
+if (want("fuel-gauge"))
+  save("fuel-gauge", [
+    (() => {
+      // 48×10 frame; the 44×6 window at (2,2) stays transparent for the CSS fill
+      const c = canvas(48, 10);
+      c.rect(0, 0, 48, 10, C.outline);
+      c.rect(1, 1, 46, 8, C.ink);
+      c.rect(2, 2, 44, 6, [0, 0, 0, 0]);
+      for (const k of [1, 2, 3]) c.rect(2 + Math.round((44 * k) / 4), 2, 1, 2, C.outline); // quarter ticks
+      return c;
+    })(),
+  ]);
+if (want("bubble"))
+  save("bubble", [
+    (() => {
+      // 16×16, 9-slice with 6px corners (see .travel-bubble in index.css)
+      const c = panel(16, 16, C.ink);
+      c.rect(1, 14, 14, 1, C.hull); // soft inner bottom edge
+      return c;
+    })(),
+  ]);
+if (want("bubble-tail"))
+  save("bubble-tail", [
+    (() => {
+      // 16×8, points down; its top row overlaps the bubble's bottom edge
+      const c = canvas(16, 8);
+      for (let y = 0; y < 7; y++) {
+        const half = 7 - y;
+        c.rect(8 - half, y, half * 2, 1, C.outline);
+        if (half > 1) c.rect(9 - half, y, half * 2 - 2, 1, C.ink);
+      }
+      return c;
+    })(),
   ]);
 if (want("button"))
   save("button", [

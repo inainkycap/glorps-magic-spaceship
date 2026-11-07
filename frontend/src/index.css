@@ -8,8 +8,14 @@
   --glorp: #9fd3b4; /* accent (Glorp mint) */
   --gold: #e2c991; /* highlights (sand) */
   --danger: #d99a9a;
-  --map-ocean: #4c6580; /* deep-ocean colour in world.png */
+  --map-ocean: #435466; /* deep-ocean colour in world.png / world-simple.png */
   --px: 4px; /* one "pixel" for borders/shadows */
+  /* Makes map sprites (pins, Glorp) pop off the terrain: a dark 1px outline
+     (four stacked 1px shadows, corners included) plus a soft drop shadow. */
+  --outline-dark: #0f1219;
+  --sprite-outline: drop-shadow(1px 0 0 var(--outline-dark)) drop-shadow(-1px 0 0 var(--outline-dark))
+    drop-shadow(0 1px 0 var(--outline-dark)) drop-shadow(0 -1px 0 var(--outline-dark));
+  --sprite-shadow: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.5));
 
   font-family: "Press Start 2P", ui-monospace, monospace;
   font-size: 12px;
@@ -110,11 +116,16 @@ a {
   color: var(--dim);
   text-decoration: none;
 }
+/* Active link: colour + underline only, so nothing shifts. */
 .navbar nav a.active {
   color: var(--glorp);
+  text-decoration: underline;
+  text-underline-offset: 6px;
 }
-.navbar nav a.active::before {
-  content: "▶ ";
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 /* Pixel boxes: hard edges, stepped shadow */
@@ -143,14 +154,14 @@ a {
 }
 
 /* ---------- Buttons ----------
-   Base styles use :where() (zero specificity) so any component class wins,
-   and the press effect uses the `translate` property, which stacks with a
-   component's own `transform` instead of replacing it. (v1 bug: the global
-   `button:active { transform }` overrode the map pins' centring transform,
-   so pins jumped out from under the cursor and the click never landed.) */
+   Base styles use :where() (zero specificity) so any component class wins.
+   UI never moves: hover and press change colour/brightness only (no
+   translate/scale). A v1 bug came from a press transform overriding the map
+   pins' positioning, so pins jumped out from under the cursor. */
 :where(.button, button) {
   display: inline-block;
   font: inherit;
+  text-align: center;
   color: var(--space-0);
   background: var(--glorp);
   border: none;
@@ -167,7 +178,19 @@ a {
   cursor: not-allowed;
 }
 :where(.button, button):active:not(:disabled) {
-  translate: 2px 2px;
+  filter: brightness(0.85);
+}
+
+/* Fixed button widths, so a label change ("Run…" → "Simulating…") never
+   shifts the layout. Sized for the monospace pixel font (1ch = one glyph). */
+.w-s {
+  width: calc(9ch + 40px);
+}
+.w-m {
+  width: calc(13ch + 40px);
+}
+.w-l {
+  width: calc(20ch + 40px);
 }
 
 /* 9-slice pixel button (public/sprites/button.png, 12×12 with 4px corners, drawn at 2×).
@@ -175,6 +198,7 @@ a {
 .px-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 4px 8px;
   font-size: 10px;
@@ -196,16 +220,11 @@ a {
 .px-button:disabled {
   opacity: 0.45;
 }
+.px-button:active:not(:disabled) {
+  filter: brightness(0.85);
+}
 .px-button.primary {
   color: var(--gold);
-}
-.px-button.primary.ready {
-  animation: ready-pulse 1.2s steps(2) infinite;
-}
-@keyframes ready-pulse {
-  50% {
-    filter: brightness(1.3);
-  }
 }
 .px-button.icon {
   padding: 2px;
@@ -314,8 +333,9 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px 24px;
-  background: linear-gradient(rgba(29, 34, 48, 0.85), transparent);
+  padding: 8px 16px;
+  background: rgba(29, 34, 48, 0.96);
+  border-bottom: var(--px) solid var(--space-2);
   pointer-events: none;
 }
 .map-hud > * {
@@ -347,7 +367,7 @@ a {
   left: 16px;
   right: 16px;
   padding: 8px 12px;
-  background: rgba(29, 34, 48, 0.85);
+  background: rgba(29, 34, 48, 0.96);
 }
 .map-status p {
   margin: 0;
@@ -394,20 +414,25 @@ a {
   z-index: 2;
 }
 .pin.other-era {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 .pin.other-era:hover,
-.pin.other-era:focus-visible {
+.pin.other-era:focus-visible,
+.pin.other-era.selected {
   opacity: 1;
+}
+.pin-sprite,
+.pin-fallback {
+  filter: var(--sprite-outline) var(--sprite-shadow);
 }
 .pin.in-era .pin-sprite,
 .pin.in-era .pin-fallback {
-  filter: drop-shadow(0 0 4px var(--gold));
+  filter: var(--sprite-outline) drop-shadow(0 0 4px var(--gold)) var(--sprite-shadow);
   animation: pin-glow 1.6s ease-in-out infinite;
 }
 @keyframes pin-glow {
   50% {
-    filter: drop-shadow(0 0 10px var(--gold)) drop-shadow(0 0 2px #fff);
+    filter: var(--sprite-outline) drop-shadow(0 0 10px var(--gold)) var(--sprite-shadow);
   }
 }
 .pin-label {
@@ -420,7 +445,7 @@ a {
   line-height: 1.2;
   white-space: nowrap;
   color: var(--star);
-  background: rgba(29, 34, 48, 0.9);
+  background: rgba(29, 34, 48, 0.96);
   border: 2px solid var(--space-2);
 }
 .pin-year {
@@ -432,6 +457,14 @@ a {
 .pin:hover .pin-label,
 .pin:focus-visible .pin-label {
   border-color: var(--star);
+}
+.pin.selected .pin-label {
+  color: var(--space-0);
+  background: var(--gold);
+  border-color: var(--star);
+}
+.pin.selected .pin-year {
+  color: var(--space-1);
 }
 .pin-fallback {
   width: 24px;
@@ -454,6 +487,10 @@ a {
   transform: translate(-50%, 4px);
   pointer-events: none;
   z-index: 3;
+}
+.glorp-anchor .sprite,
+.glorp-anchor svg {
+  filter: var(--sprite-outline) var(--sprite-shadow);
 }
 
 .travel {
@@ -478,31 +515,19 @@ a {
 
 /* ---------- Era timeline ---------- */
 .timeline {
+  --era-marker: #f4d67a; /* high contrast against the dark panel */
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 40px;
-  padding: 10px 48px 26px 16px;
-  background: rgba(29, 34, 48, 0.9);
+  padding: 8px 64px 24px 48px;
+  background: rgba(29, 34, 48, 0.97);
   border-top: var(--px) solid var(--space-2);
-}
-.timeline-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.timeline-target-label {
-  color: var(--star);
 }
 .timeline-track {
   position: relative;
-  flex: 1 1 320px;
-  height: 32px;
-  margin-top: 28px; /* room for the year label above the marker */
+  height: 40px;
+  margin-top: 60px; /* room for Glorp and the year label above the line */
 }
 .timeline-line,
 .timeline-fill {
@@ -526,61 +551,164 @@ a {
   font-size: 8px;
   color: var(--dim);
 }
-.timeline-species {
+/* Species era markers: 32px (16×16 sprite at 2×). Filled = current era,
+   outlined = other eras. Positioned with margins, never transforms. */
+.era-marker {
   position: absolute;
   top: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  padding: 0;
   line-height: 0;
-  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  box-shadow: none;
+  z-index: 2;
 }
-.timeline-species.current {
-  filter: drop-shadow(0 0 4px var(--gold));
+.era-marker:hover:not(:disabled) {
+  background: none;
+  filter: brightness(1.25);
 }
-.timeline-species-fallback {
+.era-marker:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.era-marker:focus-visible {
+  outline: 2px dashed var(--star);
+  outline-offset: 2px;
+}
+.era-marker .sprite,
+.era-marker-fallback {
+  filter: drop-shadow(0 2px 0 var(--outline-dark));
+}
+.era-marker-fallback {
   display: block;
-  width: 10px;
-  height: 10px;
+  width: 20px;
+  height: 20px;
+  margin: 6px;
   rotate: 45deg;
-  background: var(--gold);
+  border: 4px solid var(--era-marker);
+  background: var(--space-0);
 }
-.timeline-target {
+.era-marker.current .era-marker-fallback {
+  background: var(--era-marker);
+}
+
+/* Target of the time-travel preview: bright outline; pulses (glow only, no movement). */
+.era-marker.target .sprite,
+.era-marker.target .era-marker-fallback {
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+    drop-shadow(0 0 6px var(--era-marker));
+  animation: target-pulse 0.9s steps(2) infinite;
+}
+@keyframes target-pulse {
+  50% {
+    filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+      drop-shadow(0 0 14px var(--era-marker)) brightness(1.25);
+  }
+}
+.era-marker.target-light .sprite,
+.era-marker.target-light .era-marker-fallback {
+  filter: drop-shadow(1px 0 0 var(--star)) drop-shadow(-1px 0 0 var(--star)) drop-shadow(0 1px 0 var(--star))
+    drop-shadow(0 -1px 0 var(--star));
+}
+
+/* Time-travel preview arrow (EraTimeline → TimeArrow): pixel dots along a low
+   arc, an arrowhead (right = future, left = past) and a "+270 yrs" label. */
+.timeline-arrow {
   position: absolute;
-  top: 50%;
-  width: 18px;
-  height: 18px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  border: 2px dashed var(--gold);
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
 }
+.timeline-arrow.hover {
+  opacity: 0.5;
+}
+.arrow-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--glorp);
+  box-shadow: 1px 1px 0 var(--outline-dark);
+}
+.arrow-head {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  line-height: 0;
+  filter: drop-shadow(1px 1px 0 var(--outline-dark));
+}
+.arrow-head-fallback {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 2px 0 0 2px;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 12px solid var(--glorp);
+}
+.arrow-head-fallback.left {
+  border-left: none;
+  border-right: 12px solid var(--glorp);
+}
+.arrow-label {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 2px 5px;
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--space-0);
+  background: var(--glorp);
+}
+.timeline-arrow.hover .arrow-label {
+  color: var(--glorp);
+  background: var(--space-0);
+  outline: 1px solid var(--glorp);
+}
+.timeline-ghost {
+  position: absolute;
+  margin-left: -16px;
+  line-height: 0;
+  opacity: 0.45;
+  z-index: 1;
+}
+
+/* Glorp's position: vertical rule through the line, Glorp above it, year above Glorp. */
 .timeline-now {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 0;
+  z-index: 1;
 }
 .timeline-now-rule {
   position: absolute;
   left: -1px;
-  top: -8px;
-  bottom: -8px;
+  top: -40px;
+  bottom: -6px;
   width: 2px;
   background: var(--glorp);
 }
-.timeline-now .sprite,
-.timeline-now-fallback {
+/* --lift (set inline during a trip) raises Glorp onto the preview arc. */
+.timeline-now-glorp {
   position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
+  left: -16px;
+  bottom: calc(50% + 16px + var(--lift, 0px));
+  line-height: 0;
 }
 .timeline-now-fallback {
-  width: 20px;
-  height: 12px;
+  display: block;
+  width: 24px;
+  height: 14px;
+  margin: 0 4px 4px;
   background: var(--glorp);
   border: 2px solid var(--space-0);
 }
 .timeline-now-year {
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(50% + 50px + var(--lift, 0px));
   left: 0;
   transform: translateX(-50%);
   padding: 3px 6px;
@@ -591,6 +719,129 @@ a {
   background: var(--glorp);
 }
 
+/* ---------- Fuel gauge (components/FuelGauge.tsx) ---------- */
+.fuel-gauge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1;
+}
+.fuel-bar {
+  position: relative;
+  display: inline-block;
+  width: 96px;
+  height: 20px;
+  flex: none;
+}
+.fuel-fill {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  height: 12px;
+  background: var(--glorp);
+}
+.fuel-gauge.low .fuel-fill {
+  background: var(--danger);
+}
+.fuel-frame {
+  position: absolute;
+  inset: 0;
+}
+.fuel-frame-fallback {
+  border: 4px solid var(--star);
+  box-shadow: 0 0 0 2px var(--space-0);
+}
+.fuel-value {
+  width: 3ch; /* fixed: 100 → 5 never shifts anything */
+  text-align: right;
+}
+.fuel-gauge.low .fuel-value {
+  color: var(--danger);
+}
+
+/* ---------- Travel bubble (map/TravelBubble.tsx) ----------
+   9-slice frame: public/sprites/bubble.png (16×16, 6px corners) drawn at 2×. */
+.travel-bubble {
+  position: absolute;
+  z-index: 6;
+  padding: 4px 6px 6px;
+  color: var(--space-0);
+  background: var(--star);
+  background-clip: padding-box;
+  border: 12px solid var(--star);
+  border-image: url("/sprites/bubble.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  filter: var(--sprite-shadow);
+  cursor: default;
+}
+.bubble-tail {
+  position: absolute;
+  width: 32px;
+  height: 16px;
+  margin-left: -16px;
+  line-height: 0;
+}
+.travel-bubble.above .bubble-tail {
+  top: calc(100% + 10px); /* just past the frame's bottom border */
+}
+.travel-bubble.below .bubble-tail {
+  bottom: calc(100% + 10px);
+  scale: 1 -1; /* static flip so it points up at the pin */
+}
+.bubble-tail-fallback {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0 auto;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 14px solid var(--star);
+}
+.bubble-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--space-0);
+}
+.bubble-sub {
+  margin: 0 0 10px;
+  font-size: 9px;
+  color: var(--space-2);
+}
+.bubble-jump {
+  margin: 0 0 8px;
+  font-size: 9px;
+  line-height: 1.6;
+  color: #3d6b52; /* dark mint: readable on the light bubble */
+}
+/* Pixel "→" (Press Start 2P has no arrow glyph). */
+.inline-arrow {
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  vertical-align: 0;
+  background: currentColor;
+  clip-path: polygon(0 37.5%, 50% 37.5%, 50% 0, 100% 50%, 50% 100%, 50% 62.5%, 0 62.5%);
+}
+.bubble-cost {
+  margin: 0 0 8px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.bubble-warning {
+  margin: 0 0 8px;
+  padding: 4px 6px;
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--star);
+  background: #8a4f57;
+}
+.bubble-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 @media (max-width: 700px) {
   .map-hint {
     display: none;
@@ -599,7 +850,10 @@ a {
     font-size: 9px;
   }
   .timeline {
-    padding: 8px 32px 24px 16px;
+    padding: 8px 32px 24px 24px;
+  }
+  .map-hud {
+    flex-wrap: wrap;
   }
   .px-button {
     font-size: 8px;
@@ -614,12 +868,10 @@ a {
   .blink,
   .sprite-anim,
   .map-layer.fading-in,
-  .px-button.primary.ready,
   .pin.in-era .pin-sprite,
-  .pin.in-era .pin-fallback {
+  .pin.in-era .pin-fallback,
+  .era-marker.target .sprite,
+  .era-marker.target .era-marker-fallback {
     animation: none;
-  }
-  :where(.button, button):active:not(:disabled) {
-    translate: none;
   }
 }

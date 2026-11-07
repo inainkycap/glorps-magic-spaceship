@@ -16,14 +16,20 @@ export default function PinLayer({
   species,
   currentEra,
   saved,
+  selectedId,
   disabled,
   onPick,
+  onHover,
 }: {
   species: SpeciesSummary[];
   currentEra: number;
   saved: string[];
+  /** Pin whose travel bubble is open. */
+  selectedId: string | null;
   disabled: boolean;
   onPick: (s: SpeciesSummary) => void;
+  /** Pointer or keyboard focus entered (id) / left (null) a pin. */
+  onHover: (id: string | null) => void;
 }) {
   const view = useMapView();
   return (
@@ -35,8 +41,13 @@ export default function PinLayer({
         return view.screenXs(s.lon).map((x, k) => (
           <div key={`${s.id}:${k}`} className="pin-anchor" style={{ left: x, top: y }}>
             <button
-              className={`pin ${inEra ? "in-era" : "other-era"} ${isSaved ? "saved" : ""}`}
+              className={`pin ${inEra ? "in-era" : "other-era"} ${isSaved ? "saved" : ""} ${s.id === selectedId ? "selected" : ""}`}
+              aria-expanded={s.id === selectedId}
               onClick={() => onPick(s)}
+              onPointerEnter={() => onHover(s.id)}
+              onPointerLeave={() => onHover(null)}
+              onFocus={() => onHover(s.id)}
+              onBlur={() => onHover(null)}
               disabled={disabled}
               aria-label={`Travel to ${s.name}, ${s.location}, ${formatYear(s.era_year)}${isSaved ? " (saved)" : ""}`}
             >

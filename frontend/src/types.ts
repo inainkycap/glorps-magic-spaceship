@@ -115,4 +115,5 @@ export interface Progress {
   scanned: Record<string, string[]>; // species id -> scanned hotspot ids
   saved: string[]; // species ids saved to the sanctuary
   glorp?: Place; // Glorp's current location; absent = home (see geo.ts)
+  fuel?: number; // absent = FUEL_START (see game/fuel.ts)
 }

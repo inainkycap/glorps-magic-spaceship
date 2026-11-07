@@ -23,18 +23,26 @@ import {
   type Camera,
   type Viewport,
 } from "./camera";
-import { mapForEra } from "./eras";
+import { mapImageFor } from "./eras";
 import { MapViewContext, type MapView } from "./MapViewContext";
 
 const DRAG_THRESHOLD_PX = 5;
 const ZOOM_STEP = 1.5;
 const CROSSFADE_MS = 600;
 
+/** Ask the map to bring a point into view. Bump `seq` to repeat a request. */
+export interface FocusRequest {
+  lon: number;
+  lat: number;
+  seq: number;
+}
+
 /**
  * Full-bleed wrapping world map with a custom camera:
  * drag to pan, wheel / pinch to zoom toward the pointer, +/−/recenter buttons,
  * arrow keys and +/- when focused. `children` are screen-space overlays that
- * read the camera via useMapView().
+ * read the camera via useMapView(); mark interactive overlay UI with
+ * `data-map-ui` so presses on it don't pan the map or count as map clicks.
  */
 export default function WorldMap({
   initialCenter,
@@ -42,17 +50,20 @@ export default function WorldMap({
   era,
   interactive = true,
   onMapClick,
+  focus,
   children,
 }: {
   initialCenter: { lon: number; lat: number };
   /** Where the recenter button goes (Glorp). */
   home: { lon: number; lat: number };
-  /** Displayed year: picks the terrain image (see eras.ts). */
+  /** Displayed year: picks the terrain image together with the zoom (see eras.ts). */
   era: number;
   /** False while something else (time travel) is driving the camera. */
   interactive?: boolean;
   /** A click (not a drag) on empty map. */
   onMapClick?: (lon: number, lat: number) => void;
+  /** Pan (keeping the zoom) so this point is centred. */
+  focus?: FocusRequest | null;
   children?: ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -86,13 +97,15 @@ export default function WorldMap({
     });
   }, []);
 
+  /** Eased camera move; always starts on the next frame (instant with reduced motion). */
   const flyTo = (target: Camera, ms = 300) => {
     stopTween();
-    if (reduced) return setCamera(target);
     const start = camera;
-    const t0 = performance.now();
+    const duration = reduced ? 0 : ms;
+    let t0: number | null = null;
     const step = (now: number) => {
-      const t = Math.min(1, (now - t0) / ms);
+      t0 ??= now;
+      const t = duration === 0 ? 1 : Math.min(1, (now - t0) / duration);
       setCamera(lerpCamera(start, target, easeInOut(t)));
       if (t < 1) tweenRef.current = requestAnimationFrame(step);
     };
@@ -102,6 +115,11 @@ export default function WorldMap({
   useEffect(() => {
     if (!interactive) stopTween();
   }, [interactive]);
+
+  const onFocus = useEffectEvent((f: FocusRequest) => flyTo({ lon: f.lon, lat: f.lat, zoom: camera.zoom }, 500));
+  useEffect(() => {
+    if (focus) onFocus(focus);
+  }, [focus]);
 
   const zoomBy = (factor: number) =>
     flyTo(zoomAround(camera, vp, vp.w / 2, vp.h / 2, camera.zoom * factor));
@@ -117,7 +135,8 @@ export default function WorldMap({
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!interactive || (e.target as Element).closest("button, a")) return; // let UI handle its own clicks
+    // Let overlay UI (pins, the travel bubble, buttons) handle its own presses.
+    if (!interactive || (e.target as Element).closest("button, a, [data-map-ui]")) return;
     stopTween();
     const p = local(e);
     pointers.current.set(e.pointerId, p);
@@ -218,7 +237,8 @@ export default function WorldMap({
   );
 
   const tiles = mapTiles(camera, vp);
-  const src = mapForEra(era).src;
+  // Simplified overview map when zoomed out, detailed terrain when zoomed in.
+  const src = mapImageFor(era, camera.zoom);
 
   return (
     <div
@@ -244,7 +264,7 @@ export default function WorldMap({
               <Sprite name="icon-minus" width={16} height={16} fallback="−" />
             </button>
             <button className="px-button icon" onClick={recenter} disabled={!interactive} aria-label="Recenter on Glorp">
-              <Sprite name="icon-recenter" width={16} height={16} fallback="◎" />
+              <Sprite name="btn_recenter_glorp" width={16} height={16} fallback="◎" />
             </button>
           </div>
         </>

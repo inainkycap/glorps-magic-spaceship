@@ -48,7 +48,7 @@ export default function Explore() {
       {fact && <p className="dialog">{fact}</p>}
 
       {labReady ? (
-        <Link className="button" to={`/lab/${species.id}`}>
+        <Link className="button w-m" to={`/lab/${species.id}`}>
           Go to Lab ▶
         </Link>
       ) : (
