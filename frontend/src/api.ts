@@ -5,12 +5,14 @@ import type {
   SimulateResponse,
 } from "./types";
 import dodo from "./mocks/dodo.json";
+import passengerPigeon from "./mocks/passenger_pigeon.json";
 import simNone from "./mocks/simulate_none.json";
 import simGood from "./mocks/simulate_good.json";
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
 
-const mockSpecies = [dodo as Species];
+// JSON imports infer narrow literal types, so go through unknown.
+const mockSpecies = [dodo, passengerPigeon] as unknown as Species[];
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -21,8 +23,8 @@ async function get<T>(path: string): Promise<T> {
 export async function listSpecies(): Promise<SpeciesSummary[]> {
   if (USE_MOCKS) {
     return mockSpecies.map(
-      ({ id, name, scientific_name, status, era, location, kind }) => ({
-        id, name, scientific_name, status, era, location, kind,
+      ({ id, name, scientific_name, status, era, location, kind, lat, lon, era_year }) => ({
+        id, name, scientific_name, status, era, location, kind, lat, lon, era_year,
       }),
     );
   }
@@ -41,7 +43,11 @@ export async function getSpecies(id: string): Promise<Species> {
 export async function simulate(req: SimulateRequest): Promise<SimulateResponse> {
   if (USE_MOCKS) {
     await new Promise((r) => setTimeout(r, 400)); // feel like a real request
-    return (req.interventions.length > 0 ? simGood : simNone) as SimulateResponse;
+    const base = (req.interventions.length > 0 ? simGood : simNone) as SimulateResponse;
+    // The mock runs are the dodo's (from 1600); shift the years to the requested species.
+    const start = mockSpecies.find((x) => x.id === req.species_id)?.sim.start_year;
+    if (start === undefined) return base;
+    return { ...base, years: base.years.map((y) => y - base.years[0] + start) };
   }
   const res = await fetch("/api/simulate", {
     method: "POST",
