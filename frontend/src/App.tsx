@@ -4,6 +4,7 @@ import MapScreen from "./screens/MapScreen";
 import Explore from "./screens/Explore";
 import Lab from "./screens/Lab";
 import Sanctuary from "./screens/Sanctuary";
+import SanctuaryDome from "./screens/SanctuaryDome";
 import NotFound from "./screens/NotFound";
 
 /** Layout for the regular (non-map) screens. */
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/explore/:speciesId" element={<Explore />} />
         <Route path="/lab/:speciesId" element={<Lab />} />
         <Route path="/sanctuary" element={<Sanctuary />} />
+        <Route path="/sanctuary/:domeId" element={<SanctuaryDome />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

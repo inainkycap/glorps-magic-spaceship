@@ -15,6 +15,8 @@ export interface SpriteProps {
   height: number;
   frames?: number;
   fps?: number;
+  /** false = show frame 1 only (for a multi-frame sheet used as a still icon). */
+  animate?: boolean;
   scale?: number;
   flip?: boolean;
   className?: string;
@@ -31,6 +33,7 @@ export default function Sprite({
   height,
   frames = 1,
   fps = 8,
+  animate = true,
   scale = 2,
   flip = false,
   className = "",
@@ -56,7 +59,7 @@ export default function Sprite({
 
   return (
     <span
-      className={`sprite ${frames > 1 ? "sprite-anim" : ""} ${className}`}
+      className={`sprite ${frames > 1 && animate ? "sprite-anim" : ""} ${className}`}
       style={style}
       role={label ? "img" : undefined}
       aria-label={label}

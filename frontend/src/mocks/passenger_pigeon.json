@@ -27,6 +27,7 @@
   "needs": {
     "terrain": {
       "value": "Large mature beech and oak forests with big nut crops",
+      "types": ["forest"],
       "why": "Colonies of millions needed huge nut harvests to eat, and big trees to nest and roost in."
     },
     "temperature": {

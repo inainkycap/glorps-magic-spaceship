@@ -1,10 +1,13 @@
 import type {
+  SanctuarySimRequest,
+  SanctuarySimResponse,
   Species,
   SpeciesSummary,
   SimulateRequest,
   SimulateResponse,
 } from "./types";
 import dodo from "./mocks/dodo.json";
+import { mockSanctuarySimulate } from "./mocks/mockSanctuarySim";
 import passengerPigeon from "./mocks/passenger_pigeon.json";
 import simNone from "./mocks/simulate_none.json";
 import simGood from "./mocks/simulate_good.json";
@@ -40,6 +43,31 @@ export async function getSpecies(id: string): Promise<Species> {
   return get(`/api/species/${id}`);
 }
 
+/** Full species files for several ids (unknown ids are skipped). */
+export async function getSpeciesMany(ids: string[]): Promise<Species[]> {
+  const results = await Promise.allSettled(ids.map((id) => getSpecies(id)));
+  return results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+}
+
+/**
+ * PROPOSED: POST /api/sanctuary/simulate (see CLAUDE.md). In mock mode this runs
+ * the client-side MOCK model in src/mocks/mockSanctuarySim.ts.
+ */
+export async function simulateSanctuary(req: SanctuarySimRequest): Promise<SanctuarySimResponse> {
+  if (USE_MOCKS) {
+    await new Promise((r) => setTimeout(r, 400)); // feel like a real request
+    return mockSanctuarySimulate(req, mockSpecies);
+  }
+  const res = await fetch("/api/sanctuary/simulate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error(`/api/sanctuary/simulate -> ${res.status}`);
+  return res.json();
+}
+
+/** Legacy: the old Lab's single-species sim (no longer used by the UI). */
 export async function simulate(req: SimulateRequest): Promise<SimulateResponse> {
   if (USE_MOCKS) {
     await new Promise((r) => setTimeout(r, 400)); // feel like a real request

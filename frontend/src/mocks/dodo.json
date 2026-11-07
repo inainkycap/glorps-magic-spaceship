@@ -27,6 +27,7 @@
   "needs": {
     "terrain": {
       "value": "Forest floor with fallen fruit, near fresh water",
+      "types": ["forest","wetland"],
       "why": "It couldn't fly or climb, so it fed and nested on the ground, and many remains are found around freshwater marshes."
     },
     "temperature": {
