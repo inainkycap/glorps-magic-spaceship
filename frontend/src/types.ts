@@ -199,6 +199,14 @@ export interface SanctuarySimResponse {
   worst_case_species_saved: number; // 5th percentile of species alive at the end
 }
 
+/** GET /api/wiki/{title}: a Wikipedia summary (cached by the backend). */
+export interface WikiSummary {
+  title: string;
+  summary: string;
+  image_url: string | null;
+  url: string | null; // the article, for "read more"
+}
+
 // ---- Frontend-only below (not part of the backend contract) ----
 
 /** A point in space and time: where/when Glorp's ship is. */

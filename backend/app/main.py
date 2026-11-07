@@ -8,6 +8,7 @@ from .sanctuary.engine import simulate as simulate_sanctuary
 from .sanctuary.schemas import SanctuarySimRequest, SanctuarySimResponse
 from .schemas import Species, SpeciesSummary
 from .species import SPECIES
+from .wiki import WikiError, WikiSummary, get_summary
 
 app = FastAPI(title="Glorp's Magic Spaceship API")
 
@@ -47,3 +48,14 @@ def sanctuary_simulate(req: SanctuarySimRequest):
     # so when the player changes something, the difference is their change, not luck.
     seed = int(hashlib.sha256(req.model_dump_json().encode()).hexdigest()[:16], 16)
     return simulate_sanctuary(req, SPECIES, seed=seed)
+
+
+@app.get("/api/wiki/{title}", response_model=WikiSummary)
+def wiki(title: str):
+    """Wikipedia summary for the field guide (cached on disk, so it works offline)."""
+    if not title.strip() or len(title) > 200:
+        raise HTTPException(status_code=422, detail="Bad title")
+    try:
+        return get_summary(title)
+    except WikiError as e:
+        raise HTTPException(status_code=e.status, detail=str(e))
