@@ -1,0 +1,107 @@
+{
+  "id": "passenger_pigeon",
+  "name": "Passenger pigeon",
+  "scientific_name": "Ectopistes migratorius",
+  "status": "extinct",
+  "era": "1870",
+  "location": "Michigan, USA",
+  "kind": "bird",
+  "lat": 44.5,
+  "lon": -84.7,
+  "era_year": 1870,
+  "intro": "Michigan, 1870! The sky is full of passenger pigeons, maybe billions of them. Hard to believe they'll all be gone in 44 years… let's find out why.",
+  "description": "The passenger pigeon (Ectopistes migratorius) was probably the most numerous bird in North America, with an estimated 3–5 billion when Europeans arrived. It lived in the deciduous forests of eastern North America, moving in vast flocks to wherever beech, oak and chestnut trees had a good crop of nuts, and nesting in colonies of millions. In the 1800s, telegraphs and railways let market hunters find the colonies and ship the birds to cities by the barrel, while forests were cleared for farms. Because the species only bred well in huge colonies, the shrinking flocks stopped breeding successfully. The last wild birds were seen around 1900, and the last of all, Martha, died at the Cincinnati Zoo on 1 September 1914.",
+  "facts": {
+    "height": "~39–41 cm long, beak to tail",
+    "weight": "~260–340 g",
+    "diet": "Mainly beechnuts, acorns and chestnuts; also seeds, berries and insects",
+    "lifespan": "? in the wild; Martha reached ~29 years in captivity",
+    "extinct_year": 1914,
+    "cause": "Commercial hunting (helped by telegraphs and railways), forest clearing, and colonies too small to breed"
+  },
+  "habitat": {
+    "biome": "Temperate deciduous forest of eastern North America",
+    "climate": "Humid continental: warm summers, cold snowy winters; flocks migrated south for winter",
+    "elevation": "Mostly lowland and low hills (~0–600 m?)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Large mature beech and oak forests with big nut crops",
+      "types": ["forest"],
+      "why": "Colonies of millions needed huge nut harvests to eat, and big trees to nest and roost in."
+    },
+    "temperature": {
+      "min": "~-5", "max": "~32", "unit": "°C",
+      "why": "Flocks migrated north to breed in spring and south for winter, so they handled a wide range of temperatures."
+    },
+    "humidity": {
+      "min": "~50", "max": "~85", "unit": "%",
+      "why": "Beech and oak forests grow best in the humid east of the continent."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary sea-level air."
+    },
+    "pressure": {
+      "min": "~94", "max": "~102", "unit": "kPa",
+      "why": "Lowland and low-hill forests sit close to sea-level air pressure."
+    }
+  },
+  "sources": [
+    { "title": "Passenger pigeon (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Passenger_pigeon" },
+    { "title": "Martha (pigeon) (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Martha_(pigeon)" },
+    { "title": "Why the Passenger Pigeon Went Extinct (Audubon)", "url": "https://www.audubon.org/magazine/may-june-2014/why-passenger-pigeon-went-extinct" }
+  ],
+  "hotspots": [
+    { "id": "flock", "label": "Passing flock", "sprite": "flock", "x": 50, "y": 18,
+      "fact": "Passenger pigeons flew in flocks of millions or even billions that could darken the sky for hours as they passed.",
+      "dna": false, "unlocks": null, "reveals": "temperature" },
+    { "id": "nest", "label": "Twig nest", "sprite": "egg", "x": 24, "y": 52,
+      "fact": "Each pair usually raised just one chick a year, in huge nesting colonies that could stretch for miles.",
+      "dna": true, "unlocks": "colony_protection", "reveals": "terrain" },
+    { "id": "feather", "label": "Blue-grey feather", "sprite": "feather", "x": 40, "y": 74,
+      "fact": "Males had a slate-blue back and a rosy-copper breast. They were faster fliers than most pigeons.",
+      "dna": true, "unlocks": null },
+    { "id": "barrel", "label": "Barrel of pigeons", "sprite": "barrel", "x": 66, "y": 70,
+      "fact": "Market hunters netted and shot pigeons by the thousand and shipped them to city markets packed in barrels.",
+      "dna": true, "unlocks": null },
+    { "id": "telegraph", "label": "Telegraph pole", "sprite": "pole", "x": 84, "y": 40,
+      "fact": "Telegraph lines and new railways let professional hunters find nesting colonies fast and get the birds to market.",
+      "dna": false, "unlocks": "hunting_laws" },
+    { "id": "stump", "label": "Cleared beech forest", "sprite": "stump", "x": 12, "y": 30,
+      "fact": "The pigeons fed on beechnuts, acorns and chestnuts. As eastern forests were cleared for farms, their food vanished.",
+      "dna": false, "unlocks": "forest_protection", "reveals": "humidity" },
+    { "id": "lakeshore", "label": "Lake Michigan shore", "sprite": "shore", "x": 58, "y": 50,
+      "fact": "Lake Michigan's surface is only about 176 m above sea level, so the air here is nearly sea-level air: about 99 kPa and 21% oxygen.",
+      "dna": false, "unlocks": null, "reveals": ["oxygen", "pressure"] }
+  ],
+  "threats": [
+    { "id": "market_hunting", "name": "Market hunting", "description": "Professional hunters kill birds by the million to sell as cheap meat.",
+      "effect": { "mortality": 0.15 } },
+    { "id": "nest_raids", "name": "Nest raids", "description": "Hunters raid nesting colonies for squabs, scattering the adults.",
+      "effect": { "mortality": 0.06 } },
+    { "id": "deforestation", "name": "Deforestation", "description": "Eastern forests are cleared, taking the nut harvest with them.",
+      "effect": { "habitat_decline": 0.03 } },
+    { "id": "colony_collapse", "name": "Colony collapse", "description": "Small flocks struggle to breed; some years a whole colony fails.",
+      "effect": { "shock_prob": 0.08, "shock_severity": 0.25 } }
+  ],
+  "interventions": [
+    { "id": "hunting_laws", "name": "Hunting laws", "description": "Ban commercial hunting and shipping of wild pigeons.",
+      "mitigates": { "market_hunting": 0.9 } },
+    { "id": "colony_protection", "name": "Colony wardens", "description": "Guard nesting colonies during the breeding season.",
+      "mitigates": { "nest_raids": 0.8, "colony_collapse": 0.4, "market_hunting": 0.2 } },
+    { "id": "forest_protection", "name": "Forest protection", "description": "Set aside large beech and oak forests.",
+      "mitigates": { "deforestation": 0.85 } }
+  ],
+  "goal_survival": 0.8,
+  "max_interventions": 2,
+  "dna_required": 3,
+  "sim": {
+    "model": "logistic",
+    "start_year": 1870,
+    "years": 60,
+    "start_population": 20000,
+    "carrying_capacity": 100000,
+    "growth_rate": 0.1
+  }
+}
