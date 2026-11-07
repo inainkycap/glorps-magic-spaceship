@@ -1,13 +1,14 @@
-/* Pixel-art base theme: dark space palette, pixel font, crisp scaling. */
+/* Pixel-art theme: soft, low-saturation palette matched to public/map/world.png. */
 :root {
-  --space-0: #07061a; /* deepest background */
-  --space-1: #120f2e; /* panels */
-  --space-2: #241f52; /* borders, raised */
-  --star: #e8e6ff; /* main text */
-  --dim: #8f8ac2; /* muted text */
-  --glorp: #7cf8d0; /* accent (Glorp green) */
-  --gold: #ffd166; /* highlights */
-  --danger: #ff6b8b;
+  --space-0: #1d2230; /* deepest background, sprite outlines */
+  --space-1: #262c3d; /* panels */
+  --space-2: #3a4258; /* borders, raised */
+  --star: #ece6d6; /* main text (parchment) */
+  --dim: #a3a6b5; /* muted text */
+  --glorp: #9fd3b4; /* accent (Glorp mint) */
+  --gold: #e2c991; /* highlights (sand) */
+  --danger: #d99a9a;
+  --map-ocean: #4c6580; /* deep-ocean colour in world.png */
   --px: 4px; /* one "pixel" for borders/shadows */
 
   font-family: "Press Start 2P", ui-monospace, monospace;
@@ -29,12 +30,12 @@ body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--space-0);
-  /* tiny pixel starfield */
+  /* faint pixel starfield */
   background-image:
-    radial-gradient(1px 1px at 20px 30px, var(--star) 100%, transparent),
-    radial-gradient(1px 1px at 140px 90px, var(--dim) 100%, transparent),
-    radial-gradient(2px 2px at 90px 160px, var(--star) 100%, transparent),
-    radial-gradient(1px 1px at 200px 220px, var(--dim) 100%, transparent);
+    radial-gradient(1px 1px at 20px 30px, var(--dim) 100%, transparent),
+    radial-gradient(1px 1px at 140px 90px, var(--space-2) 100%, transparent),
+    radial-gradient(2px 2px at 90px 160px, var(--dim) 100%, transparent),
+    radial-gradient(1px 1px at 200px 220px, var(--space-2) 100%, transparent);
   background-size: 240px 240px;
 }
 
@@ -73,7 +74,16 @@ a {
   color: var(--danger);
 }
 
-/* Layout */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Layout for the regular (non-map) screens */
 .app {
   max-width: 960px;
   margin: 0 auto;
@@ -113,7 +123,7 @@ a {
 .scene {
   background: var(--space-1);
   border: var(--px) solid var(--space-2);
-  box-shadow: var(--px) var(--px) 0 0 #000;
+  box-shadow: var(--px) var(--px) 0 0 rgba(0, 0, 0, 0.5);
 }
 .card-list {
   list-style: none;
@@ -132,8 +142,13 @@ a {
   margin: 16px 0;
 }
 
-.button,
-button {
+/* ---------- Buttons ----------
+   Base styles use :where() (zero specificity) so any component class wins,
+   and the press effect uses the `translate` property, which stacks with a
+   component's own `transform` instead of replacing it. (v1 bug: the global
+   `button:active { transform }` overrode the map pins' centring transform,
+   so pins jumped out from under the cursor and the click never landed.) */
+:where(.button, button) {
   display: inline-block;
   font: inherit;
   color: var(--space-0);
@@ -142,19 +157,76 @@ button {
   padding: 10px 14px;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 rgba(0, 0, 0, 0.35);
+  box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 rgba(0, 0, 0, 0.3);
 }
-.button:hover,
-button:hover {
+:where(.button, button):hover {
   background: var(--gold);
 }
-button:disabled {
+:where(button):disabled {
   opacity: 0.5;
-  cursor: wait;
+  cursor: not-allowed;
 }
-.button:active,
-button:active {
-  transform: translate(2px, 2px);
+:where(.button, button):active:not(:disabled) {
+  translate: 2px 2px;
+}
+
+/* 9-slice pixel button (public/sprites/button.png, 12×12 with 4px corners, drawn at 2×).
+   Without the image it falls back to a plain bordered box. */
+.px-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--star);
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--space-2);
+  background-clip: padding-box;
+  border: 8px solid var(--space-0);
+  border-image: url("/sprites/button.png") 4 fill / 8px / 0 stretch;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+.px-button:hover:not(:disabled) {
+  background: var(--space-2);
+  filter: brightness(1.2);
+}
+.px-button:disabled {
+  opacity: 0.45;
+}
+.px-button.primary {
+  color: var(--gold);
+}
+.px-button.primary.ready {
+  animation: ready-pulse 1.2s steps(2) infinite;
+}
+@keyframes ready-pulse {
+  50% {
+    filter: brightness(1.3);
+  }
+}
+.px-button.icon {
+  padding: 2px;
+}
+
+/* ---------- Sprites (components/Sprite.tsx) ---------- */
+.sprite {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
+}
+.sprite-anim {
+  animation: sprite-play var(--duration) steps(var(--frames)) infinite;
+}
+@keyframes sprite-play {
+  to {
+    background-position: calc(-1 * var(--sheet-w)) 0;
+  }
 }
 
 /* Placeholder explore scene */
@@ -162,7 +234,7 @@ button:active {
   position: relative;
   aspect-ratio: 16 / 9;
   margin: 16px 0;
-  background: linear-gradient(var(--space-1) 0 55%, #1d3b2a 55% 100%);
+  background: linear-gradient(var(--space-1) 0 55%, #4f6a4c 55% 100%);
 }
 .scene .hotspot {
   position: absolute;
@@ -174,9 +246,6 @@ button:active {
 .scene .hotspot.scanned {
   background: var(--dim);
 }
-.scene .hotspot:active {
-  transform: translate(calc(-50% + 2px), calc(-50% + 2px));
-}
 
 .blink {
   animation: blink 1s steps(2, start) infinite;
@@ -187,150 +256,214 @@ button:active {
   }
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* ---------- World map (full screen) ---------- */
+/* ---------- World map ---------- */
 .map-screen {
-  --ocean: #10123a; /* matches the deep-ocean pixels in world-map.png */
   position: fixed;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--ocean);
   overflow: hidden;
+  background: var(--map-ocean);
 }
 
-.map-hud {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--space-0);
-  border-bottom: var(--px) solid var(--space-2);
-}
-.map-hud .brand {
-  color: var(--gold);
-}
-
-/* The map box keeps the 2:1 equirectangular aspect and fits the stage,
-   so pin percentages always line up with the image. */
-.map-stage {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  container-type: size;
-}
-.map-box {
-  position: relative;
-  aspect-ratio: 2 / 1;
-  width: min(100cqw, 200cqh);
-}
-.map-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-  user-select: none;
-}
-.map-status {
+.world-map {
   position: absolute;
-  left: 16px;
-  bottom: 8px;
-  right: 16px;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  outline: none;
+}
+.world-map:active {
+  cursor: grabbing;
+}
+.world-map.locked {
+  cursor: default;
+}
+.world-map:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+}
+.map-layers,
+.map-layer {
+  position: absolute;
+  inset: 0;
+}
+.map-layer.fading-in {
+  animation: fade-in 600ms linear both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.map-tile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  image-rendering: pixelated;
   pointer-events: none;
 }
 
-/* Pins: the button's anchor point is the pin tip */
+.map-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px 24px;
+  background: linear-gradient(rgba(29, 34, 48, 0.85), transparent);
+  pointer-events: none;
+}
+.map-hud > * {
+  pointer-events: auto;
+}
+.map-hud .brand {
+  color: var(--gold);
+  text-shadow: 2px 2px 0 var(--space-0);
+}
+.map-hint {
+  font-size: 8px;
+  color: var(--star);
+  text-shadow: 1px 1px 0 var(--space-0);
+}
+
+.map-controls {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  translate: 0 -50%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-status {
+  position: absolute;
+  top: 64px;
+  left: 16px;
+  right: 16px;
+  padding: 8px 12px;
+  background: rgba(29, 34, 48, 0.85);
+}
+.map-status p {
+  margin: 0;
+}
+
+/* Pins: a zero-size anchor at the pin tip; the button hangs off it with
+   plain offsets (no transform), and its hit area is larger than the sprite. */
+.pin-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pin-anchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
 .pin {
   position: absolute;
-  transform: translate(-50%, -100%);
+  left: -24px;
+  bottom: -2px; /* sprite tip sits 2px above its bottom edge */
+  width: 48px;
+  height: 60px;
   padding: 0;
-  background: none;
-  box-shadow: none;
   display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: 4px;
-  color: var(--star);
+  align-items: flex-end;
+  justify-content: center;
+  background: none;
+  border: none;
+  box-shadow: none;
+  pointer-events: auto;
 }
-.pin:hover,
-.pin:focus-visible {
+.pin:hover {
   background: none;
   z-index: 2;
 }
 .pin:disabled {
+  opacity: 1;
   cursor: default;
+}
+.pin:focus-visible {
+  outline: 2px dashed var(--star);
+  outline-offset: 2px;
+  z-index: 2;
+}
+.pin.other-era {
+  opacity: 0.55;
+}
+.pin.other-era:hover,
+.pin.other-era:focus-visible {
   opacity: 1;
 }
-.pin-head {
-  width: 12px;
-  height: 12px;
-  background: var(--gold);
-  box-shadow:
-    0 0 0 var(--px) var(--space-0),
-    0 8px 0 -2px var(--gold); /* little stalk */
-  margin-bottom: 6px;
+.pin.in-era .pin-sprite,
+.pin.in-era .pin-fallback {
+  filter: drop-shadow(0 0 4px var(--gold));
+  animation: pin-glow 1.6s ease-in-out infinite;
 }
-.pin.saved .pin-head {
-  background: var(--glorp);
-  box-shadow:
-    0 0 0 var(--px) var(--space-0),
-    0 8px 0 -2px var(--glorp);
+@keyframes pin-glow {
+  50% {
+    filter: drop-shadow(0 0 10px var(--gold)) drop-shadow(0 0 2px #fff);
+  }
 }
 .pin-label {
-  font-size: 9px;
-  white-space: nowrap;
+  position: absolute;
+  bottom: calc(100% - 4px);
+  left: 50%;
+  transform: translateX(-50%);
   padding: 4px 6px;
-  background: var(--space-0);
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--star);
+  background: rgba(29, 34, 48, 0.9);
   border: 2px solid var(--space-2);
+}
+.pin-year {
+  color: var(--dim);
+}
+.pin.in-era .pin-label {
+  border-color: var(--gold);
 }
 .pin:hover .pin-label,
 .pin:focus-visible .pin-label {
-  border-color: var(--gold);
+  border-color: var(--star);
+}
+.pin-fallback {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 8px;
+  background: var(--gold);
+  border: 4px solid var(--space-0);
+}
+.pin.saved .pin-fallback {
+  background: var(--glorp);
 }
 
-/* Glorp hovers just below his point (pins grow upwards from theirs).
-   .map-glorp and .travel-glorp share this anchor so the hand-off is seamless. */
-.map-glorp,
-.travel-glorp {
+/* Glorp (idle marker and in flight) hangs just below its map point, so it
+   never covers a pin (pins grow upwards from theirs). */
+.glorp-anchor {
   position: absolute;
-  transform: translate(-50%, 6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, 4px);
   pointer-events: none;
-}
-.map-glorp {
-  animation: bob 1.2s steps(2) infinite;
-}
-@keyframes bob {
-  50% {
-    margin-top: -4px;
-  }
+  z-index: 3;
 }
 
-/* ---------- Travel animation ---------- */
 .travel {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 3;
-}
-.travel-glorp {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  z-index: 4;
 }
 .travel-era {
-  margin-top: 4px;
+  margin-top: 2px;
   padding: 2px 6px;
   font-size: 10px;
   color: var(--space-0);
@@ -345,82 +478,131 @@ button:active {
 
 /* ---------- Era timeline ---------- */
 .timeline {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 12px 32px 28px 16px;
-  background: var(--space-0);
-  border-top: var(--px) solid var(--space-2);
-}
-.timeline-readout {
-  display: flex;
-  flex-direction: column;
-  min-width: 7ch;
-}
-.timeline-year {
-  font-size: 18px;
-  color: var(--gold);
-}
-.timeline-track {
-  position: relative;
-  flex: 1;
-  height: 24px;
-}
-.timeline-line {
   position: absolute;
   left: 0;
   right: 0;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 40px;
+  padding: 10px 48px 26px 16px;
+  background: rgba(29, 34, 48, 0.9);
+  border-top: var(--px) solid var(--space-2);
+}
+.timeline-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.timeline-target-label {
+  color: var(--star);
+}
+.timeline-track {
+  position: relative;
+  flex: 1 1 320px;
+  height: 32px;
+  margin-top: 28px; /* room for the year label above the marker */
+}
+.timeline-line,
+.timeline-fill {
+  position: absolute;
+  left: 0;
   top: 50%;
-  height: var(--px);
+  height: 4px;
+  translate: 0 -50%;
+}
+.timeline-line {
+  right: 0;
   background: var(--space-2);
+}
+.timeline-fill {
+  background: var(--glorp);
 }
 .timeline-tick {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 2px);
   transform: translateX(-50%);
   font-size: 8px;
   color: var(--dim);
 }
-.timeline-tick::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -14px;
-  width: 2px;
-  height: 8px;
-  background: var(--space-2);
-}
-.timeline-marker {
+.timeline-species {
   position: absolute;
   top: 50%;
+  line-height: 0;
+  transform: translate(-50%, -50%);
+}
+.timeline-species.current {
+  filter: drop-shadow(0 0 4px var(--gold));
+}
+.timeline-species-fallback {
+  display: block;
   width: 10px;
   height: 10px;
-  transform: translate(-50%, -50%) rotate(45deg);
+  rotate: 45deg;
   background: var(--gold);
 }
-.timeline-marker.saved {
-  background: var(--glorp);
+.timeline-target {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 2px dashed var(--gold);
 }
 .timeline-now {
   position: absolute;
-  top: -6px;
-  transform: translateX(-50%);
+  top: 0;
+  bottom: 0;
   width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid var(--glorp);
+}
+.timeline-now-rule {
+  position: absolute;
+  left: -1px;
+  top: -8px;
+  bottom: -8px;
+  width: 2px;
+  background: var(--glorp);
+}
+.timeline-now .sprite,
+.timeline-now-fallback {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.timeline-now-fallback {
+  width: 20px;
+  height: 12px;
+  background: var(--glorp);
+  border: 2px solid var(--space-0);
+}
+.timeline-now-year {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  transform: translateX(-50%);
+  padding: 3px 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--space-0);
+  background: var(--glorp);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
+  .map-hint {
+    display: none;
+  }
   .map-hud .brand {
     font-size: 9px;
   }
   .timeline {
-    gap: 12px;
+    padding: 8px 32px 24px 16px;
   }
-  .timeline-year {
-    font-size: 12px;
+  .px-button {
+    font-size: 8px;
   }
   .pin-label {
     font-size: 7px;
@@ -430,11 +612,14 @@ button:active {
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .blink,
-  .map-glorp {
+  .sprite-anim,
+  .map-layer.fading-in,
+  .px-button.primary.ready,
+  .pin.in-era .pin-sprite,
+  .pin.in-era .pin-fallback {
     animation: none;
   }
-  .button:active,
-  button:active {
-    transform: none;
+  :where(.button, button):active:not(:disabled) {
+    translate: none;
   }
 }
