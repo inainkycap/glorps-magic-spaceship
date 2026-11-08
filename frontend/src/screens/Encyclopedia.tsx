@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
 import DiversityCounter from "../components/DiversityCounter";
+import DiversityIcon from "../components/DiversityIcon";
 import SpeciesPortrait from "../components/SpeciesPortrait";
 import Sprite from "../components/Sprite";
 import Status from "../components/Status";
 import {
   completionOf,
+  diversityValueOf,
   isFound,
   isRevealed,
   isUnlocked,
@@ -20,6 +22,8 @@ import { useSpeciesData } from "../hooks/useSpeciesData";
 
 /** How long the "light up" reveal plays before it's marked as seen. */
 const REVEAL_MS = 2600;
+
+const DIVERSITY_TIP = "How evolutionarily unique this species is (1–5)";
 
 /**
  * Every species as a card. Locked: a black silhouette marked "locked". Unlocked
@@ -80,6 +84,7 @@ export default function Encyclopedia() {
           const isNew = newIds.includes(s.id);
           const full1 = ok.byId[s.id];
           const pct = found && full1 ? completionOf(full1, progress).fraction : 0;
+          const dv = diversityValueOf(s);
           const cls = `ency-card ${locked ? "locked" : found ? "found" : "hidden"} ${isNew && !reduced ? "reveal" : ""}`;
           const inner = (
             <>
@@ -88,6 +93,12 @@ export default function Encyclopedia() {
                 {isNew && !reduced && <span className="ency-sparkle" aria-hidden="true" />}
               </span>
               <span className="ency-name">{found ? s.name : "???"}</span>
+              {found && (
+                <span className="ency-diversity" title={DIVERSITY_TIP}>
+                  <DiversityIcon small />
+                  {dv}
+                </span>
+              )}
               {locked ? (
                 <span className="locked-badge">
                   <Sprite name="locked-badge" width={16} height={16} scale={1} fallback={null} /> locked
@@ -109,7 +120,7 @@ export default function Encyclopedia() {
           return (
             <li key={s.id} className={cls}>
               {found ? (
-                <Link to={`/encyclopedia/${s.id}`} className="ency-card-inner" aria-label={`${s.name}: ${pctText(pct)} complete`}>
+                <Link to={`/encyclopedia/${s.id}`} className="ency-card-inner" aria-label={`${s.name}: ${pctText(pct)} complete, diversity value ${dv} of 5`}>
                   {inner}
                 </Link>
               ) : (

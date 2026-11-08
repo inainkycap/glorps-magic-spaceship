@@ -84,7 +84,7 @@ Placeholders: none of these files exist yet; the game draws a CSS stand-in for e
 | `encyclopedia-frame.png` | 16×16 | 1 | 2× (9-slice) | The portrait frame on each encyclopedia card and the species page (`.ency-frame` in `src/index.css`) | **9-slice with 6 px corners.** Dark, like a specimen case; the portrait (or its silhouette) sits inside. Stand-in: a 2 px border. Wire it with `border-image` once drawn. |
 | `locked-badge.png` | 16×16 | 1 | 1× | The "LOCKED" tag on locked encyclopedia cards (`screens/Encyclopedia.tsx`) | A small padlock. Stand-in: the word only. |
 | `sparkle.png` | 8×8 | 1 | 1× | The sparkle burst when new map pins pop in (`map/PinLayer.tsx`, 8 per pin, flying outwards) | A 4-point star, bright parchment/sand. Stand-in: a small gold square. |
-| `diversity-icon.png` | 16×16 | 1 | 2× | Diversity score in the HUD, next to Zorps (`components/DiversityCounter.tsx`) | A gem or leaf in Glorp mint. Stand-in: a ◆ character. |
+| `diversity-icon.png` | 16×16 | 1 | 2× | "Diversity N" in the HUD and the encyclopedia header, and "◆ N" on each discovered encyclopedia card at 1× (`components/DiversityIcon.tsx`) | A gem or leaf in Glorp mint. Stand-in: a ◆ character. |
 
 Unvisited pins and "???" cards reuse `resident-<id>.png` blacked out with a CSS filter, so there is no silhouette art to draw. Glorp's "New signals detected!" bubble reuses `glorp-talk.png`.
 
