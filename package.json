@@ -1,0 +1,12 @@
+{
+  "name": "glorps-magic-spaceship",
+  "private": true,
+  "description": "One-command dev setup for the backend (FastAPI) and frontend (Vite). See README \"Run it\".",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
