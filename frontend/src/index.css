@@ -2690,3 +2690,438 @@ input.dial:focus-visible {
 .report-outbreak.ended {
   color: var(--glorp);
 }
+
+/* ---- Encyclopedia + progression ------------------------------------------------------- */
+
+/* Diversity score in the HUD (next to Zorps). */
+.diversity-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 5ch;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--glorp);
+}
+.diversity-fallback {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--glorp);
+}
+
+/* Species portraits: the resident sprite, or a black silhouette (CSS filter, no extra art). */
+.portrait {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.portrait-fallback {
+  display: block;
+  background: #6d7488;
+  border-radius: 40% 40% 30% 30%;
+}
+.portrait.silhouette .sprite,
+.portrait.silhouette .portrait-fallback {
+  filter: brightness(0);
+}
+.portrait.silhouette.lit .sprite,
+.portrait.silhouette.lit .portrait-fallback {
+  filter: brightness(0) drop-shadow(0 0 3px var(--glorp)) drop-shadow(0 0 1px var(--glorp));
+}
+
+/* Map pins: the wrapper fills the button (the label is positioned against it). */
+.pin-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.pin-silhouette {
+  margin-bottom: 4px;
+  padding: 2px;
+  background: rgba(29, 34, 48, 0.75);
+  border: 2px solid var(--glorp);
+  border-radius: 50%;
+}
+.pin.unvisited .pin-label {
+  border-color: var(--glorp);
+}
+.pin-new {
+  animation: pin-pop 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes pin-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.sparkle-burst {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.spark {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  animation: spark-fly 1.1s ease-out 0.25s 2 both;
+}
+.spark-fallback {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--star);
+}
+@keyframes spark-fly {
+  0% {
+    transform: rotate(var(--a)) translateY(0) scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--a)) translateY(-44px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Glorp's "New signals detected!" bubble on the map. */
+.signal-bubble {
+  position: absolute;
+  left: 16px;
+  bottom: 140px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 8px;
+  color: var(--space-0);
+  background: var(--star);
+  border: var(--px) solid var(--space-0);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  animation: bubble-in 0.4s ease-out both;
+}
+.signal-bubble p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+@keyframes bubble-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+/* Encyclopedia grid */
+.ency-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 16px;
+}
+.ency-head h1 {
+  margin: 0 0 4px;
+}
+.ency-overall {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ency-overall-pct {
+  font-size: 18px;
+  color: var(--gold);
+}
+.ency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ency-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 12px 8px 10px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--star);
+  background: var(--space-1);
+  border: var(--px) solid var(--space-2);
+}
+a.ency-card-inner:hover,
+a.ency-card-inner:focus-visible {
+  border-color: var(--gold);
+}
+/* encyclopedia-frame.png (placeholder, see ART_TODO.md) can replace this border once drawn. */
+.ency-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: radial-gradient(circle, #3b4560 0%, var(--space-0) 75%);
+  border: 2px solid var(--space-2);
+}
+.ency-frame.big {
+  width: 96px;
+  height: 96px;
+}
+.ency-name {
+  font-size: 9px;
+  line-height: 1.5;
+}
+.ency-card.locked .ency-card-inner {
+  opacity: 0.55;
+}
+.ency-card.hidden .ency-name {
+  color: var(--glorp);
+}
+.ency-hint {
+  font-size: 7px;
+  color: var(--dim);
+}
+.ency-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  color: var(--dim);
+}
+.locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 7px;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 2px solid var(--space-2);
+}
+/* Newly unlocked: the silhouette lights up (glow pulse) with a sparkle. */
+.ency-card.reveal .ency-card-inner {
+  animation: card-light 1.2s ease-out 2;
+}
+@keyframes card-light {
+  0% {
+    border-color: var(--space-2);
+    box-shadow: none;
+  }
+  40% {
+    border-color: var(--glorp);
+    box-shadow: 0 0 16px var(--glorp);
+  }
+  100% {
+    border-color: var(--space-2);
+    box-shadow: none;
+  }
+}
+.ency-sparkle {
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 20%, var(--star) 0 2px, transparent 3px),
+    radial-gradient(circle at 85% 30%, var(--gold) 0 2px, transparent 3px),
+    radial-gradient(circle at 30% 90%, var(--gold) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 85%, var(--star) 0 2px, transparent 3px);
+  animation: twinkle 0.6s steps(2) 4;
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Encyclopedia page */
+.ency-entry-top {
+  margin-bottom: 12px;
+}
+.ency-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.ency-entry-head h1 {
+  margin: 0;
+}
+.ency-entry-cols {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.ency-checklist {
+  padding: 12px;
+  background: var(--space-1);
+  border: var(--px) solid var(--space-2);
+}
+.ency-checklist h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--gold);
+}
+.ency-checklist .bar {
+  width: 100%;
+}
+.ency-checklist ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ency-checklist li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--dim);
+  border-bottom: 2px solid var(--space-2);
+}
+.ency-checklist li.done {
+  color: var(--star);
+}
+.ency-checklist li.partial {
+  color: var(--gold);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  color: var(--space-0);
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+li.done .check {
+  background: var(--glorp);
+  border-color: var(--glorp);
+}
+.check-count {
+  white-space: nowrap;
+}
+.field-guide.inline {
+  width: auto;
+  max-height: none;
+  filter: none;
+}
+.field-guide.inline .guide-body {
+  overflow: visible;
+}
+.wiki-body {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.wiki-body p {
+  margin: 0;
+}
+.wiki-image {
+  flex: none;
+  width: 96px;
+  height: auto;
+  border: 2px solid #8c7d6a;
+}
+.wiki-attribution {
+  margin: 8px 0 0;
+  font-size: 8px;
+  color: #6b6250;
+}
+.wiki-attribution a {
+  color: #3d5c87;
+}
+.explore-locked {
+  padding: 24px 0;
+}
+@media (max-width: 720px) {
+  .ency-entry-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* End screen (components/GameComplete.tsx) */
+.end-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, 100%);
+  padding: 20px 24px;
+  text-align: center;
+  background: var(--space-1);
+  border: var(--px) solid var(--gold);
+}
+.end-screen h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--gold);
+}
+.end-lead {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.end-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0;
+}
+.end-stats div {
+  padding: 8px;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.end-stats dt {
+  font-size: 8px;
+  color: var(--dim);
+}
+.end-stats dd {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: var(--glorp);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-new,
+  .spark,
+  .signal-bubble,
+  .ency-card.reveal .ency-card-inner,
+  .ency-sparkle {
+    animation: none;
+  }
+  .sparkle-burst,
+  .ency-sparkle {
+    display: none;
+  }
+}

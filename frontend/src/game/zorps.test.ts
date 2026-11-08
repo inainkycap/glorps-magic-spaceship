@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Place, Species } from "../types";
+import { wavesOf } from "./encyclopedia";
 import { PRESENT_YEAR } from "./time";
 import {
   advancePayout,
@@ -79,7 +80,9 @@ describe("payout and prices", () => {
 
 describe("early-game Zorps budget", () => {
   const route = (...stops: Place[]) => stops.slice(1).reduce((s, to, i) => s + travelCost(stops[i], to), 0);
-  const WAVE1 = ["lord_howe_stick_insect", "passenger_pigeon", "dodo"].map(byId); // newest era first
+  // Wave 1 as the game unlocks it (game/encyclopedia.ts), visited newest era first.
+  const WAVES = wavesOf(SPECIES);
+  const WAVE1 = SPECIES.filter((s) => WAVES[s.id] === 1).sort((a, b) => b.era_year - a.era_year);
   const REST = SPECIES.filter((s) => !WAVE1.includes(s)).sort((a, b) => b.era_year - a.era_year);
 
   /** Play wave 1 in order: travel, then earn its discoveries. Fails if a trip is unaffordable. */

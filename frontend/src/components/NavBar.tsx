@@ -1,5 +1,6 @@
 import { NavLink } from "react-router";
 import ApiStatus from "./ApiStatus";
+import DiversityCounter from "./DiversityCounter";
 import ZorpsCounter from "./ZorpsCounter";
 
 export default function NavBar() {
@@ -9,10 +10,12 @@ export default function NavBar() {
       <div className="hud-right">
         <ApiStatus />
         <ZorpsCounter />
+        <DiversityCounter />
         <nav>
           <NavLink to="/" end>
             Map
           </NavLink>
+          <NavLink to="/encyclopedia">Encyclopedia</NavLink>
           <NavLink to="/sanctuary">Sanctuary</NavLink>
         </nav>
       </div>

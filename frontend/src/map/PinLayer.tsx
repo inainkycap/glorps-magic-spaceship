@@ -1,21 +1,35 @@
+import type { CSSProperties } from "react";
+import SpeciesPortrait from "../components/SpeciesPortrait";
 import Sprite from "../components/Sprite";
 import { formatYear } from "../geo";
 import type { SpeciesSummary } from "../types";
 import { useMapView } from "./MapViewContext";
 
+const SPARKS = 8;
+
 /**
  * Species pins in screen space (constant size at any zoom). A pin appears on
- * every visible copy of the wrapping world.
+ * every visible copy of the wrapping world. Only unlocked species get a pin.
+ *
+ * - Visited: the regular pin with the species' name.
+ * - Not visited yet: the species' black silhouette; its name shows as "???"
+ *   until the signal is found (the pin is opened once).
+ * - Newly unlocked (`newIds`): pops in with a sparkle burst (not under reduced motion).
  *
  * Layout note: the positioned element is a zero-size anchor at the pin tip;
  * the <button> hangs off it with plain offsets and NO transform, so nothing
  * (e.g. a :active press style) can move it out from under the pointer
- * mid-click. That was the v1 "pin jumps and travel doesn't start" bug.
+ * mid-click. That was the v1 "pin jumps and travel doesn't start" bug. (The
+ * pop-in animates an inner wrapper, never the button.)
  */
 export default function PinLayer({
   species,
   currentEra,
   saved,
+  found,
+  visited,
+  newIds,
+  animate,
   selectedId,
   disabled,
   onPick,
@@ -24,6 +38,11 @@ export default function PinLayer({
   species: SpeciesSummary[];
   currentEra: number;
   saved: string[];
+  found: string[];
+  visited: string[];
+  newIds: string[];
+  /** false under reduced motion: no pop-in or sparkles. */
+  animate: boolean;
   /** Pin whose travel bubble is open. */
   selectedId: string | null;
   disabled: boolean;
@@ -37,11 +56,15 @@ export default function PinLayer({
       {species.flatMap((s) => {
         const y = view.toScreen(s.lon, s.lat).y;
         const isSaved = saved.includes(s.id);
+        const isVisited = visited.includes(s.id);
+        const isFound = isVisited || found.includes(s.id);
+        const isNew = animate && newIds.includes(s.id);
         const inEra = s.era_year === currentEra;
+        const name = isFound ? s.name : "???";
         return view.screenXs(s.lon).map((x, k) => (
           <div key={`${s.id}:${k}`} className="pin-anchor" style={{ left: x, top: y }}>
             <button
-              className={`pin ${inEra ? "in-era" : "other-era"} ${isSaved ? "saved" : ""} ${s.id === selectedId ? "selected" : ""}`}
+              className={`pin ${inEra ? "in-era" : "other-era"} ${isSaved ? "saved" : ""} ${isVisited ? "" : "unvisited"} ${s.id === selectedId ? "selected" : ""}`}
               aria-expanded={s.id === selectedId}
               onClick={() => onPick(s)}
               onPointerEnter={() => onHover(s.id)}
@@ -49,19 +72,40 @@ export default function PinLayer({
               onFocus={() => onHover(s.id)}
               onBlur={() => onHover(null)}
               disabled={disabled}
-              aria-label={`Travel to ${s.name}, ${s.location}, ${formatYear(s.era_year)}${isSaved ? " (saved)" : ""}`}
+              aria-label={
+                isFound
+                  ? `Travel to ${s.name}, ${s.location}, ${formatYear(s.era_year)}${isSaved ? " (saved)" : ""}`
+                  : `Unknown signal, ${formatYear(s.era_year)}: open to find out what it is`
+              }
             >
-              <span className="pin-label" aria-hidden="true">
-                {s.name}
-                <span className="pin-year"> · {formatYear(s.era_year)}</span>
+              <span className={`pin-body ${isNew ? "pin-new" : ""}`}>
+                <span className="pin-label" aria-hidden="true">
+                  {name}
+                  <span className="pin-year"> · {formatYear(s.era_year)}</span>
+                </span>
+                {isVisited ? (
+                  <Sprite
+                    name={isSaved ? "pin-saved" : "pin"}
+                    width={16}
+                    height={24}
+                    className="pin-sprite"
+                    fallback={<span className="pin-fallback" />}
+                  />
+                ) : (
+                  <span className="pin-silhouette">
+                    <SpeciesPortrait id={s.id} scale={2} silhouette lit />
+                  </span>
+                )}
+                {isNew && (
+                  <span className="sparkle-burst" aria-hidden="true">
+                    {Array.from({ length: SPARKS }, (_, i) => (
+                      <span key={i} className="spark" style={{ "--a": `${(360 / SPARKS) * i}deg` } as CSSProperties}>
+                        <Sprite name="sparkle" width={8} height={8} scale={1} fallback={<span className="spark-fallback" />} />
+                      </span>
+                    ))}
+                  </span>
+                )}
               </span>
-              <Sprite
-                name={isSaved ? "pin-saved" : "pin"}
-                width={16}
-                height={24}
-                className="pin-sprite"
-                fallback={<span className="pin-fallback" />}
-              />
             </button>
           </div>
         ));

@@ -9,8 +9,10 @@ import FieldGuide from "../explore/FieldGuide";
 import ScanBubble from "../explore/ScanBubble";
 import { needKeysOf, revealsOf } from "../game/needs";
 import { formatYear } from "../geo";
+import { isUnlocked } from "../game/encyclopedia";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
+import { useSpeciesData } from "../hooks/useSpeciesData";
 import type { Hotspot, NeedKey } from "../types";
 
 interface ActiveScan {
@@ -25,11 +27,24 @@ const spriteUrl = (name: string) => `${import.meta.env.BASE_URL}sprites/${name}.
 export default function Explore() {
   const { speciesId = "" } = useParams();
   const state = useAsync(speciesId, () => getSpecies(speciesId));
-  const { scannedFor, discoveredFor, markScanned, discoverNeed, markDnaComplete } = useProgress();
+  const { scannedFor, discoveredFor, markScanned, discoverNeed, markDnaComplete, unlock } = useProgress();
+  const all = useSpeciesData();
   const [scan, setScan] = useState<ActiveScan | null>(null);
   const [arrivalOpen, setArrivalOpen] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
 
+  // A locked species (not unlocked by rescues yet) can't be explored, even by URL.
+  if (all.status === "ok" && all.data.waves[speciesId] !== undefined && !isUnlocked(speciesId, all.data.waves, unlock.wave)) {
+    return (
+      <section className="explore-locked">
+        <h1>No signal yet</h1>
+        <p className="muted">Glorp hasn't picked up this species' signal. Rescue more species to detect new ones.</p>
+        <Link className="px-button" to="/">
+          Back to the map
+        </Link>
+      </section>
+    );
+  }
   if (state.status !== "ok") return <Status state={state} />;
   const species = state.data;
   const scanned = scannedFor(species.id);
