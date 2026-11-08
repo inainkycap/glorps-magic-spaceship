@@ -4,7 +4,7 @@ Eras now run from ~2000 BCE to the 1980s. On a linear axis everything after 1500
 squashed into the last fifth, so positions use a LOG scale of "years before now": each
 step left is a multiple further back (10 -> 100 -> 1,000 years ago are evenly spaced).
 
-  years_ago(y) = PRESENT_YEAR - y + OFFSET        (OFFSET keeps recent eras off log(0))
+  years_ago(y) = years before now (no year 0) + OFFSET   (OFFSET keeps recent eras off log(0))
   position(y)  = 1 - (log(years_ago(y)) - log(years_ago(PRESENT_YEAR)))
                      / (log(years_ago(oldest)) - log(years_ago(PRESENT_YEAR)))
 
@@ -16,8 +16,9 @@ import math
 from pydantic import BaseModel
 
 from .schemas import Species
+from .years import PRESENT_YEAR, format_era
+from .years import years_ago as _years_ago
 
-PRESENT_YEAR = 2026
 OFFSET = 10
 TICK_YEARS = [-10000, -5000, -3000, -2000, -1000, -500, 1, 500, 1000, 1500, 1700, 1800, 1900, 1950, 2000]
 
@@ -26,7 +27,7 @@ class TimelineEra(BaseModel):
     species_id: str
     name: str
     era_year: int
-    label: str  # "2000 BCE", "50 BCE", "900 CE", "1987"
+    label: str  # same as the frontend's formatEra: "2,000 BC", "50 BC", "900 CE", "1987", "today"
     position: float  # 0 = oldest species, 1 = present
 
 
@@ -45,14 +46,12 @@ class Timeline(BaseModel):
 
 
 def year_label(year: int) -> str:
-    """-2000 -> '2000 BCE', -50 -> '50 BCE', 900 -> '900 CE', 1987 -> '1987'."""
-    if year < 0:
-        return f"{-year} BCE"
-    return f"{year} CE" if year < 1000 else str(year)
+    """The frontend's era label (formatEra): -2000 -> '2,000 BC', 900 -> '900 CE'."""
+    return format_era(year)
 
 
 def years_ago(year: int) -> float:
-    return PRESENT_YEAR - year + OFFSET
+    return _years_ago(year) + OFFSET
 
 
 def position(year: int, oldest: int) -> float:

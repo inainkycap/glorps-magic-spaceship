@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.economy import era_multiplier, travel_cost
+from app.economy import era_multiplier, travel_cost, travel_cost_exact
 from app.main import app
 from app.sanctuary.engine import simulate
 from app.sanctuary.schemas import DomeInput, SanctuarySimRequest
@@ -28,23 +28,28 @@ def test_multiplier_present_is_one_and_older_is_worth_more():
 
 # ---- travel cost ----
 
+@pytest.mark.parametrize("year, cost", [
+    (1987, 29), (1915, 29), (1870, 29), (1600, 35), (900, 47), (-50, 54), (-2000, 62), (-66_000_000, 179),
+])
+def test_travel_cost_matches_the_frontend_examples(year, cost):
+    """CLAUDE.md "Game rules -> Travel cost" (frontend game/zorps.ts) worked examples."""
+    assert travel_cost(2026, year) == cost
+
+
 def test_travel_cost_rules():
-    assert travel_cost(1600, 1600) == 0
+    assert travel_cost(1600, 1600) == 0  # staying put is free
     assert travel_cost(2026, 1600) == travel_cost(1600, 2026)  # direction doesn't matter
-    # Going further back from now always costs more...
-    costs = [travel_cost(2026, y) for y in (1987, 1870, 1600, 1350, -50, -2000)]
-    assert costs == sorted(costs) and len(set(costs)) == len(costs)
-    # ...but on a log scale each decade gets cheaper the further back it is (the trade-off
-    # that keeps deep time affordable): 1610 -> 1600 is cheaper than 2020 -> 2010.
-    assert travel_cost(1610, 1600) < travel_cost(2020, 2010)
-    assert 80 <= travel_cost(2026, -2000) <= 90  # the mammoth is a reachable goal
+    assert travel_cost(1600, 1870) == 34
+    # For the last ~400 years the same jump costs more the older it is...
+    assert travel_cost_exact(1610, 1600) > travel_cost_exact(2020, 2010)
+    assert travel_cost(1700, 1600) > travel_cost(2000, 1900)
+    # ...and going further back from now never costs less
+    costs = [travel_cost(2026, y) for y in (1987, 1870, 1600, 1350, -50, -2000, -66_000_000)]
+    assert costs == sorted(costs)
 
 
-def test_stepping_stones_cost_only_base_extra():
-    """On a log scale the route doesn't change the time cost, so hopping only adds base costs."""
-    direct = travel_cost(2026, -2000)
-    hops = travel_cost(2026, 1350) + travel_cost(1350, -50) + travel_cost(-50, -2000)
-    assert direct < hops <= direct + 3 * 8 + 3  # + rounding
+def test_deep_time_stays_affordable():
+    assert travel_cost(2026, -66_000_000) <= 6 * travel_cost(2026, 1600)
 
 
 # ---- zorps from a run ----

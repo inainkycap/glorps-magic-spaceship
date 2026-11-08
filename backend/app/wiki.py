@@ -82,8 +82,8 @@ def get_summary(title: str, client: Optional[httpx.Client] = None) -> WikiSummar
     """Cached first; otherwise fetch and cache."""
     path = cache_path(title)
     if path.exists():
-        return WikiSummary.model_validate_json(path.read_text())
+        return WikiSummary.model_validate_json(path.read_text(encoding="utf-8"))
     summary = fetch(title, client)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(summary.model_dump(), indent=2, ensure_ascii=False) + "\n")
+    path.write_text(json.dumps(summary.model_dump(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return summary
