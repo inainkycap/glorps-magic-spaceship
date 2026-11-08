@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { listSpecies } from "../api";
 import EraTimeline, { type TimePreview } from "../components/EraTimeline";
-import FuelGauge from "../components/FuelGauge";
+import ApiStatus from "../components/ApiStatus";
 import Status from "../components/Status";
 import TravelAnimation from "../components/TravelAnimation";
-import { travelCost } from "../game/fuel";
+import { buildEraScale } from "../game/time";
+import { travelCost } from "../game/zorps";
+import ZorpsCounter from "../components/ZorpsCounter";
 import { HOME, isPlace, samePlace } from "../geo";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
@@ -26,16 +28,10 @@ const placeOf = (s: SpeciesSummary): Place => ({ lat: s.lat, lon: s.lon, era_yea
 /** Keep Glorp off the very top/bottom rows of the map, where it's hard to see. */
 const MAX_HOVER_LAT = 80;
 
-/** Timeline range: all given years, padded out to whole centuries. */
-function eraRange(years: number[]): [number, number] {
-  const lo = Math.min(...years);
-  const hi = Math.max(...years);
-  return [Math.floor((lo - 50) / 100) * 100, Math.ceil((hi + 50) / 100) * 100];
-}
 
 export default function MapScreen() {
   const state = useAsync("species", listSpecies);
-  const { progress, glorp, fuel, setGlorp, spendFuel } = useProgress();
+  const { progress, glorp, zorps, setGlorp, spendZorps } = useProgress();
   const navigate = useNavigate();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [tripEra, setTripEra] = useState<number | null>(null);
@@ -76,7 +72,7 @@ export default function MapScreen() {
       navigate(`/explore/${selected.id}`);
       return;
     }
-    if (!spendFuel(travelCost(glorp, to))) return; // the bubble already disables Travel
+    if (!spendZorps(travelCost(glorp, to))) return; // the bubble already disables Travel
     setTrip({ from: glorp, to, speciesId: selected.id });
   };
 
@@ -97,7 +93,13 @@ export default function MapScreen() {
     navigate(`/explore/${trip.speciesId}`);
   };
 
-  const range = eraRange([...species.map((s) => s.era_year), glorp.era_year, HOME.era_year]);
+  // Timeline: oldest species to the present (+ padding), linear or log; recomputed when species load.
+  const eraKey = species.map((s) => s.era_year).join(",");
+  const scale = useMemo(
+    () => buildEraScale([...species.map((s) => s.era_year), glorp.era_year, HOME.era_year]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [eraKey, glorp.era_year],
+  );
 
   return (
     <div className="map-screen">
@@ -128,7 +130,7 @@ export default function MapScreen() {
             species={selected}
             fromYear={glorp.era_year}
             cost={travelCost(glorp, placeOf(selected))}
-            fuel={fuel}
+            zorps={zorps}
             here={samePlace(glorp, placeOf(selected))}
             onTravel={confirmTravel}
             onCancel={() => setSelectedId(null)}
@@ -140,7 +142,8 @@ export default function MapScreen() {
         <span className="brand">Glorp's Magic Spaceship</span>
         <span className="map-hint">Click a pin to travel · click the map to hover · drag to pan</span>
         <div className="hud-right">
-          <FuelGauge />
+          <ApiStatus />
+          <ZorpsCounter />
           <Link className="px-button w-s" to="/sanctuary">
             Sanctuary
           </Link>
@@ -160,7 +163,7 @@ export default function MapScreen() {
 
       <EraTimeline
         current={currentEra}
-        range={range}
+        scale={scale}
         preview={preview}
         disabled={trip !== null}
         onPick={(id) => {

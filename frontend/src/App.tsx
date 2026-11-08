@@ -1,5 +1,6 @@
 import { Outlet, Route, Routes } from "react-router";
 import NavBar from "./components/NavBar";
+import ZorpsToasts from "./components/ZorpsToasts";
 import MapScreen from "./screens/MapScreen";
 import Explore from "./screens/Explore";
 import Lab from "./screens/Lab";
@@ -21,16 +22,20 @@ function PageLayout() {
 
 export default function App() {
   return (
-    <Routes>
-      {/* The map is full-screen, with its own HUD */}
-      <Route path="/" element={<MapScreen />} />
-      <Route element={<PageLayout />}>
-        <Route path="/explore/:speciesId" element={<Explore />} />
-        <Route path="/lab/:speciesId" element={<Lab />} />
-        <Route path="/sanctuary" element={<Sanctuary />} />
-        <Route path="/sanctuary/:domeId" element={<SanctuaryDome />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        {/* The map is full-screen, with its own HUD */}
+        <Route path="/" element={<MapScreen />} />
+        <Route element={<PageLayout />}>
+          <Route path="/explore/:speciesId" element={<Explore />} />
+          <Route path="/lab/:speciesId" element={<Lab />} />
+          <Route path="/sanctuary" element={<Sanctuary />} />
+          <Route path="/sanctuary/:domeId" element={<SanctuaryDome />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      {/* "+N Zorps" popups, on every screen */}
+      <ZorpsToasts />
+    </>
   );
 }

@@ -207,31 +207,21 @@ if (want("btn_recenter_glorp"))
       c.rect(6, 11, 4, 1, C.mintDark);
     }),
   ]);
-if (want("fuel-icon"))
-  save("fuel-icon", [
+if (want("zorps"))
+  save("zorps", [
     icon((c) => {
-      // jerrycan
-      c.rect(4, 1, 5, 1, C.thruster);
-      c.rect(4, 2, 1, 2, C.thruster);
-      c.rect(8, 2, 1, 2, C.thruster);
-      c.rect(10, 2, 3, 2, C.hullShadow); // spout
-      c.rect(3, 4, 10, 11, C.thruster);
-      c.rect(4, 5, 8, 1, C.ink); // highlight
-      c.rect(5, 8, 6, 1, C.thrusterDark);
-      c.rect(5, 11, 6, 1, C.thrusterDark);
+      // Zorps coin: a round gold coin with a "Z" and a shine
+      c.disc(7.5, 7.5, 6.5, C.sand);
+      c.disc(7.5, 7.5, 5, hex("#c9b48c"));
+      c.rect(5, 4, 6, 1, C.outline); // Z top
+      c.rect(9, 5, 1, 1, C.outline);
+      c.rect(8, 6, 1, 1, C.outline);
+      c.rect(7, 7, 1, 1, C.outline);
+      c.rect(6, 8, 1, 1, C.outline);
+      c.rect(5, 9, 1, 1, C.outline);
+      c.rect(5, 10, 6, 1, C.outline); // Z bottom
+      c.rect(4, 3, 2, 1, C.ink); // shine
     }),
-  ]);
-if (want("fuel-gauge"))
-  save("fuel-gauge", [
-    (() => {
-      // 48×10 frame; the 44×6 window at (2,2) stays transparent for the CSS fill
-      const c = canvas(48, 10);
-      c.rect(0, 0, 48, 10, C.outline);
-      c.rect(1, 1, 46, 8, C.ink);
-      c.rect(2, 2, 44, 6, [0, 0, 0, 0]);
-      for (const k of [1, 2, 3]) c.rect(2 + Math.round((44 * k) / 4), 2, 1, 2, C.outline); // quarter ticks
-      return c;
-    })(),
   ]);
 if (want("bubble"))
   save("bubble", [

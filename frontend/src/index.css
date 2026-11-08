@@ -186,16 +186,17 @@ a {
   filter: brightness(0.85);
 }
 
-/* Fixed button widths, so a label change ("Run…" → "Simulating…") never
-   shifts the layout. Sized for the monospace pixel font (1ch = one glyph). */
+/* Button min-widths (plus padding), so a label change ("Forecast" → "Simulating…")
+   doesn't shift short layouts, but a longer label grows the button instead of
+   overflowing it. Sized for the monospace pixel font (1ch = one glyph). */
 .w-s {
-  width: calc(9ch + 40px);
+  min-width: calc(9ch + 40px);
 }
 .w-m {
-  width: calc(13ch + 40px);
+  min-width: calc(13ch + 40px);
 }
 .w-l {
-  width: calc(20ch + 40px);
+  min-width: calc(20ch + 40px);
 }
 
 /* 9-slice pixel button (public/sprites/button.png, 12×12 with 4px corners, drawn at 2×).
@@ -1059,45 +1060,92 @@ a {
   background: var(--glorp);
 }
 
-/* ---------- Fuel gauge (components/FuelGauge.tsx) ---------- */
-.fuel-gauge {
+/* ---------- Zorps (components/ZorpsCounter.tsx, ZorpsToasts.tsx) ---------- */
+.zorps-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 8ch;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--gold);
+}
+.zorps-fallback {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--space-0);
+  background: var(--gold);
+  border-radius: 50%;
+}
+.zorps-fallback.small {
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  font-size: 8px;
+}
+.zorps-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.zorps-price .sprite {
+  vertical-align: -3px;
+}
+.zorps-toasts {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+.zorps-toast {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 10px;
   font-size: 10px;
-  line-height: 1;
+  color: var(--space-0);
+  background: var(--gold);
+  border: 2px solid var(--space-0);
+  box-shadow: var(--px) var(--px) 0 rgba(0, 0, 0, 0.4);
+  animation: zorps-pop 2.4s ease-out both;
 }
-.fuel-bar {
-  position: relative;
-  display: inline-block;
-  width: 96px;
-  height: 20px;
-  flex: none;
+.zt-amount {
+  font-size: 12px;
 }
-.fuel-fill {
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  height: 12px;
-  background: var(--glorp);
+.zt-reason {
+  font-size: 8px;
+  opacity: 0.8;
 }
-.fuel-gauge.low .fuel-fill {
+@keyframes zorps-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  10%,
+  75% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+.api-status {
+  padding: 2px 6px;
+  font-size: 8px;
+  color: var(--space-0);
   background: var(--danger);
-}
-.fuel-frame {
-  position: absolute;
-  inset: 0;
-}
-.fuel-frame-fallback {
-  border: 4px solid var(--star);
-  box-shadow: 0 0 0 2px var(--space-0);
-}
-.fuel-value {
-  width: 3ch; /* fixed: 100 → 5 never shifts anything */
-  text-align: right;
-}
-.fuel-gauge.low .fuel-value {
-  color: var(--danger);
 }
 
 /* ---------- Travel bubble (map/TravelBubble.tsx) ----------
@@ -1606,28 +1654,419 @@ a {
   text-align: right;
 }
 
-/* Dome detail */
-.dome-detail > .px-button {
-  margin-top: 16px;
+/* Dome screen: three columns that fit 1280×720 without page scroll.
+   The page widens the app container (via :has) and sizes itself to the viewport. */
+.app:has(.dome-page) {
+  max-width: 1320px;
+  padding-bottom: 0; /* the dome page fills the viewport exactly: no page scroll */
 }
-.dome-detail-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+.app:has(.dome-page) .navbar {
+  padding: 8px 0;
+}
+.dome-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  min-height: 560px;
+  padding: 8px 0;
+}
+.dome-page-head {
+  display: flex;
+  align-items: center;
   gap: 16px;
-  align-items: start;
-  margin-top: 12px;
+  margin-bottom: 8px;
+}
+.dome-page-head h1 {
+  margin: 0;
+  font-size: 16px;
+}
+.dome-cols {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr) 300px;
+  gap: 12px;
+}
+.dome-col {
+  min-height: 0;
+  overflow-y: auto; /* a long list scrolls inside its column, never the page */
+}
+.residents-col {
+  padding: 8px 10px;
+  background: var(--space-1);
+  border: var(--px) solid var(--space-2);
+}
+.residents-col .cp-heading {
+  margin-top: 0;
+}
+.centre-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .dome-stage {
+  flex: 1;
+  min-height: 0;
   aspect-ratio: auto;
-  min-height: 460px;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .dome-stage .dome-view {
-  max-width: 82vw;
-  max-height: 82vw;
+  max-width: min(320px, 90%);
+  max-height: min(320px, 90%);
+}
+.dome-summaries {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.summary {
+  padding: 6px 8px;
+  background: var(--space-1);
+  border: 2px solid var(--space-2);
+}
+.summary h3 {
+  margin: 0 0 4px;
+  font-size: 9px;
+  font-weight: normal;
+  color: var(--glorp);
+}
+.summary p {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+/* Residents column: one collapsible row per species */
+.res-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.res-row {
+  padding: 6px 0;
+  border-bottom: 2px solid var(--space-2);
+}
+.res-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name stepper" "meta meta";
+  align-items: center;
+  gap: 4px 8px;
+}
+.res-toggle {
+  grid-area: name;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px;
+  font-size: 9px;
+  text-align: left;
+  color: var(--star);
+  background: none;
+  box-shadow: none;
+}
+.res-toggle:hover {
+  background: none;
+  filter: brightness(1.25);
+}
+.res-toggle:focus-visible {
+  outline: 2px dashed var(--gold);
+}
+.res-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.res-chevron {
+  width: 1ch;
+  color: var(--dim);
+}
+.res-head .stepper {
+  grid-area: stepper;
+}
+.res-meta {
+  grid-area: meta;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 22px;
+  font-size: 8px;
+  color: var(--dim);
+}
+.res-fit.good {
+  color: var(--glorp);
+}
+.res-fit.close {
+  color: var(--gold);
+}
+.res-fit.poor {
+  color: var(--danger);
+}
+.res-details {
+  padding: 6px 0 2px 22px;
+}
+.res-details .seg-bar {
+  height: 12px;
+  margin-bottom: 6px;
+}
+.rf-why {
+  grid-column: 1 / -1;
+  color: var(--dim);
+}
+.dome-cols .control-panel {
+  overflow-y: auto;
+}
+.disasters-help {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.px-button.help-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+/* position: fixed + left/top/bottom/width/max-height set inline by DisastersHelp.tsx,
+   so the scrolling control panel can't clip it and it stays inside the viewport. */
+.disasters-pop {
+  position: fixed;
+  z-index: 50;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: var(--space-0);
+  border: 2px solid var(--gold);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+}
+.disasters-note {
+  margin: 4px 0 0;
+  padding-left: 44px; /* lines up with the text column above (32px icon + 12px gap) */
+  font-size: 8px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+/* Sanctuary: clock, time buttons, forecast animation, details toggle */
+.sanctuary-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sanctuary-clock {
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 14px;
+  color: var(--space-0);
+  background: var(--glorp);
+}
+.time-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.run-panel > .px-button {
+  margin-top: 8px;
+}
+.details-toggle {
+  margin: 8px 0;
+}
+.forecast-anim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(29, 34, 48, 0.55);
+  pointer-events: none;
+}
+.fa-counters {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--space-0);
+  background: var(--gold);
+}
+.fa-plain {
+  position: absolute;
+  top: 45%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--star);
+}
+.fa-flicker {
+  position: absolute;
+  margin: -16px 0 0 -16px;
+  line-height: 0;
+}
+.fa-year {
+  min-width: 9ch;
+}
+
+/* Survival chart (sanctuary/SurvivalChart.tsx) */
+.survival-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.survival-line {
+  fill: none;
+  stroke-width: 2.5;
+}
+.survival-line.prev {
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+.survival-previous {
+  opacity: 0.35;
+}
+.survival-expected {
+  fill: none;
+  stroke: var(--star);
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
+}
+.survival-expected.prev {
+  stroke-dasharray: 3 5;
+}
+.survival-label {
+  font-family: inherit;
+  font-size: 9px;
+}
+
+/* Advance report (sanctuary/AdvanceReport.tsx) */
+.report-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 18, 25, 0.8);
+}
+.advance-report {
+  width: min(880px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: var(--space-1);
+  border: var(--px) solid var(--gold);
+}
+.report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.report-head h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.recap-year {
+  margin: 10px 0;
+  font-size: 18px;
+  text-align: center;
+  color: var(--gold);
+}
+.recap-domes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+.recap-dome {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+}
+.recap-hit {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  margin-left: -24px;
+  line-height: 0;
+  transform: scale(1.5);
+  animation: recap-pop 0.5s steps(3) both;
+}
+@keyframes recap-pop {
+  from {
+    opacity: 0;
+  }
+}
+.recap-name {
+  color: var(--gold);
+}
+.report-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+.report-card {
+  padding: 8px 10px;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.report-card h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: normal;
+}
+.report-pop,
+.report-events {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 8px;
+  line-height: 1.7;
+}
+.report-pop .up {
+  color: var(--glorp);
+}
+.report-pop .down {
+  color: var(--danger);
+}
+.report-events li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 6px;
+  align-items: start;
+}
+.report-quiet {
+  margin: 0;
+  font-size: 8px;
+  color: var(--dim);
+}
+.report-zorps,
+.report-luck {
+  margin: 6px 0;
+  font-size: 11px;
+}
+.report-luck {
+  color: var(--glorp);
+}
+.disaster-fallback.small {
+  width: 16px;
+  height: 16px;
 }
 
 /* Glorp's control panel: public/sprites/control-panel.png (16×16, 9-slice, 6px corners at 2×). */
@@ -1838,12 +2277,24 @@ input.dial:focus-visible {
 }
 .disasters li {
   display: grid;
-  grid-template-columns: 32px 1fr;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  grid-template-columns: 32px minmax(0, 1fr); /* fixed icon column, text column */
+  align-items: start;
+  column-gap: 12px;
+  margin-bottom: 10px;
   font-size: 8px;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+.disaster-icon {
+  display: flex;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+}
+.disaster-text {
+  min-width: 0;
+  padding-top: 2px;
+  text-align: left;
 }
 .disasters strong {
   font-weight: normal;
@@ -2119,10 +2570,123 @@ input.dial:focus-visible {
   .pin.in-era .pin-fallback,
   .era-marker.target .sprite,
   .era-marker.target .era-marker-fallback,
-  .dome-resident {
+  .dome-resident,
+  .zorps-toast,
+  .recap-hit {
     animation: none;
   }
   .dome-sky {
     transition: none;
   }
+}
+
+/* Dome capacity (sanctuary/CapacityBar.tsx): green → amber at 80% (crowded) → red at 100% (full). */
+.capacity {
+  --cap: var(--glorp);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+}
+.capacity.crowded {
+  --cap: var(--gold);
+}
+.capacity.full {
+  --cap: var(--danger);
+}
+.capacity-bar {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 120px;
+  height: 12px;
+  background: var(--space-0);
+  border: 2px solid var(--space-2);
+}
+.capacity.compact .capacity-bar {
+  width: 64px;
+  height: 8px;
+}
+.capacity-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cap);
+}
+.capacity-text {
+  white-space: nowrap;
+  color: var(--dim);
+}
+.capacity-level {
+  color: var(--cap);
+}
+.capacity-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 6px;
+}
+.capacity-row .cp-label {
+  margin: 0;
+}
+.px-button.upgrade-btn {
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  font-size: 8px;
+}
+
+/* Lingering outbreaks */
+.outbreak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  font-size: 8px;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--space-0);
+  background: var(--danger);
+}
+.dome-site.built.infected .dome-view {
+  outline: 3px dashed var(--danger);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+.dome-stage {
+  position: relative;
+}
+.stage-badge {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.outbreak-warning {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  font-size: 8px;
+  line-height: 1.6;
+  color: var(--star);
+  background: rgba(217, 154, 154, 0.16);
+  border-left: var(--px) solid var(--danger);
+}
+.outbreak-warning.mild {
+  background: rgba(226, 201, 145, 0.12);
+  border-left-color: var(--gold);
+}
+.res-exposed {
+  color: var(--danger);
+  font-size: 8px;
+  white-space: nowrap;
+}
+.report-outbreak {
+  margin: 6px 0 0;
+  font-size: 8px;
+}
+.report-outbreak.active {
+  color: var(--danger);
+}
+.report-outbreak.ended {
+  color: var(--glorp);
 }

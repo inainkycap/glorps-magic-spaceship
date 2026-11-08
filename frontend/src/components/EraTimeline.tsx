@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { EraScale } from "../game/time";
 import { formatJumpShort } from "../game/timeJump";
 import { formatYear } from "../geo";
 import Sprite from "./Sprite";
@@ -48,14 +49,15 @@ const arcLift = (h: number, t: number) => 4 * h * t * (1 - t);
 export default function EraTimeline({
   current,
   markers,
-  range: [start, end],
+  scale,
   preview,
   disabled,
   onPick,
 }: {
   current: number;
   markers: EraMarker[];
-  range: [number, number];
+  /** From game/time.ts buildEraScale: linear or log, with ticks; recomputed when species load. */
+  scale: EraScale;
   preview: TimePreview | null;
   /** True during a trip: markers can't be clicked. */
   disabled: boolean;
@@ -71,12 +73,8 @@ export default function EraTimeline({
     return () => ro.disconnect();
   }, []);
 
-  const pct = (y: number) => Math.min(100, Math.max(0, ((y - start) / (end - start)) * 100));
+  const pct = (y: number) => Math.min(100, Math.max(0, scale.pos(y) * 100));
   const px = (y: number) => (pct(y) / 100) * width;
-  const span = end - start;
-  const step = span > 1000 ? 200 : span > 400 ? 100 : 50;
-  const ticks: number[] = [];
-  for (let y = Math.ceil(start / step) * step; y <= end; y += step) ticks.push(y);
 
   // --- preview arc ---
   const showArc = preview !== null && preview.from !== preview.to && width > 0;
@@ -88,7 +86,10 @@ export default function EraTimeline({
   // During a trip, Glorp's marker rides the arc: lift it by the arc height at its progress.
   let glorpLift = 0;
   if (preview?.mode === "travel" && preview.from !== preview.to) {
-    const t = Math.min(1, Math.max(0, (current - preview.from) / (preview.to - preview.from)));
+    // progress measured along the track (works for log and linear scales alike)
+    const p0 = scale.pos(preview.from);
+    const p1 = scale.pos(preview.to);
+    const t = p1 === p0 ? 1 : Math.min(1, Math.max(0, (scale.pos(current) - p0) / (p1 - p0)));
     glorpLift = arcLift(arcH, t);
   }
 
@@ -102,9 +103,9 @@ export default function EraTimeline({
       >
         <div className="timeline-line" />
         <div className="timeline-fill" style={{ width: `${pct(current)}%` }} />
-        {ticks.map((y) => (
-          <span key={y} className="timeline-tick" style={{ left: `${pct(y)}%` }} aria-hidden="true">
-            {formatYear(y)}
+        {scale.ticks.map((t) => (
+          <span key={t.year} className="timeline-tick" style={{ left: `${t.pos * 100}%` }} aria-hidden="true">
+            {t.label}
           </span>
         ))}
 

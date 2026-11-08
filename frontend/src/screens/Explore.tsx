@@ -8,6 +8,7 @@ import ArrivalBubble from "../explore/ArrivalBubble";
 import FieldGuide from "../explore/FieldGuide";
 import ScanBubble from "../explore/ScanBubble";
 import { needKeysOf, revealsOf } from "../game/needs";
+import { formatYear } from "../geo";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
 import type { Hotspot, NeedKey } from "../types";
@@ -24,7 +25,7 @@ const spriteUrl = (name: string) => `${import.meta.env.BASE_URL}sprites/${name}.
 export default function Explore() {
   const { speciesId = "" } = useParams();
   const state = useAsync(speciesId, () => getSpecies(speciesId));
-  const { scannedFor, discoveredFor, markScanned, discoverNeed } = useProgress();
+  const { scannedFor, discoveredFor, markScanned, discoverNeed, markDnaComplete } = useProgress();
   const [scan, setScan] = useState<ActiveScan | null>(null);
   const [arrivalOpen, setArrivalOpen] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -39,12 +40,13 @@ export default function Explore() {
   const showArrival = arrivalOpen && !!species.intro?.trim();
 
   const scanHotspot = (h: Hotspot) => {
-    const firstScan = !scanned.includes(h.id);
-    markScanned(species.id, h.id);
+    // Each of these pays its Zorps reward (with a "+N Zorps" popup) the first time only.
+    const firstScan = markScanned(species.id, h.id);
     // Only announce needs the species actually has content for.
     const reveals = revealsOf(h).filter((k) => species.needs?.[k]);
     const newNeeds = reveals.filter((k) => discoverNeed(species.id, k)); // records each new one
     const knownNeeds = reveals.filter((k) => !newNeeds.includes(k));
+    if (h.dna && firstScan && dna + 1 >= species.dna_required) markDnaComplete(species.id);
     setArrivalOpen(false);
     setScan({ hotspot: h, firstScan, newNeeds, knownNeeds });
   };
@@ -70,7 +72,7 @@ export default function Explore() {
       <header className="explore-head">
         <div>
           <h1>
-            {species.location}, {species.era}
+            {species.location}, {formatYear(species.era_year)}
           </h1>
           <p className="explore-stats">
             DNA {dna}/{species.dna_required} · Scanned {scanned.length}/{species.hotspots.length}

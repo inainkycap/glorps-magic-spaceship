@@ -2,7 +2,7 @@
 // strand with its partner (A↔T, C↔G) against the clock. Quality % → individuals
 // rescued (4–20), which become the species' pool in the Sanctuary.
 
-import { PRESENT_YEAR } from "./fuel";
+import { yearsAgo } from "./time";
 
 export type Base = "A" | "T" | "C" | "G";
 export const BASES: Base[] = ["A", "T", "C", "G"];
@@ -26,7 +26,7 @@ export interface DnaDifficulty {
  * e.g. 1870 → 11 bases, 1 degraded, 20 s; 1600 → 13 bases, 3 degraded, 21 s.
  */
 export function dnaDifficulty(eraYear: number): DnaDifficulty {
-  const age = Math.min(3000, Math.max(0, PRESENT_YEAR - eraYear));
+  const age = Math.min(3000, yearsAgo(eraYear)); // BCE-safe (no year 0)
   const bases = Math.min(16, 10 + Math.round(age / 150));
   const degraded = Math.min(6, Math.floor(age / 120), Math.floor(bases / 3));
   const seconds = 20 + Math.max(0, bases - 12);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import dodo from "../mocks/dodo.json";
+import dodo from "../mocks/species/dodo.json";
 import type { DomeConditions, Species } from "../types";
 import { knownFit, overallFit, parseBound } from "./fit";
 

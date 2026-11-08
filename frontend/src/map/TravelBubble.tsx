@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useId, useRef } from "react";
 import Sprite from "../components/Sprite";
-import { canAfford } from "../game/fuel";
+import { ZorpsPrice } from "../components/ZorpsCounter";
+import { canAfford } from "../game/zorps";
 import { describeJump } from "../game/timeJump";
 import { formatYear } from "../geo";
 import type { SpeciesSummary } from "../types";
@@ -34,13 +35,13 @@ function JumpText({ text }: { text: string }) {
 /**
  * Speech bubble from a species pin: what the trip costs and [Travel] [Cancel].
  * Sits above the pin (below it if there's no room) and follows it as the map
- * moves. Escape cancels. Travel is disabled, with a message, if fuel is short.
+ * moves. Escape cancels. Travel is disabled, with a message, if Zorps are short.
  */
 export default function TravelBubble({
   species,
   fromYear,
   cost,
-  fuel,
+  zorps,
   here,
   onTravel,
   onCancel,
@@ -49,7 +50,7 @@ export default function TravelBubble({
   /** Glorp's current era, for the "1600 → 1870 · 270 years into the future" line. */
   fromYear: number;
   cost: number;
-  fuel: number;
+  zorps: number;
   /** Glorp is already at this place and era: no trip needed. */
   here: boolean;
   onTravel: () => void;
@@ -59,7 +60,7 @@ export default function TravelBubble({
   const titleId = useId();
   const primaryRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const affordable = canAfford(fuel, cost);
+  const affordable = canAfford(zorps, cost);
 
   // Focus the main action when the bubble opens (Cancel if Travel is disabled).
   useEffect(() => {
@@ -104,11 +105,17 @@ export default function TravelBubble({
         <JumpText text={describeJump(fromYear, species.era_year)} />
       </p>
       <p className="bubble-cost">
-        {here ? "Glorp is already here: no fuel needed." : `⛽ costs ${cost} fuel (you have ${fuel})`}
+        {here ? (
+          "Glorp is already here: free."
+        ) : (
+          <>
+            Costs <ZorpsPrice amount={cost} /> (you have <ZorpsPrice amount={zorps} />)
+          </>
+        )}
       </p>
       {!affordable && (
         <p className="bubble-warning" role="alert">
-          Not enough fuel: you need {cost - fuel} more.
+          Not enough Zorps: you need {cost - zorps} more. Advance time in the Sanctuary to earn some.
         </p>
       )}
       <div className="bubble-actions">

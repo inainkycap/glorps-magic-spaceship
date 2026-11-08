@@ -1,0 +1,78 @@
+{
+  "id": "pyrenean_ibex",
+  "name": "Pyrenean ibex",
+  "scientific_name": "Capra pyrenaica pyrenaica",
+  "status": "extinct",
+  "era": "1910",
+  "era_year": 1910,
+  "location": "Pyrenees, Spain",
+  "lat": 42.65,
+  "lon": -0.03,
+  "kind": "mammal",
+  "intro": "Zib! The Pyrenees mountains, 1910. Glorp's ears are popping! Up on these cliffs lives a wild goat with huge curved horns: the bucardo.",
+  "description": "The Pyrenean ibex, or bucardo, was a wild mountain goat from the Pyrenees, the mountains between Spain and France. Males had thick horns that curved back in a wide sweep. It climbed steep, rocky slopes and grazed alpine meadows, moving lower in winter. Hunters prized its horns as trophies, and by the early 1900s only a small group was left. The very last one, a female named Celia, died in 2000 when a tree fell on her. Scientists had saved some of her cells, and in 2003 they cloned her: the baby was born alive but lived only a few minutes. It was the first time an extinct animal had ever been brought back, even briefly.",
+  "facts": {
+    "height": "~65–75 cm at the shoulder?",
+    "weight": "~60–80 kg for males?",
+    "diet": "Grasses, herbs and shrubs; lichens in winter",
+    "lifespan": "~16 years?",
+    "extinct_year": 2000,
+    "cause": "Hunting (its horns were trophies) and competition with farm animals for grazing"
+  },
+  "habitat": {
+    "biome": "Rocky mountain slopes, cliffs and alpine meadows",
+    "climate": "Cold winters with deep snow, mild summers",
+    "elevation": "~1,000–2,800 m? (lower in winter)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Steep rocky slopes with alpine meadows",
+      "types": ["grassland", "tundra"],
+      "why": "It grazed high meadows and escaped predators by climbing cliffs."
+    },
+    "temperature": {
+      "min": "~-15", "max": "~20", "unit": "°C",
+      "why": "Mountain winters are freezing and snowy, and even summer stays mild up high."
+    },
+    "humidity": {
+      "min": "~40", "max": "~80", "unit": "%",
+      "why": "Mountain air changes from dry sunny days to cloud and snow."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "The air up here has the same mix of gases, just thinner."
+    },
+    "pressure": {
+      "min": "~70", "max": "~88", "unit": "kPa",
+      "why": "It lived 1,000–2,800 m up, where the air pressure is much lower than at sea level."
+    }
+  },
+  "sources": [
+    { "title": "Pyrenean ibex (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Pyrenean_ibex" },
+    { "title": "Pyrenees (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Pyrenees" }
+  ],
+  "hotspots": [
+    { "id": "cliff", "label": "Rocky cliff", "sprite": "cliff", "x": 18, "y": 44,
+      "fact": "Bucardos climbed cliffs like this to escape wolves, and grazed the meadows below.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "snow", "label": "Snow patch", "sprite": "snowflake", "x": 74, "y": 30,
+      "fact": "Snow lingers up here into summer. Winters are freezing, so the ibex moved lower down the mountain.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "cloud", "label": "Passing cloud", "sprite": "cloud", "x": 50, "y": 14,
+      "fact": "One minute it's sunny and dry, the next a cloud rolls over the ridge and everything is damp.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "peak", "label": "High peak", "sprite": "mountain", "x": 88, "y": 22,
+      "fact": "Glorp's ears popped on the way up: the air pressure up here is much lower than at sea level.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "horns", "label": "Curved horns", "sprite": "horns", "x": 40, "y": 62,
+      "fact": "A male's horns curved back in a wide sweep. Hunters wanted them as trophies, which is why so few bucardos were left.",
+      "dna": true },
+    { "id": "kid", "label": "Young ibex", "sprite": "goat", "x": 62, "y": 70,
+      "fact": "A kid, just a few months old, already climbing. Females usually had one kid each spring.",
+      "dna": true },
+    { "id": "celia", "label": "Glorp's future note", "sprite": "vial", "x": 30, "y": 80,
+      "fact": "The last bucardo, Celia, died in 2000. Scientists cloned her in 2003: the first extinct animal ever brought back, though the baby lived only minutes.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

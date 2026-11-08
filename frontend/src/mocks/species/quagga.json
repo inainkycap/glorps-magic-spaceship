@@ -1,0 +1,78 @@
+{
+  "id": "quagga",
+  "name": "Quagga",
+  "scientific_name": "Equus quagga quagga",
+  "status": "extinct",
+  "era": "1870",
+  "era_year": 1870,
+  "location": "Karoo, South Africa",
+  "lat": -32.3,
+  "lon": 22.5,
+  "kind": "mammal",
+  "intro": "Zib! The Karoo, South Africa, 1870. Out on this dry grassland lives a zebra that forgot to finish its stripes: the quagga.",
+  "description": "The quagga was a kind of plains zebra from the dry grasslands of South Africa. It had bold stripes on its head and neck that faded away along its body, leaving its back half plain brown. Its name is thought to come from its call, a sound like \"kwa-ha\". European settlers hunted it for meat and hides and cleared its grazing land for sheep and cattle. The last wild quaggas were shot in the 1870s, and the very last one died in a zoo in Amsterdam in 1883. In 1984 the quagga became the first extinct animal to have its DNA studied, which showed it was a zebra, not a separate species.",
+  "facts": {
+    "height": "~1.25–1.35 m at the shoulder",
+    "weight": "~250 kg?",
+    "diet": "Grasses",
+    "lifespan": "~20 years?",
+    "extinct_year": 1883,
+    "cause": "Hunted for meat and hides; its grassland was taken over for farm animals"
+  },
+  "habitat": {
+    "biome": "Dry grassland and scrub (the Karoo)",
+    "climate": "Dry, with hot days and cold nights",
+    "elevation": "High plateau, ~1,000–1,500 m?"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Open, dry grassland with low shrubs",
+      "types": ["grassland"],
+      "why": "It grazed in herds on open plains, where it could see predators coming."
+    },
+    "temperature": {
+      "min": "~0", "max": "~35", "unit": "°C",
+      "why": "Karoo days are hot, but nights on the high plateau can drop to freezing."
+    },
+    "humidity": {
+      "min": "~20", "max": "~55", "unit": "%",
+      "why": "The Karoo is semi-desert: rain is rare and the air is dry."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, like every other grazing animal."
+    },
+    "pressure": {
+      "min": "~84", "max": "~100", "unit": "kPa",
+      "why": "It lived on a high plateau, where the air pressure is a bit lower than at the coast."
+    }
+  },
+  "sources": [
+    { "title": "Quagga (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Quagga" },
+    { "title": "Karoo (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Karoo" }
+  ],
+  "hotspots": [
+    { "id": "grass", "label": "Dry grass", "sprite": "grass", "x": 26, "y": 70,
+      "fact": "Short, tough grass as far as Glorp can see. A quagga herd grazed open plains like this.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "sun", "label": "Blazing sun", "sprite": "sun", "x": 84, "y": 16,
+      "fact": "It's scorching by day, but on this high plateau the nights can drop to freezing.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "riverbed", "label": "Dry riverbed", "sprite": "cracked-earth", "x": 56, "y": 82,
+      "fact": "This river only flows after rare storms. The Karoo is semi-desert, and the air is dry.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "plateau", "label": "Flat-topped hill", "sprite": "mountain", "x": 14, "y": 38,
+      "fact": "The Karoo is a high plateau, so the air pressure here is a bit lower than at the sea.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "hoofprints", "label": "Hoofprints", "sprite": "hoofprints", "x": 40, "y": 60,
+      "fact": "Fresh hoofprints! Quaggas lived in herds and called out with a sound like \"kwa-ha\".",
+      "dna": true },
+    { "id": "hide", "label": "Striped hide", "sprite": "hide", "x": 70, "y": 66,
+      "fact": "Stripes on the head and neck, plain brown behind. In 1984 the quagga became the first extinct animal to have its DNA studied.",
+      "dna": true },
+    { "id": "fence", "label": "Farm fence", "sprite": "fence", "x": 88, "y": 58,
+      "fact": "Settlers fenced the plains for sheep and shot quaggas for meat and hides. The last one died in Amsterdam Zoo in 1883.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

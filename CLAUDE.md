@@ -5,26 +5,28 @@ Glorp's spaceship travels through time to rescue extinct species (first world: M
 **domes on Glorp's home planet**, each with its own controlled environment. The loop:
 
 1. **Map**: a full-screen pixel world map with an era timeline; each species is a pin at
-   its real lat/lon and era. Travelling costs **fuel** (more the further back in time; see
-   "Game rules"), then Glorp flies there while the era ticks over.
+   its real lat/lon and era. Travelling costs **Zorps** (Glorp's currency; more the further
+   back in time; see "Game rules"), then Glorp flies there while the era ticks over.
 2. **Explore**: a pixel scene of the species' world. Scan hotspots to learn facts,
    **discover the species' needs** (ideal terrain, temperature, humidity, oxygen, pressure)
    for the field guide, and **collect DNA** fragments.
 3. **DNA Lab**: a quick pairing minigame (frontend-only); its result is the **number of
    individuals rescued** (4–20) for that species. See "Game rules".
 4. **Sanctuary**: domes on Glorp's home planet (1 built,
-   up to 6; more cost fuel). **Set each dome's conditions** (terrain, temperature,
-   humidity, oxygen, pressure), **place rescued individuals**, then **run 1,000 futures**
-   (Monte Carlo) for all domes together. Growth depends on how well a dome's conditions fit
+   up to 6; more cost Zorps). **Set each dome's conditions** (terrain, temperature,
+   humidity, oxygen, pressure), **place rescued individuals**, then **Forecast** (1,000
+   Monte Carlo futures for all domes together) and **Advance 10 years** (one future actually
+   happens: populations are replaced by the survivors, a report shows what struck which
+   dome, and thriving species pay Zorps). Growth depends on how well a dome's conditions fit
    each species' needs. **Disasters strike per dome**, so splitting a species across domes
    is safer. See "Sanctuary sim" and `backend/MODEL.md`.
 
 The old Lab loop (protecting a species *in the past* by picking interventions against
 threats, then simulating) is **dropped**.
 
-Flow: Map (fuel) → travel → Explore (scan, discover needs, collect DNA) → DNA Lab
+Flow: Map (Zorps) → travel → Explore (scan, discover needs, collect DNA) → DNA Lab
 (minigame, score = individuals rescued) → Sanctuary (domes on Glorp's home planet:
-conditions, placement, 1,000 futures).
+conditions, placement, Forecast → Advance → Report, which earns the Zorps for the next trips).
 
 Judged on: Technical Challenge, Innovation, Presentation.
 
@@ -60,8 +62,7 @@ Adding a species = adding one file. Fields:
 - **Legacy, optional** (from the dropped "protect it in the past" Lab; nothing uses them):
   `hotspots[].unlocks`, `threats[]`, `interventions[]`, `goal_survival`, `max_interventions`,
   `sim`. The backend accepts but doesn't require them; new species files should leave them
-  out. To do (frontend): drop them from `types.ts` along with the legacy `simulate()` in
-  `api.ts` and the `simulate_*.json` mocks.
+  out. The frontend no longer has types for them (only `hotspots[].unlocks?` remains).
 
 The backend validates every species file at startup (the server won't start on a bad file):
 types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
@@ -74,6 +75,7 @@ types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
 | GET | `/api/species` | `SpeciesSummary[]`: the basic-info fields only, which **must include `lat`, `lon`, `era_year`** (the map needs them) |
 | GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
 | POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
+| POST | `/api/sanctuary/advance` (proposed, frontend) | `SanctuaryAdvanceResponse` (see "Proposed: Forecast → Advance") |
 | GET | `/api/timeline` | `Timeline` (see below): every species' era, sorted, with labels and log-scale positions |
 | GET | `/api/economy` (proposed) | zorps rules, prices and per-species era multipliers (see "Proposed: zorps") |
 | GET | `/api/travel-cost?from_year=&to_year=` (proposed) | `{ from_year, to_year, zorps }` |
@@ -109,61 +111,123 @@ title as in the URL (`Ball's_Pyramid`); for a species' `sources[].url`, use the 
 TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 
 ## Frontend conventions
-- Mocks live in `frontend/src/mocks/`. `VITE_USE_MOCKS=true` (in `frontend/.env.local`)
-  makes `src/api.ts` serve mocks instead of calling the backend.
-- Progress (scanned hotspots, DNA, saved species) persists in localStorage; wrap
-  reads/writes in try/catch.
+- Mocks live in `frontend/src/mocks/` (`mocks/species/<id>.json` are copies of every
+  backend species file). `src/api.ts` calls the real backend first and **falls back to the
+  mocks** on a network error, a 5xx, or a 404 from an endpoint the backend hasn't built yet
+  (`/api/sanctuary/advance`); a small "offline data: …" badge then shows in the HUD.
+  `VITE_USE_MOCKS=true` (in `frontend/.env.local`) uses the mocks only.
+- **Forecast and Advance always use the same model** (`frontend/src/simRouter.ts`, tested
+  in `simRouter.test.ts`): the frontend probes `POST /api/sanctuary/advance` once; if it
+  exists (any answer but 404), both use the backend; if it's missing or the backend is
+  unreachable, both use the mock (`mockSanctuarySim.ts`) and the HUD shows "offline sim".
+  A backend failure mid-session switches both to the mock; it re-checks after 60 s.
+- Progress (scanned hotspots, DNA, rescued animals, Zorps, domes, sanctuary clock) persists
+  in localStorage; wrap reads/writes in try/catch. Old saves are migrated on load
+  (`migrate()` in `hooks/useProgress.ts` drops retired fields and repairs broken ones).
+- Eras are formatted one way everywhere (`formatEra` in `game/time.ts`): "today", "1987",
+  "900 CE", "1,000 BC", "14,025 yrs ago", "66 million yrs ago".
 - Screens (pixel art: `image-rendering: pixelated`):
-  - Map `/`: world map + era timeline + fuel gauge; clicking a pin opens a travel bubble
-    (jump, fuel cost), and confirming plays the travel animation.
+  - Map `/`: world map + era timeline + Zorps counter; clicking a pin opens a travel bubble
+    (jump, Zorps cost), and confirming plays the travel animation. The timeline scales to
+    the species: oldest era to today plus padding, log scale when the span is over ~1,000
+    years (`buildEraScale` in `game/time.ts`), with ticks like "today", "100 yrs ago",
+    "1,000 BC", "66 million yrs ago". The travel animation's year counter moves in log time.
   - Explore `/explore/:speciesId`: Glorp's arrival intro, scan hotspots (facts, DNA, needs),
     field guide; "Go to DNA Lab" once DNA ≥ `dna_required`.
   - DNA Lab `/lab/:speciesId`: base-pairing minigame (A↔T, C↔G) against the clock; Glorp
-    announces the individuals rescued, then "Send to Sanctuary". Retries cost fuel.
+    announces the individuals rescued, then "Send to Sanctuary". Retries cost Zorps.
   - Sanctuary `/sanctuary`: Glorp's home planet with up to 6 dome sites (1 built; building
-    more costs fuel), the pool of rescued individuals not yet placed, and "Run 1,000
-    futures" for all domes together (fan chart of species alive, per-species survival,
-    expected and worst-case species saved; compare mode overlays the previous run).
-  - Dome `/sanctuary/:domeId`: the dome large, with Glorp's control panel (name, terrain,
-    temperature/humidity/oxygen/pressure dials; the interior reacts live), placement
-    steppers to/from the pool, a fit bar per resident species (computed from discovered
-    needs only; undiscovered needs show as a grey "?" segment and give no hint), and this
-    dome's last-run results. Mock mode runs a client-side mock
-    (`frontend/src/mocks/mockSanctuarySim.ts`) instead of the backend sim.
-  - Dome state, rescued individuals and the last two runs persist in progress.
+    more costs Zorps), the pool of rescued individuals not yet placed, the sanctuary clock
+    ("Year +N"), and two actions for all domes together:
+    - **Forecast**: 1,000 futures over 50 years, with a short simulating animation (plain
+      "Simulating…" under reduced motion). Shows per-species survival curves labelled at
+      their line ends plus a dashed "expected species alive" line (the band chart is
+      behind "Details", and is the fallback when `survival_by_year` is missing); compare
+      mode fades in the previous forecast.
+    - **Advance 10 years**: one future happens (`POST /api/sanctuary/advance`). Dome
+      populations are replaced by the survivors, the clock moves on, and an animated recap
+      leads to report cards ("Meteor strike on Dome Zib in year +4: 6 passenger pigeons
+      lost"), the Zorps earned and a luck line from `luck_percentile`.
+  - Dome `/sanctuary/:domeId`: three columns that fit 1280×720 with no page scroll. Left:
+    the capacity bar with "Upgrade capacity (+20) for N Zorps", then residents
+    (collapsible rows with placement steppers, a fit bar and per-need fit + why;
+    undiscovered needs show as a grey "?" and give no hint). Steppers can't go over the
+    dome's capacity. Centre: the dome large (the interior reacts live; an outbreak badge
+    with years left) with compact last-forecast and last-advance summaries. Right:
+    Glorp's control panel (name, terrain, temperature/humidity/oxygen/pressure dials);
+    disasters are explained behind a "?" button (a popover kept inside the viewport).
+  - Capacity: every dome has one (default 60, all species share it). The capacity bar
+    (overview and dome screen) is green, amber from 80% ("crowded"), red at 100% ("full").
+  - Lingering disease: a dome with an outbreak (from the last advance) shows a badge with
+    the years left; the report says "Outbreak continues (3 years left)." or "Outbreak
+    ended.". Moving animals out of an infected dome warns that they may carry it; they're
+    marked "exposed" and sent as `from_infected` when placed in another dome, until the
+    next advance.
+  - Dome state (incl. capacity, outbreak, exposure), rescued individuals, the pool, the
+    clock, the last advance and the last two forecasts persist in progress.
+- Every Zorps gain pops up as "+N Zorps · reason" (`components/ZorpsToasts.tsx`).
+- Buttons size with `min-width` + padding, never a fixed width, so labels never overflow.
 - Map projection is equirectangular: `x% = (lon+180)/360`, `y% = (90−lat)/180`.
   Glorp's current location (lat/lon/era_year) is part of the persisted progress.
-- Respect `prefers-reduced-motion` (the travel animation becomes an instant jump).
-- Fan chart is hand-written SVG (no chart library): 25 sample paths, 50% band (p25–p75),
-  90% band (p5–p95), median line (p50).
+- Respect `prefers-reduced-motion` (the travel animation becomes an instant jump, the
+  forecast shows plain "Simulating…", the advance report skips the recap).
+- Charts are hand-written SVG (no chart library). Survival chart: one curve per species
+  (`survival_by_year`), labels at the line ends, dashed expected-species-alive line. Band
+  ("fan") chart: 25 sample paths, 50% band (p25–p75), 90% band (p5–p95), median line (p50).
 
 ## Game rules
-Frontend-only for now; fuel constants live in `frontend/src/game/fuel.ts`, DNA Lab rules in
-`frontend/src/game/dna.ts` (tests next to them, run with `npm test` in `frontend/`). If the
-backend takes these over, add them to the contract above and keep the frontend constants
-as fallbacks.
+Zorps rules live in `frontend/src/game/zorps.ts`, era/time helpers in `game/time.ts`, DNA Lab
+rules in `game/dna.ts` (tests next to them, run with `npm test` in `frontend/`).
 
-**Fuel.** Glorp starts with 100 fuel (also the tank size), saved in the player's progress.
-Low-fuel warning at 25. Costs: travel (below), **building a sanctuary dome: 18**
-(`FUEL_COSTS.buildDome`; the first dome is free, 6 sites in all), and **retrying the DNA
-Lab: 4** (`FUEL_COSTS.dnaRetry`; the first attempt per species is free). There is no way to
-earn fuel back yet.
+**Zorps** (Glorp's alien currency, **no cap**, saved in the player's progress, shown in the
+HUD; every gain pops up "+N Zorps"). Where each number comes from:
 
-**Fuel budget target** (enforced by the "fuel budget" tests in `fuel.test.ts`). Starting
-fresh with the 2 current species, visiting the newest era first and allowing one DNA retry
-per species:
-- affordable: **2 species + 2 extra domes** (94) or **3 species + 1 extra dome** (88, with a
-  hypothetical ~1750 third species)
-- not affordable: 3 species + 2 extra domes (106), or 2 species + all 5 extra domes (148)
+| Rule | Value | Source |
+|---|---|---|
+| Starting balance | 100 | **backend** `GET /api/economy` `start_zorps` |
+| Building a dome (habitat) | 25 (first dome free, 6 sites) | **backend** `habitat_cost` |
+| Payout per thriving species on "Advance 10 years" | `zorps_per_survivor` (0.5) × animals alive × era multiplier, for species with ≥ 2 alive | **backend**: the advance response's `zorps_earned` when present; otherwise computed in the frontend from `/api/economy` (`zorps_per_survivor`, per-species `era_multiplier`) |
+| Travel | formula below | **frontend** (the backend's `/api/travel-cost` makes recent decades cost *more* than older ones; proposed back, see "Notes for backend") |
+| DNA Lab retry | 5 (first attempt per species free) | **frontend** `DNA_RETRY_COST` |
+| Dome capacity upgrade (+20, up to 200) | 10, then +5 per upgrade of the same dome (10, 15, 20, …) | **frontend** `capacityUpgradeCost` |
+| New fact (first scan of a hotspot) | +1 | **frontend** `REWARDS.newFact` |
+| New need discovered | +2 each | **frontend** `REWARDS.newNeed` |
+| DNA complete (all fragments) | +3 | **frontend** `REWARDS.dnaComplete` |
+| Species rescued (first DNA Lab result) | +5 | **frontend** `REWARDS.rescue` |
 
-So the player has to choose between more species and more domes. Route order matters:
-going to 1600 first and back to 1870 re-crosses "thick" time (77 instead of 50 for the two
-trips), which costs about a dome. Retune the constants together, and keep those tests
-passing.
+Discovery rewards are paid once each (per hotspot, need, species). If the backend is down,
+`FALLBACK_ECONOMY` in `zorps.ts` (a copy of `backend/data/economy.json`) stands in. The
+forecast's `zorps` field (what a run *would* earn) is not paid out: only Advance pays,
+because it actually happens (so the anti-farming question doesn't arise; see "Proposed:
+zorps").
+
+**Budget target** (enforced by the "early-game Zorps budget" tests in `zorps.test.ts`).
+From a fresh start (100 Zorps at home in 2026), the first wave is the stick insect (1915),
+the passenger pigeon (1870) and the dodo (1600), newest first:
+- affordable: rescue all 3 **and build 2 domes** with a DNA retry each, or **3 domes**
+  without retries
+- not affordable: the remaining species from discoveries alone, or the mammoth right
+  after wave 1. Later waves need Advance payouts.
+
+**Travel cost.** Clicking a pin (or its timeline diamond) opens a bubble showing the jump
+("today → 2,000 BC · 4,025 years into the past") and the Zorps it costs ("Costs 62 (you
+have 100)"); Travel is disabled if Zorps are short. Using `t` = years ago (no year 0):
+
+    depth(t) = t² / (2·KNEE)                 for t ≤ KNEE
+             = KNEE · (ln(t / KNEE) + ½)     beyond       (continuous and smooth at the knee)
+    cost     = TRAVEL_BASE + TRAVEL_K × |depth(t_from) − depth(t_to)|, rounded up
+
+with `TRAVEL_BASE = 28`, `TRAVEL_K = 0.03`, `KNEE = 400` years. For the last ~400 years each
+year crossed costs more the older it is (the same jump costs more further back: 1610→1600
+> 2020→2010 exactly; 1700→1600 > 2000→1900 after rounding). Beyond that, time is
+logarithmic: every factor of 10 further back costs the same, which keeps deep time
+affordable. Direction doesn't matter, costs are never negative or NaN, and staying put is
+free. Examples from today: 1987/1915/1870 = 29, 1600 = 35, 900 CE = 47, 50 BC = 54,
+2,000 BC = 62, **66 million yrs ago = 179 (≈ 5× the trip to 1600)**. 1600→1870 = 34.
 
 **DNA Lab (frontend-only).** A pairing minigame: for each base of a strand the player picks
 its partner (A↔T, C↔G) before time runs out. Older species are harder; the one difficulty
-formula is `dnaDifficulty(era_year)` in `game/dna.ts`:
+formula is `dnaDifficulty(era_year)` in `game/dna.ts` (age = years ago, capped at 3,000):
 - bases = 10 + 1 per 150 years before 2026 (max 16)
 - degraded bases ("?", their letter flashes briefly on their turn) = 1 per 120 years (max 6,
   at most a third of the strand)
@@ -176,22 +240,6 @@ individuals become that species' rescued total, which fills the Sanctuary's unpl
 **The backend never sees the minigame:** its only effect on the backend is
 `residents[].count` in `POST /api/sanctuary/simulate` (how many of those individuals the
 player placed in each dome).
-
-**Travel cost.** Clicking a pin (or its timeline diamond) opens a bubble showing the jump
-("1600 → 1870 · 270 years into the future") and the fuel it costs; Travel is disabled if
-fuel is short. Time is "thicker" the further back you go:
-
-    thickness(year) = 1 + (PRESENT_YEAR − year) / 100        PRESENT_YEAR = 2026
-    cost = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K × ∫ thickness(year) d(year) over the years crossed
-         = TRAVEL_BASE_COST + TRAVEL_TIME_COST_K × |b − a| × thickness((a + b) / 2)
-
-with `TRAVEL_BASE_COST = 8` and `TRAVEL_TIME_COST_K = 0.025`. The closed form holds because
-thickness is linear: the integral is the span times the thickness at the midpoint. The charge
-is the exact cost rounded **up** to a whole unit. Properties: direction doesn't matter
-(A→B = B→A); a decade further back costs more (1610→1600 = 10 > 2020→2010 = 9); a trip
-within the same era costs the base 8; staying put (same place and era) is free. Examples:
-2026→1600 = 42, 2026→1870 = 15, 1600→1870 = 35. Thickness reaches 0 at year 2126, so the
-formula assumes eras up to about the present.
 
 ## Species content + needs
 **Status: agreed** (backend implements it since PR #6). The frontend copes with any of
@@ -244,7 +292,7 @@ Notes:
   terrain/temperature/humidity/oxygen/pressure fit each species' needs. Most real species
   share near-normal oxygen and sea-level pressure; those matter mainly for alien domes.
 - To parse an uncertain bound, strip a leading `~`; treat `"?"` as missing.
-- The frontend mocks (`frontend/src/mocks/<id>.json`) are copies of the backend files.
+- The frontend mocks (`frontend/src/mocks/species/<id>.json`) are copies of the backend files.
   The backend files are the source of truth: edit there, then copy to the mocks.
 
 ## Sanctuary sim
@@ -306,17 +354,19 @@ How the backend behaves:
   unchanged sanctuary gives identical numbers, and compare mode shows the player's change,
   not luck.
 - **Untrusted input is sanitised, not rejected**: `residents[].count` is clamped to 0–50 per
-  species per dome; unknown `species_id`s are dropped; dome conditions are clamped to the
+  species per dome (proposed: 0–the dome's `capacity`, see "Proposed: Forecast → Advance", item 4); unknown `species_id`s are dropped; dome conditions are clamped to the
   control-panel ranges (temperature −30–50 °C, humidity 0–100 %, oxygen 10–35 %, pressure
   50–200 kPa). An unknown `terrain`, or more than 12 domes, is a 422.
 - All tuning (birth/death rates, dome capacity, disaster chances and kill fractions) lives
   in `backend/data/sanctuary.json`.
 
 ## Proposed: zorps (backend, needs frontend ok)
-**Status: proposal** (implemented in the backend). Zorps replace fuel: an alien currency,
-**uncapped**, spent on travel and habitats, and earned by animals that survive sanctuary
-runs. Older species earn more. Code: `backend/app/economy.py`; numbers:
-`backend/data/economy.json`. No `types.ts` changes yet (frontend to add).
+**Status: accepted by the frontend except travel cost** (frontend uses `GET /api/economy`
+for the start balance, habitat cost, per-survivor payout and era multipliers; types
+`Economy`, `EconomySpecies`, `ZorpsEarned` are in `types.ts`; see "Game rules"). Zorps are
+the only currency: an alien currency, **uncapped**, spent on travel and habitats, and
+earned by animals that survive in the sanctuary. Older species earn more. Code:
+`backend/app/economy.py`; numbers: `backend/data/economy.json`.
 
 Everything uses the timeline's log scale of years before now, `age(y) = log10(2026 − y + 10)`
 (1.0 for the present):
@@ -328,8 +378,11 @@ Everything uses the timeline's log scale of years before now, `age(y) = log10(20
   over two good domes ≈ 187; a poor dome ≈ 20.
 - **Travel cost** `= ceil(8 + 30 × |age(a) − age(b)|)`, 0 for the same era: from 2026,
   golden toad 29, pigeon 45, dodo 58, moa 64, aurochs 78, **mammoth 87**. Further back
-  always costs more, but each decade gets cheaper the further back it is (the opposite of
-  the old fuel rule; it's what keeps deep time affordable).
+  always costs more, but each decade gets cheaper the further back it is (it's what keeps
+  deep time affordable). **Frontend: not used**, because the game rule is that the same
+  jump costs more the older it is (2020→2010 here costs more than 1610→1600). The frontend
+  formula (see "Game rules → Travel cost") keeps deep time affordable with a log tail
+  beyond 400 years ago; proposed for `/api/travel-cost` in "Notes for backend".
 - **Habitat (dome) cost** 25; **start** with 100 zorps. Suggested values: the frontend owns
   how they're charged.
 
@@ -349,6 +402,165 @@ track balances. Since the same layout always gives the same result, the frontend
 pay out only once per layout (e.g. per `runKey`), or only the improvement over the best
 layout so far, or once per "season". Also note splitting animals across more domes earns
 more (more room to grow), so the habitat cost is a balance lever.
+**Frontend answer:** forecasts never pay. Only "Advance 10 years" pays (one future that
+actually happens and moves the sanctuary clock on), so re-running a layout earns nothing.
+
+## Proposed: Forecast → Advance (frontend, 2026-11-07)
+**Status: proposal** (frontend implements it against a client-side mock,
+`frontend/src/mocks/mockSanctuarySim.ts`, and uses the backend as soon as it exists).
+TypeScript: `SpeciesForecast`, `SanctuaryAdvanceRequest`, `SanctuaryAdvanceResponse`,
+`AdvanceDome`, `AdvanceEvent`, `DisasterType` in `frontend/src/types.ts`.
+
+1. **`POST /api/sanctuary/simulate`: `per_species[].survival_by_year`** (optional):
+   `number[]`, one entry per entry of `years`, the fraction of runs in which that species
+   is alive in any dome in that year (so its last entry = `survival_probability`). Drives
+   the per-species survival curves; without it the frontend falls back to the band chart.
+2. **`POST /api/sanctuary/advance`**: same request as `/simulate` (domes with live
+   populations, `years` = 10; `runs` optional). Plays **one** future and reports it:
+   ```json
+   {
+     "years": 10,
+     "domes": [{ "id": "dome-1",
+                 "start": { "dodo": 10, "passenger_pigeon": 6 },
+                 "end":   { "dodo": 14, "passenger_pigeon": 0 },
+                 "events": [{ "year": 4, "type": "meteor",
+                              "lost": { "passenger_pigeon": 6 } }] }],
+     "species_alive_end": 1,
+     "luck_percentile": 0.18,
+     "zorps_earned": 49
+   }
+   ```
+   - `type` is `breach | power | meteor | disease` (the disaster keys in
+     `backend/data/sanctuary.json`); `year` is
+     1…`years`; `lost` = animals of each species killed by that event.
+   - `end` replaces the dome's populations in the player's save (the frontend does this).
+   - `luck_percentile` (0–1): where this future ranks among many futures of the same
+     request: the fraction of futures that ended **no better** (fewer or equal species
+     alive at the end; ties broken by total animals alive). 0.1 = unlucky (90% of
+     futures were better), 0.9 = lucky.
+   - `zorps_earned` (optional, a whole number of Zorps): the payout for this decade. If missing the frontend pays `zorps_per_survivor` × animals alive × era
+     multiplier per species with ≥ 2 alive (`advancePayout` in `game/zorps.ts`).
+   - Not deterministic like `/simulate`: each call is a fresh future (a seed from the
+     request plus the sanctuary clock is fine too, if you want replays).
+3. **Counts clamp to 0…the dome's capacity, not 0…50.** Advance lets populations grow past
+   50, so `residents[].count` (and `start`/`end`) are clamped to the dome's `capacity`
+   (item 4), and a dome's total never exceeds it.
+4. **Dome capacity and lingering outbreaks** (2026-11-08). Types: `SanctuaryDomeInput`,
+   `SpeciesCount`, `Outbreak`, `AdvanceDome`, `AdvanceEvent` in `types.ts`.
+   - Request (both `/simulate` and `/advance`), per dome:
+     ```json
+     { "id": "dome-1", "terrain": "forest", "temperature": 24, "humidity": 75,
+       "oxygen": 21, "pressure": 101,
+       "capacity": 60,
+       "outbreak": { "years_left": 3, "severity": 0.2 },
+       "residents": [{ "species_id": "dodo", "count": 10, "from_infected": 2 }] }
+     ```
+     - `capacity` (whole number, default 60, the frontend sends 60–200): animals the dome
+       holds **in all, shared by every species inside**. The player upgrades it (+20 each,
+       paid in Zorps, frontend-only).
+     - `outbreak` (optional, or `null`): an outbreak still running from the last advance;
+       `years_left` ≥ 1, `severity` 0–1 = fraction of each species killed per year.
+     - `residents[].from_infected` (optional): how many of `count` were moved here from a
+       dome with an active outbreak since the last advance.
+   - Sim:
+     - **Species share the capacity.** Crowding slows growth: the mock multiplies births by
+       `max(0, 1 − total/capacity)` (logistic), and trims the dome back to `capacity` if it
+       goes over. (This replaces the global `dome_capacity: 30` crowding constant.)
+     - **Disease chance rises with crowding**: base 1%/year up to 80% full, then linear up
+       to (1 + 4) × base = 5%/year when full (mock: `outbreakChance`).
+     - **An outbreak lingers**: it lasts 3–5 years (counting the year it starts) and kills
+       `severity` (mock: 0.2) of each species in the dome every year; no new outbreak starts
+       in a dome while one runs. Over 3–5 years that's ≈ 49–67% dead, close to today's
+       one-shot 55% disease kill.
+     - **Moved animals can carry it**: each `from_infected` animal starts an outbreak in its
+       new dome in year 1 with a chance (mock: 15% each). The backend decides; the frontend
+       only warns the player.
+   - Advance response, per dome: **`outbreak`**: the outbreak state at the end (`{ years_left,
+     severity }`) or `null`. The frontend saves it and sends it back as the dome's
+     `outbreak` next time. Events: an outbreak is **one** `disease` event (its `lost` sums all
+     its years within this advance), with `ongoing: true` if it was already running before
+     this advance, or `spread: true` if moved animals brought it in.
+   - The mock implements all of it (`frontend/src/mocks/mockSanctuarySim.ts`), with tests:
+     a crowded dome gets more outbreaks than an uncrowded one, totals never exceed capacity,
+     an outbreak lingers and its end state comes back, moved animals sometimes spread it.
+
+## Notes for backend (from frontend)
+For Annie's Claude Code. Written 2026-11-07 by the frontend; nothing here changes the agreed
+contract until the backend accepts it (move items into the contract above as you do).
+
+**Where the game is going.** The target is **10 species**, **6 domes** and **unlock
+waves**: the player starts with a first wave (currently stick insect 1915, passenger
+pigeon 1870, dodo 1600) and has to grow a sanctuary (Forecast → Advance 10 years → Report)
+to earn the Zorps for later, older waves. main has 14 species now; pick the 10 that make
+the best set (see below) or tell the frontend to plan for 14. Unlock waves aren't
+implemented yet in either half (only the Zorps budget enforces them).
+
+**Endpoints the frontend uses:**
+| Endpoint | Status | Frontend use |
+|---|---|---|
+| `GET /api/species`, `GET /api/species/{id}` | agreed | map pins, Explore, field guide |
+| `POST /api/sanctuary/simulate` | agreed | Forecast (wants `per_species[].survival_by_year`) |
+| `POST /api/sanctuary/advance` | **proposed, not built** (frontend falls back to its mock on 404) | Advance 10 years + report |
+| `GET /api/economy` | proposed by backend, used | start Zorps, habitat cost, payouts, era multipliers |
+| `GET /api/travel-cost` | proposed by backend, **not used** | see travel below |
+| `GET /api/timeline` | built, **not used** | frontend needs padding + continuous positions for Glorp; see below |
+| `GET /api/wiki/{title}` | built | not yet used |
+
+**To do for the backend (in priority order):**
+1. Build `POST /api/sanctuary/advance` and add `per_species[].survival_by_year` to
+   `/simulate` (see "Proposed: Forecast → Advance"; the mock in
+   `frontend/src/mocks/mockSanctuarySim.ts` mirrors `MODEL.md` and is a working reference,
+   with tests: luck in [0, 1], concentrating a species loses more than splitting it).
+2. Dome **capacity** (shared by all species; clamp counts to it instead of 50) and
+   **lingering outbreaks** (crowding raises the chance; `outbreak` in the request and the
+   advance response; `from_infected`): see "Proposed: Forecast → Advance", item 4. Until
+   then the real `/simulate` ignores these fields (pydantic drops extras), so forecasts
+   don't reflect capacity or outbreaks.
+3. **Bug (Windows):** the server crashes at startup with `UnicodeDecodeError` because
+   `read_text()` in `app/species.py` uses the system code page (cp1252). Pass
+   `encoding="utf-8"` to every `read_text()`/`open()` of the JSON files. Workaround until
+   then: run with `PYTHONUTF8=1`.
+4. **Travel cost:** `/api/travel-cost` makes recent decades cost more than older ones
+   (`ceil(8 + 30 × |Δlog10|)`), but the game rule is that the same jump costs more the
+   further back it is. If the backend takes travel over, please use the frontend formula
+   (Game rules → Travel cost; `game/zorps.ts`, tests in `zorps.test.ts`): it also keeps
+   66 million years ago at ≈ 5× a trip to 1600.
+5. `/api/timeline` labels say "BCE"; the frontend says "BC" and "N yrs ago" for deep time
+   (`formatEra` in `game/time.ts`). Align if you keep the endpoint.
+
+**Current disaster probabilities** (backend `data/sanctuary.json` as of 2026-11-08; the mock
+copies them). Per dome, per year, independent between domes; each hits every resident:
+
+| Disaster (`type`) | Chance per year | Each resident dies with | ≥ 1 in 10 years | ≥ 1 in 50 years |
+|---|---|---|---|---|
+| Dome breach (`breach`) | 0.6% | 80% | 5.8% | 26.0% |
+| Power failure (`power`) | 1.5% | 35% | 14.0% | 53.0% |
+| Meteor strike (`meteor`) | 0.3% | 97% | 3.0% | 13.9% |
+| Disease outbreak (`disease`) | 1.0% | 55% (one-shot today) | 9.6% | 39.5% |
+| Any of them | 3.36% | | 29.0% | 81.9% |
+
+Proposed change for disease (item 4 above): 1.0% up to 80% full, rising to 5.0% when full
+(≈ 40% in 10 years), lingering 3–5 years at 20% a year instead of a one-shot 55%. If these
+numbers change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
+
+**Species guidance (for the next species files):**
+- Aim for **3–4 climate groups with partial overlap**, so a dome can host 2–3 species but
+  not everyone, roughly: *warm and humid* (dodo, golden toad, elephant bird, stick insect),
+  *temperate forest* (passenger pigeon, aurochs, thylacine, moa, Haast's eagle), *dry
+  grassland* (quagga), *cold* (mammoth, great auk, Steller's sea cow, Pyrenean ibex).
+  Overlap = neighbouring groups share a few degrees/percent of their ranges, so placement
+  is a real choice. Check the current `needs` ranges against this; a group of one (quagga)
+  means a dome for one species.
+- Add a **`diversity_value`** per species (proposed, number, ~1–3): how much saving it adds
+  to the sanctuary score (e.g. rarer lineages higher), so "species saved" isn't just a
+  count.
+- Optional **`interactions`**: `[{ "with": "<species id>", "effect": "helps" | "competes" |
+  "preys_on", "strength": 0..1 }]`, applied only when both share a dome (e.g. Haast's eagle
+  `preys_on` moa). The frontend will show them in the dome's resident rows once they exist.
+- Every species file needs the content fields (`intro`, `description`, `facts`, `habitat`,
+  `needs` with `why` and `terrain.types`, `sources`, hotspots with `reveals` covering every
+  need) plus `lat`, `lon`, `era_year`. Copy new files to `frontend/src/mocks/species/` too
+  (or tell the frontend).
 
 ## Git workflow
 - `main` is protected. Never commit to it directly.
@@ -405,3 +617,25 @@ more (more room to grow), so the habitat cost is a balance lever.
   habitats, earned by surviving animals, scaled by era (log scale). Sim response gains
   `zorps`; new `GET /api/economy` and `GET /api/travel-cost`. Anti-farming rule still to
   agree. Frontend: add types, replace the fuel UI and rules.
+- 2026-11-07: Sanctuary v2 (frontend). **Fuel is gone**; Zorps are the only currency.
+  Frontend accepts the backend's zorps proposal for start balance, habitat cost, per-survivor
+  payout and era multipliers (`GET /api/economy`; types `Economy`, `EconomySpecies`,
+  `ZorpsEarned`), but keeps its own travel formula (the backend's makes recent decades cost
+  more) plus DNA retry and discovery rewards (see "Game rules"). Forecasts never pay; only
+  Advance does. PROPOSED (frontend, see "Proposed: Forecast → Advance"):
+  `per_species[].survival_by_year` on `/simulate`; new `POST /api/sanctuary/advance`
+  (`{ years, domes: [{ id, start, end, events: [{ year, type, lost }] }],
+  species_alive_end, luck_percentile, zorps_earned? }`); counts clamp to 0–carrying
+  capacity instead of 0–50. Legacy types, `simulate()` and the `simulate_*.json` mocks are
+  removed from the frontend; mocks of all 14 species in `frontend/src/mocks/species/`.
+  New "Notes for backend (from frontend)" section, incl. a Windows UTF-8 startup bug.
+- 2026-11-08: PROPOSED (frontend) dome capacity + lingering outbreaks, see "Proposed:
+  Forecast → Advance" item 4. Requests: each dome gains `capacity` (default 60, shared by
+  all species) and optional `outbreak: { years_left, severity }`; `residents[]` gains
+  optional `from_infected`. Sim: crowding slows growth; disease chance rises above 80%
+  full; an outbreak lasts 3–5 years killing a fraction each year; moved animals may carry
+  it. Advance response: each dome gains `outbreak` (state at the end, or null); disease
+  events gain `ongoing?` / `spread?`. Counts clamp to the dome capacity, not 50. Current
+  disaster probabilities listed in "Notes for backend". Also fixed the doc: the advance
+  `zorps_earned` is a number (as in `types.ts`). Frontend-only: capacity upgrades (+20)
+  cost 10, 15, 20, … Zorps.

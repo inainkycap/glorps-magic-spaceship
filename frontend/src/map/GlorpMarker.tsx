@@ -6,7 +6,7 @@ import FlightGlorp from "./FlightGlorp";
 import { flightPoint, HOP_FLIGHT } from "./flightPath";
 import { useMapView } from "./MapViewContext";
 
-/** Short hop: no zoom, no era change, no fuel. Slightly longer for longer hops. */
+/** Short hop: no zoom, no era change, free. Slightly longer for longer hops. */
 const HOP_BASE_MS = 900;
 const HOP_MAX_EXTRA_MS = 500;
 const GLORP_PX = 64;

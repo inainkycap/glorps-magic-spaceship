@@ -35,8 +35,7 @@ change is needed.
 | `icon-plus.png` | 16×16 | 1 | 2× | Map zoom-in button (`map/WorldMap.tsx`) | |
 | `icon-minus.png` | 16×16 | 1 | 2× | Map zoom-out button | |
 | `btn_recenter_glorp.png` | 16×16 | 1 | 2× | Map "recenter on Glorp" button (`map/WorldMap.tsx`) | Glorp's face: antenna, eyes, smile. |
-| `fuel-icon.png` | 16×16 | 1 | 1× | Fuel gauge icon in every HUD (`components/FuelGauge.tsx`) | Jerrycan, fuel cell, or similar. |
-| `fuel-gauge.png` | 48×10 | 1 | 2× (96×20) | Fuel gauge frame (`components/FuelGauge.tsx`) | Frame only. Keep the **44×6 window at (2,2) transparent**: the fill bar is drawn by CSS underneath (mint, rose when low). Quarter ticks optional. |
+| `zorps.png` | 16×16 | 1 | 2× in HUDs and popups, 1× in prices | The Zorps coin: HUD counter (`components/ZorpsCounter.tsx`), "+N Zorps" popups (`ZorpsToasts.tsx`), prices in the travel bubble, dome Build buttons and DNA Lab retry | Glorp's alien currency. Readable at 16 px next to a number. |
 | `bubble.png` | 16×16 | 1 | 2× (9-slice) | Travel speech bubble that opens from a pin (`map/TravelBubble.tsx`, `.travel-bubble` in `src/index.css`) | **9-slice with 6 px corners.** Light fill (dark text goes on it). |
 | `bubble-tail.png` | 16×8 | 1 | 2× | The bubble's pointer down to the pin | Points **down**; it's flipped by CSS when the bubble opens below the pin. Its top row overlaps the bubble's bottom edge, so start it with fill colour, not outline. |
 | `button.png` | 12×12 | 1 | 2× (9-slice) | Every pixel button on the map: zoom buttons, Sanctuary link, bubble Travel/Cancel (`.px-button` in `src/index.css`) | **9-slice:** 4 px corners and edges stretch around the label; the centre fills the button. Buttons have fixed widths, so don't rely on the art to size them. |
