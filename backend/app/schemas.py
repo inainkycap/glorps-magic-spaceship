@@ -14,6 +14,12 @@ class SpeciesSummary(BaseModel):
     era: str
     location: str
     kind: str
+    # How much keeping this species alive adds to the diversity score: its evolutionary
+    # distinctiveness (the "ED" half of ZSL's EDGE metric), 1-5 by roughly how long ago its
+    # line split from its closest LIVING relative (see CLAUDE.md "Species file").
+    diversity_value: int = Field(ge=1, le=5)
+    # Which unlock wave (1-3) the species belongs to; absent = the frontend orders by era.
+    unlock_wave: Optional[int] = Field(default=None, ge=1, le=3)
     lat: float = Field(ge=-90, le=90)  # degrees, where the species lived (map pin)
     lon: float = Field(ge=-180, le=180)
     # The year Glorp travels to; `era` stays the display string. Negative = BCE (-2000 is

@@ -57,8 +57,17 @@ Adding a species = adding one file. Fields:
   - `dna`: boolean — scanning it gives a DNA fragment
   - `reveals`: need key or array of need keys (see "Species content + needs")
 - `dna_required` (e.g. 3): DNA fragments needed before the DNA Lab opens
-- **PROPOSED (2026-11-08, frontend)** `diversity_value` (number ≥ 0, **required for
-  scoring**; the frontend defaults it to 1 until it's there): how much keeping this species
+- `diversity_value` (whole number **1–5**, **required**: the backend refuses to start without
+  it; agreed 2026-11-08; the frontend still defaults it to 1 for offline mocks). It's the
+  species' **evolutionary distinctiveness**, the "ED" half of ZSL's EDGE of Existence metric
+  (EDGE = Evolutionarily Distinct × Globally Endangered; official EDGE scores exist only for
+  living species, so for extinct ones we use ED alone): roughly how many million years of
+  unique history were lost, i.e. how long ago its line split from its closest *living*
+  relative. **5** > 35 Myr (thylacine, elephant bird, moa); **4** ~20–35 (dodo, Steller's sea
+  cow); **3** ~10–20 (stick insect, passenger pigeon); **2** ~1–10 (great auk, golden toad,
+  woolly mammoth); **1** < 1 Myr or its line lives on (quagga, aurochs, Pyrenean ibex,
+  Haast's eagle). Divergence times are approximate published estimates; check a figure
+  before quoting it.: how much keeping this species
   alive adds to the diversity score (e.g. 1 common, 2–3 for rarer or more distinct
   lineages). Optional `unlock_wave` (1, 2 or 3): which unlock wave the species belongs to
   (absent: the frontend orders by era, newest first). **Both must also be in the
@@ -548,12 +557,6 @@ species; main has 14 (fine, no cut to 10 needed).
 | Endpoint | Status | Frontend use |
 |---|---|---|
 | `GET /api/species`, `GET /api/species/{id}` | agreed | map pins, Explore, field guide |
-| `POST /api/sanctuary/simulate` | agreed | Forecast (wants `per_species[].survival_by_year`) |
-| `POST /api/sanctuary/advance` | **proposed, not built** (frontend falls back to its mock on 404) | Advance 10 years + report |
-| `GET /api/economy` | proposed by backend, used | start Zorps, habitat cost, payouts, era multipliers |
-| `GET /api/travel-cost` | proposed by backend, **not used** | see travel below |
-| `GET /api/timeline` | built, **not used** | frontend needs padding + continuous positions for Glorp; see below |
-| `GET /api/wiki/{title}` | built, used | "From Wikipedia" on encyclopedia pages (hidden if it fails) |
 | `POST /api/sanctuary/simulate` | agreed, sends `survival_by_year` | Forecast |
 | `POST /api/sanctuary/advance` | **built** (2026-11-08) | Advance 10 years + report |
 | `GET /api/economy` | agreed, used | start Zorps, habitat cost, payouts, era multipliers |
@@ -582,7 +585,8 @@ species guidance (10 vs 14 species, `diversity_value`, `interactions`) is still 
    66 million years ago at ≈ 5× a trip to 1600.
 5. `/api/timeline` labels say "BCE"; the frontend says "BC" and "N yrs ago" for deep time
    (`formatEra` in `game/time.ts`). Align if you keep the endpoint.
-6. **`diversity_value` and `unlock_wave`** (Contract → Species file, PROPOSED 2026-11-08):
+6. **Done (2026-11-08):** `diversity_value` and `unlock_wave` are in every species file and
+   the `/api/species` summaries. Was: **`diversity_value` and `unlock_wave`** (Contract → Species file, PROPOSED 2026-11-08):
    add them to every species file **and** to `SpeciesSummary` in `app/schemas.py` (the
    response models drop undeclared fields, so adding them to the JSON alone isn't enough).
 
@@ -593,11 +597,11 @@ hotspots whose `reveals` cover every need. Missing:
 
 | Species | `diversity_value` | `unlock_wave` | Sprites missing (frontend) |
 |---|---|---|---|
-| aurochs | missing | missing | `resident-aurochs`, `bg-explore-aurochs`, hotspot icon `scroll` |
-| elephant_bird | missing | missing | `resident-elephant_bird`, `bg-explore-elephant_bird`, hotspot icon `giant-egg` |
-| haasts_eagle | missing | missing | `resident-haasts_eagle`, `bg-explore-haasts_eagle`, hotspot icon `talon` |
-| moa | missing | missing | `resident-moa`, `bg-explore-moa`, hotspot icon `pebbles` |
-| the other 10 (dodo, golden_toad, great_auk, lord_howe_stick_insect, passenger_pigeon, pyrenean_ibex, quagga, stellers_sea_cow, thylacine, woolly_mammoth) | missing | missing | none |
+| aurochs | 1 | 3 | `resident-aurochs`, `bg-explore-aurochs`, hotspot icon `scroll` |
+| elephant_bird | 5 | 3 | `resident-elephant_bird`, `bg-explore-elephant_bird`, hotspot icon `giant-egg` |
+| haasts_eagle | 1 | 3 | `resident-haasts_eagle`, `bg-explore-haasts_eagle`, hotspot icon `talon` |
+| moa | 5 | 3 | `resident-moa`, `bg-explore-moa`, hotspot icon `pebbles` |
+| the other 10 (dodo, golden_toad, great_auk, lord_howe_stick_insect, passenger_pigeon, pyrenean_ibex, quagga, stellers_sea_cow, thylacine, woolly_mammoth) | set (see changelog) | set | none |
 
 Without `unlock_wave` the waves are by era: **1** golden toad, stick insect, Pyrenean ibex;
 **2** thylacine, passenger pigeon, quagga; **3** the other 8. If you set `unlock_wave`, keep
@@ -733,3 +737,10 @@ change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
   style ("2,000 BC"). All JSON reads are UTF-8 (fixes the Windows startup crash).
   `backend/MODEL.md` updated. Frontend: optionally add `travel_k`/`travel_knee_years` to the
   `Economy` type.
+- 2026-11-08: AGREED (backend) `diversity_value` (required, whole number 1–5, evolutionary
+  distinctiveness = the ED half of ZSL's EDGE metric; values in "Species file") and
+  `unlock_wave` in every species file and in the `/api/species` summaries. `unlock_wave` =
+  the frontend's era default made explicit: **1** golden toad, stick insect, Pyrenean ibex;
+  **2** thylacine, passenger pigeon, quagga; **3** the other 8. Frontend: copy the species
+  files to `frontend/src/mocks/species/` so offline mode scores the same.
+  Also removed stale duplicate rows from the "Notes for backend" endpoint table.

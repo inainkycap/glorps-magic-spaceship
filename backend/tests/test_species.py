@@ -90,3 +90,40 @@ def test_every_need_is_revealed_by_a_hotspot(species_id):
 def test_hotspot_ids_unique(species_id):
     ids = [h.id for h in SPECIES[species_id].hotspots]
     assert len(ids) == len(set(ids))
+
+
+def test_summaries_have_scoring_and_wave_fields():
+    """The map and HUD read these from the list, so they must survive the summary model."""
+    for s in client.get("/api/species").json():
+        assert s["diversity_value"] in (1, 2, 3, 4, 5)
+        assert s["unlock_wave"] in (1, 2, 3)
+
+
+def test_waves_have_three_species_each_at_least():
+    from collections import Counter
+    waves = Counter(s.unlock_wave for s in SPECIES.values())
+    assert waves[1] == 3 and waves[2] == 3 and waves[3] >= 3
+
+
+def test_wave_one_is_cheap_to_reach():
+    """The frontend's Zorps budget assumes ~29 Zorps per trip for wave 1."""
+    from app.economy import travel_cost
+    for s in SPECIES.values():
+        if s.unlock_wave == 1:
+            assert travel_cost(2026, s.era_year) <= 30, s.id
+
+
+def test_diversity_value_is_required():
+    data = SPECIES["dodo"].model_dump(exclude_unset=True)
+    data.pop("diversity_value")
+    with pytest.raises(ValidationError):
+        Species.model_validate(data)
+
+
+def test_diversity_follows_evolutionary_distinctiveness():
+    """Lineages with no close living relatives score high; ones that live on score low."""
+    dv = {sid: s.diversity_value for sid, s in SPECIES.items()}
+    for high in ("thylacine", "elephant_bird", "moa"):
+        assert dv[high] == 5
+    for low in ("quagga", "aurochs", "pyrenean_ibex"):
+        assert dv[low] == 1

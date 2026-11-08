@@ -9,6 +9,8 @@
   "lat": 71.2,
   "lon": -179.5,
   "kind": "mammal",
+  "diversity_value": 2,
+  "unlock_wave": 3,
   "intro": "Zib! Wrangel Island in the Arctic, about 2000 BCE. While people far away are building pyramids, the last woolly mammoths on Earth are still wandering here!",
   "description": "The woolly mammoth was an elephant built for the Ice Age, with a thick coat of shaggy hair, small ears, a short tail and long curved tusks. Herds roamed the \"mammoth steppe\", a cold, dry grassland that stretched across northern Europe, Asia and North America. As the Ice Age ended about 10,000 years ago, the climate warmed, the grasslands shrank, and human hunters spread; mammoths vanished from the mainland. But a small population survived on Wrangel Island in the Arctic Ocean until about 4,000 years ago. They became inbred over many generations, and then they were gone too.",
   "facts": {
