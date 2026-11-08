@@ -1,25 +1,14 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import Sprite from "../components/Sprite";
 import { ZorpsPrice } from "../components/ZorpsCounter";
+import { populationAt } from "../game/recap";
 import { animals, DISASTERS, luckLine, outbreakStatus } from "../game/sanctuary";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-import type { AdvanceDome, DisasterType, StoredAdvance } from "../types";
+import type { DisasterType, StoredAdvance } from "../types";
 import DomeView from "./DomeView";
 
 const YEAR_MS = 320;
 const disasterLabel = (t: DisasterType) => DISASTERS.find((d) => d.id === t)?.label ?? t;
-
-/**
- * A dome's animals partway through the recap: start, minus losses so far; the
- * real end at the end. (An outbreak's toll is reported for the whole advance, so
- * it shows from the year it struck.)
- */
-function populationAt(d: AdvanceDome, year: number, years: number): Record<string, number> {
-  if (year >= years) return d.end;
-  const out = { ...d.start };
-  for (const e of d.events) if (e.year <= year) for (const [id, n] of Object.entries(e.lost)) out[id] = Math.max(0, (out[id] ?? 0) - n);
-  return out;
-}
 
 /**
  * The report after "Advance 10 years": an animated recap (years tick, disaster

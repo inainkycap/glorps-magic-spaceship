@@ -506,6 +506,16 @@ TypeScript: `SpeciesForecast`, `SanctuaryAdvanceRequest`, `SanctuaryAdvanceRespo
      `backend/data/sanctuary.json`); `year` is
      1…`years`; `lost` = animals of each species killed by that event.
    - `end` replaces the dome's populations in the player's save (the frontend does this).
+   - **PROPOSED (frontend, 2026-11-08): `history`** (optional), per dome:
+     `{ "<species_id>": number[] }`, the yearly populations of this future in that dome,
+     index 0 = `start`, last = `end` (`years` + 1 entries), e.g.
+     `"history": { "dodo": [10, 12, 9, 9, 11, 13, 15, 16, 15, 14, 14] }`. The recap animation
+     shows it as is. Without it the frontend interpolates (`game/recap.ts`): a smooth line
+     from start to end, sudden disasters as dips in their year, an outbreak's toll spread
+     from the year it began, and never 0 before the end unless the species ends at 0 (the
+     old "start minus losses" recap showed species dying out and coming back, because
+     births are missing and an outbreak's whole-decade `lost` landed in one year). The
+     mock sends it.
    - `luck_percentile` (0–1): where this future ranks among many futures of the same
      request: the fraction of futures that ended **no better** (fewer or equal species
      alive at the end; ties broken by total animals alive). 0.1 = unlucky (90% of
@@ -778,6 +788,10 @@ Frontend can add the `demo` script once the backend serves `dist`.
   insect, Pyrenean ibex; 2 thylacine, passenger pigeon, quagga; 3 dodo, great auk, Steller's
   sea cow, woolly mammoth. Max diversity score 27. Frontend: the offline mocks in
   `frontend/src/mocks/species/` still hold all 14 (remove the 4 if offline mode should match).
+- 2026-11-08: PROPOSED (frontend) `domes[].history` in the `/api/sanctuary/advance`
+  response: yearly populations per species (index 0 = start, last = end) for the recap.
+  Optional: the frontend interpolates without it. `AdvanceDome.history` in `types.ts`;
+  the mock sends it. Backend: add it if you can (the chosen run's `N` per year).
 - 2026-11-08: Backend serves the built frontend when `frontend/dist` exists (one process, one
   URL; no change for `npm run dev`). New root `Dockerfile` + `.dockerignore` for deploying the
   whole game as one container. No API change.
