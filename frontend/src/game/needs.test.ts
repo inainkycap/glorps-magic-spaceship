@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { NeedKey, Species } from "../types";
 import { discoveryMessage, formatNeed, knownMessage, NEED_KEYS, needKeysOf, revealsOf } from "./needs";
@@ -21,7 +23,13 @@ describe("need reveals", () => {
   });
 
   it("covers all species (the mocks mirror the backend files)", () => {
-    expect(SPECIES.length).toBeGreaterThanOrEqual(14);
+    // Same species as backend/data/species/ (read-only), so offline mode matches the game.
+    const backendIds = readdirSync(fileURLToPath(new URL("../../../backend/data/species/", import.meta.url)))
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.replace(/\.json$/, ""))
+      .sort();
+    expect(backendIds.length).toBeGreaterThan(0);
+    expect(SPECIES.map((s) => s.id).sort()).toEqual(backendIds);
   });
 
   it.each(SPECIES.map((s) => [s.id, s] as const))("every need of %s is revealed by some hotspot", (_, s) => {
