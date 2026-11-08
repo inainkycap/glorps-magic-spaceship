@@ -10,7 +10,8 @@ from app.timeline import build_timeline, position, year_label
 client = TestClient(app)
 
 
-@pytest.mark.parametrize("year, label", [(-2000, "2000 BCE"), (-50, "50 BCE"), (1, "1 CE"), (900, "900 CE"), (1987, "1987")])
+@pytest.mark.parametrize("year, label", [(-2000, "2,000 BC"), (-50, "50 BC"), (-1, "1 BC"), (1, "1 CE"), (900, "900 CE"), (1987, "1987"),
+                                         (2026, "today"), (-12000, "14,025 yrs ago"), (-66_000_000, "66 million yrs ago")])
 def test_year_label(year, label):
     assert year_label(year) == label
 
@@ -38,10 +39,10 @@ def test_endpoint_sorted_and_complete():
     assert positions == sorted(positions)
 
 
-def test_bce_species_gets_bce_label():
+def test_bc_species_gets_bc_label():
     oldest = build_timeline(list(SPECIES.values())).eras[0]
     if oldest.era_year < 0:
-        assert oldest.label.endswith("BCE")
+        assert oldest.label.endswith(" BC")
 
 
 def test_year_zero_rejected():

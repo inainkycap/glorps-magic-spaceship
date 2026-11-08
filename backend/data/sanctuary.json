@@ -1,10 +1,11 @@
 {
-  "_comment": "Tuning for the sanctuary sim. Rates are per individual per year. See app/sanctuary/engine.py.",
+  "_comment": "Tuning for the sanctuary sim. Rates are per individual per year. See app/sanctuary/engine.py and MODEL.md.",
   "birth_rate": 0.5,
   "death_rate_min": 0.12,
   "death_rate_poor_fit": 0.5,
-  "dome_capacity": 30,
   "allee": 2,
+  "default_capacity": 60,
+  "max_capacity": 200,
   "fit_tolerance": { "temperature": 6, "humidity": 15, "oxygen": 2, "pressure": 10 },
   "wrong_terrain_fit": 0.4,
   "no_needs_fit": 0.5,
@@ -13,5 +14,14 @@
     "power":   { "name": "Power failure",     "chance": 0.015, "kill": 0.35 },
     "meteor":  { "name": "Meteor strike",     "chance": 0.003, "kill": 0.97 },
     "disease": { "name": "Disease outbreak",  "chance": 0.01,  "kill": 0.55 }
+  },
+  "outbreak": {
+    "_comment": "Disease is an outbreak, not a one-shot kill: disasters.disease.chance is its BASE yearly chance (its kill is unused).",
+    "crowded_at": 0.8,
+    "crowd_boost": 4,
+    "min_years": 3,
+    "max_years": 5,
+    "severity": 0.2,
+    "carry_chance": 0.15
   }
 }

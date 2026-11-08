@@ -1,11 +1,16 @@
 """Glorp's Magic Spaceship API. Person A owns this file."""
-import hashlib
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .sanctuary.engine import advance as advance_sanctuary
+from .sanctuary.engine import seed_for
 from .sanctuary.engine import simulate as simulate_sanctuary
-from .sanctuary.schemas import SanctuarySimRequest, SanctuarySimResponse
+from .sanctuary.schemas import (
+    SanctuaryAdvanceRequest,
+    SanctuaryAdvanceResponse,
+    SanctuarySimRequest,
+    SanctuarySimResponse,
+)
 from .schemas import Species, SpeciesSummary
 from .economy import Economy, TravelCost, economy, travel_cost
 from .species import SPECIES
@@ -44,8 +49,8 @@ def get_economy():
 def get_travel_cost(from_year: int, to_year: int):
     """PROPOSED: zorps to jump from one era to another."""
     for y in (from_year, to_year):
-        if not -50_000 <= y <= 2026:
-            raise HTTPException(status_code=422, detail="Years must be between -50000 and 2026")
+        if not -100_000_000 <= y <= 2026:
+            raise HTTPException(status_code=422, detail="Years must be between -100000000 and 2026")
     return TravelCost(from_year=from_year, to_year=to_year, zorps=travel_cost(from_year, to_year))
 
 
@@ -62,15 +67,27 @@ def get_species(species_id: str):
     return SPECIES[species_id]
 
 
-@app.post("/api/sanctuary/simulate", response_model=SanctuarySimResponse)
-def sanctuary_simulate(req: SanctuarySimRequest):
-    # Untrusted input: drop residents of species we don't know (CLAUDE.md asks for this).
+def _known_species_only(req):
+    """Untrusted input: drop residents of species we don't know (CLAUDE.md asks for this)."""
     for d in req.domes:
         d.residents = [r for r in d.residents if r.species_id in SPECIES]
-    # Seed from the request itself: the same sanctuary layout always gives the same futures,
-    # so when the player changes something, the difference is their change, not luck.
-    seed = int(hashlib.sha256(req.model_dump_json().encode()).hexdigest()[:16], 16)
-    return simulate_sanctuary(req, SPECIES, seed=seed)
+    return req
+
+
+@app.post("/api/sanctuary/simulate", response_model=SanctuarySimResponse)
+def sanctuary_simulate(req: SanctuarySimRequest):
+    """Forecast: 1,000 futures. Seeded from the request, so the same sanctuary always gives
+    the same forecast and the difference between two forecasts is the player's change."""
+    req = _known_species_only(req)
+    return simulate_sanctuary(req, SPECIES, seed=seed_for(req))
+
+
+@app.post("/api/sanctuary/advance", response_model=SanctuaryAdvanceResponse)
+def sanctuary_advance(req: SanctuaryAdvanceRequest):
+    """Advance: ONE future actually happens (a fresh one every call), with its events,
+    how lucky it was, and the zorps the thriving species earn."""
+    req = _known_species_only(req)
+    return advance_sanctuary(req, SPECIES)
 
 
 @app.get("/api/wiki/{title}", response_model=WikiSummary)

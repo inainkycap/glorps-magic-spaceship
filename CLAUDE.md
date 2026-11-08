@@ -82,10 +82,10 @@ types and ranges, every `unlocks`/`mitigates` id exists, and there are at least
 | GET | `/api/species` | `SpeciesSummary[]`: the basic-info fields only, which **must include `lat`, `lon`, `era_year`** (the map needs them) |
 | GET | `/api/species/{id}` | full species file (404 if unknown); optional fields missing from the file are left out, not `null` |
 | POST | `/api/sanctuary/simulate` | `SanctuarySimResponse` (see "Sanctuary sim") |
-| POST | `/api/sanctuary/advance` (proposed, frontend) | `SanctuaryAdvanceResponse` (see "Proposed: Forecast → Advance") |
+| POST | `/api/sanctuary/advance` | `SanctuaryAdvanceResponse` (see "Forecast → Advance") |
 | GET | `/api/timeline` | `Timeline` (see below): every species' era, sorted, with labels and log-scale positions |
-| GET | `/api/economy` (proposed) | zorps rules, prices and per-species era multipliers (see "Proposed: zorps") |
-| GET | `/api/travel-cost?from_year=&to_year=` (proposed) | `{ from_year, to_year, zorps }` |
+| GET | `/api/economy` | zorps rules, prices and per-species era multipliers (see "Zorps") |
+| GET | `/api/travel-cost?from_year=&to_year=` | `{ from_year, to_year, zorps }`: the frontend's travel formula ("Game rules → Travel cost") |
 | GET | `/api/wiki/{title}` | `WikiSummary`: `{ title, summary, image_url, url }` (`image_url`/`url` may be `null`); 404 if no article, 502 if Wikipedia is unreachable and it isn't cached |
 
 The old `POST /api/simulate` (single species, interventions) was never built and is gone.
@@ -98,14 +98,15 @@ last ~12%). Position 0 = the oldest species, 1 = the present (2026).
 {
   "present_year": 2026, "scale": "log", "oldest_year": -2000,
   "eras":  [{ "species_id": "woolly_mammoth", "name": "Woolly mammoth", "era_year": -2000,
-              "label": "2000 BCE", "position": 0.0 },
+              "label": "2,000 BC", "position": 0.0 },
             { "species_id": "elephant_bird", "name": "Elephant bird", "era_year": 900,
               "label": "900 CE", "position": 0.211 }, ...],
-  "ticks": [{ "year": -1000, "label": "1000 BCE", "position": 0.047 }, ...]
+  "ticks": [{ "year": -1000, "label": "1,000 BC", "position": 0.047 }, ...]
 }
 ```
 - `eras` is sorted oldest first (ties by id); `ticks` are suggested axis labels between
-  the oldest era and now. Labels: negative years "N BCE", 1–999 "N CE", then plain years.
+  the oldest era and now. Labels match the frontend's `formatEra` (backend `app/years.py`):
+  "today", "1987", "900 CE", "2,000 BC", "14,025 yrs ago", "66 million yrs ago".
 - Formula (`backend/app/timeline.py`): `years_ago = 2026 − year + 10`;
   `position = 1 − (ln years_ago − ln 10) / (ln years_ago(oldest) − ln 10)`.
 
@@ -204,7 +205,7 @@ HUD; every gain pops up "+N Zorps"). Where each number comes from:
 | Starting balance | 100 | **backend** `GET /api/economy` `start_zorps` |
 | Building a dome (habitat) | 25 (first dome free, 6 sites) | **backend** `habitat_cost` |
 | Payout per thriving species on "Advance 10 years" | `zorps_per_survivor` (0.5) × animals alive × era multiplier, for species with ≥ 2 alive | **backend**: the advance response's `zorps_earned` when present; otherwise computed in the frontend from `/api/economy` (`zorps_per_survivor`, per-species `era_multiplier`) |
-| Travel | formula below | **frontend** (the backend's `/api/travel-cost` makes recent decades cost *more* than older ones; proposed back, see "Notes for backend") |
+| Travel | formula below | **frontend** `game/zorps.ts`; the backend's `/api/travel-cost` uses the same formula and gives the same numbers |
 | DNA Lab retry | 5 (first attempt per species free) | **frontend** `DNA_RETRY_COST` |
 | Dome capacity upgrade (+20, up to 200) | 10, then +5 per upgrade of the same dome (10, 15, 20, …) | **frontend** `capacityUpgradeCost` |
 | Encyclopedia: found on the map (pin opened) | +1 | **frontend** `REWARDS.foundOnMap` |
@@ -396,15 +397,16 @@ How the backend behaves:
 - **Same request, same result**: the random seed comes from the request, so re-running an
   unchanged sanctuary gives identical numbers, and compare mode shows the player's change,
   not luck.
-- **Untrusted input is sanitised, not rejected**: `residents[].count` is clamped to 0–50 per
-  species per dome (proposed: 0–the dome's `capacity`, see "Proposed: Forecast → Advance", item 4); unknown `species_id`s are dropped; dome conditions are clamped to the
+- **Untrusted input is sanitised, not rejected**: `residents[].count` is clamped to 0–the
+  dome's `capacity` (domes over capacity are trimmed proportionally); unknown `species_id`s are dropped; dome conditions are clamped to the
   control-panel ranges (temperature −30–50 °C, humidity 0–100 %, oxygen 10–35 %, pressure
   50–200 kPa). An unknown `terrain`, or more than 12 domes, is a 422.
-- All tuning (birth/death rates, dome capacity, disaster chances and kill fractions) lives
-  in `backend/data/sanctuary.json`.
+- All tuning (birth/death rates, default/max capacity, disaster chances and kill fractions,
+  outbreak rules) lives in `backend/data/sanctuary.json`.
 
-## Proposed: zorps (backend, needs frontend ok)
-**Status: accepted by the frontend except travel cost** (frontend uses `GET /api/economy`
+## Zorps (backend, needs frontend ok)
+**Status: agreed.** The backend's travel cost now uses the frontend formula. Previously:
+**accepted by the frontend except travel cost** (frontend uses `GET /api/economy`
 for the start balance, habitat cost, per-survivor payout and era multipliers; types
 `Economy`, `EconomySpecies`, `ZorpsEarned` are in `types.ts`; see "Game rules"). Zorps are
 the only currency: an alien currency, **uncapped**, spent on travel and habitats, and
@@ -419,13 +421,9 @@ Everything uses the timeline's log scale of years before now, `age(y) = log10(20
   where mean survivors = animals alive at the end, averaged over all runs, summed over domes.
   Dead species earn 0. Typical: 10 dodos in a good dome ≈ 110; 10 dodos + 10 pigeons split
   over two good domes ≈ 187; a poor dome ≈ 20.
-- **Travel cost** `= ceil(8 + 30 × |age(a) − age(b)|)`, 0 for the same era: from 2026,
-  golden toad 29, pigeon 45, dodo 58, moa 64, aurochs 78, **mammoth 87**. Further back
-  always costs more, but each decade gets cheaper the further back it is (it's what keeps
-  deep time affordable). **Frontend: not used**, because the game rule is that the same
-  jump costs more the older it is (2020→2010 here costs more than 1610→1600). The frontend
-  formula (see "Game rules → Travel cost") keeps deep time affordable with a log tail
-  beyond 400 years ago; proposed for `/api/travel-cost` in "Notes for backend".
+- **Travel cost**: the frontend formula ("Game rules → Travel cost": quadratic time-depth
+  up to 400 years ago, logarithmic beyond; base 28, K 0.03), the same numbers as
+  `game/zorps.ts` (1600 = 35, 2,000 BC = 62, 66 million yrs ago = 179). Same era: 0.
 - **Habitat (dome) cost** 25; **start** with 100 zorps. Suggested values: the frontend owns
   how they're charged.
 
@@ -434,11 +432,13 @@ API:
   `"zorps": { "total": 110, "per_species": [{ "species_id": "dodo", "mean_survivors": 62.41,
   "era_multiplier": 3.52, "zorps": 110 }] }` (same layout, same zorps: it's seeded).
 - `GET /api/economy`: `{ present_year, start_zorps, zorps_per_survivor, habitat_cost,
-  travel_base_cost, era_multiplier_per_decade_of_age, travel_cost_per_decade_of_age,
-  species: [{ species_id, era_year, era_label, era_multiplier, travel_cost_from_present }] }`
-  (species oldest first).
+  travel_base_cost, era_multiplier_per_decade_of_age, travel_k, travel_knee_years,
+  travel_cost_per_decade_of_age, species: [{ species_id, era_year, era_label,
+  era_multiplier, travel_cost_from_present }] }` (species oldest first; `travel_base_cost`
+  is now 28; `travel_k` and `travel_knee_years` are new; `travel_cost_per_decade_of_age` is
+  deprecated and always 0; `era_label` uses `formatEra` style).
 - `GET /api/travel-cost?from_year=2026&to_year=-2000` → `{ from_year, to_year, zorps }`
-  (422 outside −50,000…2026).
+  (422 outside −100,000,000…2026).
 
 **Still to agree (anti-farming):** the backend reports what a run *would* earn; it doesn't
 track balances. Since the same layout always gives the same result, the frontend should
@@ -448,9 +448,15 @@ more (more room to grow), so the habitat cost is a balance lever.
 **Frontend answer:** forecasts never pay. Only "Advance 10 years" pays (one future that
 actually happens and moves the sanctuary clock on), so re-running a layout earns nothing.
 
-## Proposed: Forecast → Advance (frontend, 2026-11-07)
-**Status: proposal** (frontend implements it against a client-side mock,
-`frontend/src/mocks/mockSanctuarySim.ts`, and uses the backend as soon as it exists).
+## Forecast → Advance
+**Status: agreed and built by the backend** (proposed by the frontend 2026-11-07/08; the
+backend implements every item below in `backend/app/sanctuary/engine.py`, tests in
+`backend/tests/test_advance.py`). The client-side mock
+(`frontend/src/mocks/mockSanctuarySim.ts`) stays as the offline fallback.
+Backend notes: `survival_by_year` is always sent; `zorps_earned` is always sent; disease
+events always carry `ongoing` and `spread` (false when not set); every dome in the advance
+response carries `outbreak` (an object or `null`); advance `runs` defaults to 500
+(clamped 10–500); `years` defaults to 10 (clamped 1–50).
 TypeScript: `SpeciesForecast`, `SanctuaryAdvanceRequest`, `SanctuaryAdvanceResponse`,
 `AdvanceDome`, `AdvanceEvent`, `DisasterType` in `frontend/src/types.ts`.
 
@@ -548,17 +554,23 @@ species; main has 14 (fine, no cut to 10 needed).
 | `GET /api/travel-cost` | proposed by backend, **not used** | see travel below |
 | `GET /api/timeline` | built, **not used** | frontend needs padding + continuous positions for Glorp; see below |
 | `GET /api/wiki/{title}` | built, used | "From Wikipedia" on encyclopedia pages (hidden if it fails) |
+| `POST /api/sanctuary/simulate` | agreed, sends `survival_by_year` | Forecast |
+| `POST /api/sanctuary/advance` | **built** (2026-11-08) | Advance 10 years + report |
+| `GET /api/economy` | agreed, used | start Zorps, habitat cost, payouts, era multipliers |
+| `GET /api/travel-cost` | built, now the frontend formula | (frontend may use it or keep its own; same numbers) |
+| `GET /api/timeline` | built, labels now `formatEra` style, **not used** | frontend needs padding + continuous positions for Glorp |
+| `GET /api/wiki/{title}` | built, used | "From Wikipedia" on encyclopedia pages (hidden if it fails) |
 
-**To do for the backend (in priority order):**
+**To do for the backend:** items 1–5 below are **done** (backend, 2026-11-08). Remaining:
+species guidance (10 vs 14 species, `diversity_value`, `interactions`) is still open.
 1. Build `POST /api/sanctuary/advance` and add `per_species[].survival_by_year` to
-   `/simulate` (see "Proposed: Forecast → Advance"; the mock in
+   `/simulate` (see "Forecast → Advance"; the mock in
    `frontend/src/mocks/mockSanctuarySim.ts` mirrors `MODEL.md` and is a working reference,
    with tests: luck in [0, 1], concentrating a species loses more than splitting it).
 2. Dome **capacity** (shared by all species; clamp counts to it instead of 50) and
    **lingering outbreaks** (crowding raises the chance; `outbreak` in the request and the
-   advance response; `from_infected`): see "Proposed: Forecast → Advance", item 4. Until
-   then the real `/simulate` ignores these fields (pydantic drops extras), so forecasts
-   don't reflect capacity or outbreaks.
+   advance response; `from_infected`): see "Forecast → Advance", item 4. (Done: both
+   `/simulate` and `/advance` now use capacity and outbreaks.)
 3. **Bug (Windows):** the server crashes at startup with `UnicodeDecodeError` because
    `read_text()` in `app/species.py` uses the system code page (cp1252). Pass
    `encoding="utf-8"` to every `read_text()`/`open()` of the JSON files. Workaround until
@@ -602,9 +614,10 @@ copies them). Per dome, per year, independent between domes; each hits every res
 | Disease outbreak (`disease`) | 1.0% | 55% (one-shot today) | 9.6% | 39.5% |
 | Any of them | 3.36% | | 29.0% | 81.9% |
 
-Proposed change for disease (item 4 above): 1.0% up to 80% full, rising to 5.0% when full
-(≈ 40% in 10 years), lingering 3–5 years at 20% a year instead of a one-shot 55%. If these
-numbers change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
+**Disease is now an outbreak (built, 2026-11-08):** 1.0% a year up to 80% full, rising to
+5.0% when full, lingering 3–5 years at 20% a year instead of a one-shot 55% (the 55% in the
+table is unused). Values in `backend/data/sanctuary.json` → `outbreak`. If these numbers
+change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
 
 **Species guidance (for the next species files):**
 - Aim for **3–4 climate groups with partial overlap**, so a dome can host 2–3 species but
@@ -710,3 +723,13 @@ numbers change, update this table (and `MOCK_MODEL` in the mock) so we both know
   +1, visited +1, thriving +5) and retuned ones (new need 2 → 1, DNA complete 3 → 2) to keep
   the budget target. Uses `GET /api/wiki/{title}`. "Notes for backend" lists what each
   species file is missing.
+- 2026-11-08: Backend builds Forecast → Advance (all items): `per_species[].survival_by_year`
+  on `/simulate`; `POST /api/sanctuary/advance` (one future, events, luck, `zorps_earned`);
+  dome `capacity` shared by all species (replaces the `dome_capacity: 30` crowding constant;
+  counts clamp to capacity); lingering outbreaks with crowding-driven chance, `outbreak` in
+  and out, `from_infected` spread, `ongoing`/`spread` on disease events. `/api/travel-cost`
+  and `/api/economy` use the frontend's travel formula (`travel_k`, `travel_knee_years` new;
+  `travel_cost_per_decade_of_age` deprecated, 0). Timeline/economy labels use `formatEra`
+  style ("2,000 BC"). All JSON reads are UTF-8 (fixes the Windows startup crash).
+  `backend/MODEL.md` updated. Frontend: optionally add `travel_k`/`travel_knee_years` to the
+  `Economy` type.
