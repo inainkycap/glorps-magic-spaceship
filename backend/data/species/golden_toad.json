@@ -9,6 +9,8 @@
   "lat": 10.3,
   "lon": -84.8,
   "kind": "amphibian",
+  "diversity_value": 2,
+  "unlock_wave": 1,
   "intro": "Zib! Monteverde, Costa Rica, 1987. It's so misty up here Glorp can barely see, but somewhere in these puddles are toads that glow bright orange.",
   "description": "The golden toad lived only in a tiny patch, about 4 km², of misty cloud forest on a mountain ridge above Monteverde, Costa Rica. Males were a shining orange-gold; females were dark olive with red-edged spots. For most of the year they hid underground, then came out for a few weeks in the spring rains to breed in small pools. In 1987 scientists counted about 1,500 adults. The next year only a handful appeared, and in 1989 a single male was seen. It was never found again. Its loss is linked to an unusually warm, dry El Niño year and to chytrid, a fungus that has killed frogs and toads around the world, though scientists still debate exactly what happened.",
   "facts": {

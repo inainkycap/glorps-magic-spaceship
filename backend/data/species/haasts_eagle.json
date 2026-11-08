@@ -9,6 +9,8 @@
   "lat": -43.0,
   "lon": 171.0,
   "kind": "bird",
+  "diversity_value": 1,
+  "unlock_wave": 3,
   "intro": "Zib! New Zealand, 1300. Glorp just saw a shadow the size of a small plane sweep over the forest. Duck!",
   "description": "Haast's eagle was the largest eagle ever known. Females, the bigger sex, weighed around 10 to 18 kilograms, with a wingspan of up to about 3 metres and talons as big as a tiger's claws. It lived on New Zealand's South Island, where there were no land mammals except bats, and it was the top predator: it hunted moa, giant flightless birds many times its own weight, by diving on them at high speed. Its closest living relatives are much smaller eagles. When people arrived in New Zealand around 1300 and hunted the moa to extinction, the eagle lost its prey, and it died out soon after, around 1445.",
   "facts": {

@@ -9,6 +9,8 @@
   "lat": 49.75,
   "lon": -53.18,
   "kind": "bird",
+  "diversity_value": 2,
+  "unlock_wave": 3,
   "intro": "Zib! Funk Island, off Newfoundland, 1800. Brrr! These black-and-white birds look like penguins, but this is the North Atlantic. Meet the great auk.",
   "description": "The great auk was a large, flightless seabird of the North Atlantic. It stood upright on land, black above and white below, and was a superb swimmer and diver. It was the original \"penguin\": sailors gave it that name, and later used it for the southern birds that looked similar. Great auks came ashore only to breed, crowding onto a few rocky islands where each pair laid a single egg on the bare rock. On land they were slow and easy to catch, so sailors killed huge numbers for meat, eggs, oil and feathers. As they grew rare, collectors paid for skins and eggs. The last known pair was killed on Eldey Island, Iceland, in 1844.",
   "facts": {
