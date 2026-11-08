@@ -49,7 +49,10 @@ Judged on: Technical Challenge, Innovation, Presentation.
 ## Contract
 
 ### Species file — `backend/data/species/<id>.json`
-Adding a species = adding one file. Fields:
+Adding a species = adding one file. The game has **10 species**. Complete species without
+sprites are parked in `backend/data/species_extra/` (not loaded, not served; currently
+aurochs, elephant bird, Haast's eagle, moa; see its README): move a file back into
+`data/species/` once its sprites exist. Fields:
 - `id`, `name`, `scientific_name`, `status` ("extinct" | "critically_endangered" | ...),
   `era` (string, e.g. "1600"), `location`, `kind` ("bird" | "insect" | "plant" | ...)
 - `lat`, `lon` (numbers, required): where the species lived, in degrees
@@ -769,3 +772,9 @@ Frontend can add the `demo` script once the backend serves `dist`.
   **2** thylacine, passenger pigeon, quagga; **3** the other 8. Frontend: copy the species
   files to `frontend/src/mocks/species/` so offline mode scores the same.
   Also removed stale duplicate rows from the "Notes for backend" endpoint table.
+- 2026-11-08: The game has **10 species**. The 4 without sprites (aurochs, elephant bird,
+  Haast's eagle, moa) moved to `backend/data/species_extra/` (still valid, tested, not served),
+  so `/api/species`, the timeline and `/api/economy` list 10. Waves: 1 golden toad, stick
+  insect, Pyrenean ibex; 2 thylacine, passenger pigeon, quagga; 3 dodo, great auk, Steller's
+  sea cow, woolly mammoth. Max diversity score 27. Frontend: the offline mocks in
+  `frontend/src/mocks/species/` still hold all 14 (remove the 4 if offline mode should match).
