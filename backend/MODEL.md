@@ -89,7 +89,34 @@ average looks fine, but one bad event wipes you out. Splitting them is
 - **Zorps earned**: each species with at least 2 animals alive pays 0.5 Zorps per animal,
   times its era multiplier (×1 today, up to ×5 for 2,000 BC).
 
-## 5. Engineering notes (for the technical judges)
+## 5. Why Monte Carlo, not just "the average"?
+
+A toy example. One dome; each decade a meteor has a **10 % chance of killing every
+animal in it**; look 5 decades ahead.
+
+| | "Average it out": lose 10 % of the animals each decade | What really happens: all or nothing |
+|---|---|---|
+| One dome | 100 → 59 dodos left; "they survive" | survive only if no meteor 5 times: 0.9⁵ = **59 % chance**, **41 % extinct** |
+| Split over two domes | still 59 % of the dodos: **splitting changes nothing** | extinct only if **both** domes are hit: 0.41² ≈ 17 %, so **83 % survive** |
+
+Averaging turns an all-or-nothing event into a gentle trickle, so a species can never go
+extinct, and the benefit of diversification disappears. It lives entirely in the unlucky
+futures. With births, crowding, mate-finding, multi-year outbreaks and several domes and
+species, there is no formula for those probabilities, so the backend plays the sanctuary
+forward 1,000 times with real random events and counts what happens.
+
+The same comparison on the real model (10 dodos + 10 pigeons, 50 years):
+
+| | Expected values run once | Monte Carlo |
+|---|---|---|
+| All in one dome | both survive, ~21 animals each | each dies out in ~1 in 3 futures; worst case 0 species |
+| Split over two domes | both survive, ~41 each | each dies out in ~1 in 7; worst case 1 species |
+
+**Forecast vs Advance** is a weather forecast vs the weather: a forecast ("70 % chance of
+rain") needs many possible futures; living through the decade is a single roll of the
+dice. Advance simulates 500 futures only to say how lucky the one that happened was.
+
+## 6. Engineering notes (for the technical judges)
 
 - **Vectorised**: populations are one numpy array `N[run, dome, species]`, and all futures
   step forward together. A forecast of 6 domes × 4 species takes about 0.3 s; an advance
