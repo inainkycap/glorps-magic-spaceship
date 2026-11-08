@@ -5,6 +5,14 @@ never put all your dodos in one dome.**
 
 WHACK '26 · Marshall Wace track · theme: **New Worlds**
 
+### In 30 seconds
+
+- 🛸 **Travel through time** to rescue 10 real extinct species, from the woolly mammoth to the golden toad.
+- 🔮 **Build domes and forecast 1,000 futures** before you commit, then live through one of them.
+- ☄️ **Learn why splitting beats concentrating**: a similar average, a much better worst case.
+
+<!-- Hero image: drag a screenshot or GIF here in the GitHub editor -->
+
 Glorp is a small alien with a time-travelling spaceship. You fly to the eras where species
 went extinct (the dodo in 1600, the thylacine in 1900, the woolly mammoth 4,000 years ago),
 study each one, rescue its DNA, and give it a **new world**: sealed glass domes on Glorp's
@@ -22,20 +30,12 @@ decade at a time.
 
 ## How to play
 
-1. **Map**: a pixel world map with an era timeline. Each species is a signal at its real
-   place and year. Travelling costs **Zorps** (Glorp's currency), and older eras cost more.
-2. **Explore**: scan hotspots in the species' world to learn facts, discover what it needs
-   (terrain, temperature, humidity, oxygen, pressure), and collect DNA fragments.
-3. **DNA Lab**: a base-pairing minigame (A↔T, C↔G) against the clock. Older DNA is longer
-   and more degraded. The better you do, the more individuals you rescue (4–20).
-4. **Sanctuary**: up to 6 domes. Set each dome's terrain and climate dials and place your
-   animals; every species in a dome shares its capacity. A fit bar shows how well the dome
-   suits each species, based only on the needs you've discovered.
-5. **Forecast**: simulate **1,000 possible futures** over 50 years, and see each species'
-   chance of survival, the expected number saved, and the worst case.
-6. **Advance 10 years**: one future actually happens. Your populations are replaced by the
-   survivors, a report shows which disaster struck which dome and when, and you learn how
-   lucky that decade was compared with the forecast.
+1. **Map**: pick a species' signal on the world map and time-travel there (older eras cost more **Zorps**).
+2. **Explore**: scan hotspots to learn facts, discover the species' ideal conditions and collect DNA.
+3. **DNA Lab**: a quick base-pairing minigame; the better you do, the more animals you rescue.
+4. **Sanctuary**: set up to 6 domes' terrain and climate, and decide who lives where.
+5. **Forecast**: simulate 1,000 futures and see survival chances and the worst case.
+6. **Advance 10 years**: one future actually happens, and you find out how lucky it was.
 
 **Zorps** pay for travel, domes, capacity upgrades and DNA retries. You earn them from
 encyclopedia discoveries and, mostly, from species that thrive when you advance time, so
@@ -100,8 +100,8 @@ forecast chart, players are never told any of this; they learn it by losing a do
 
 | Part | Stack | Owner |
 |---|---|---|
-| `frontend/` | React 19 + Vite + TypeScript; hand-written SVG charts (no chart library); pixel-art sprites with built-in fallbacks | Person B |
-| `backend/` | FastAPI (Python) + numpy; a vectorised sim stepping all futures at once (`N[run, dome, species]`) | Person A |
+| `frontend/` | React 19 + Vite + TypeScript; hand-written SVG charts (no chart library); pixel-art sprites with built-in fallbacks | Valentina |
+| `backend/` | FastAPI (Python) + numpy; a vectorised sim stepping all futures at once (`N[run, dome, species]`) | Annie |
 
 - **Data-driven species.** Each species is one JSON file in `backend/data/species/`: place,
   era, facts, needs with a "why" for each, hotspots, sources, diversity value and unlock
@@ -200,5 +200,5 @@ Ten species across 4,000 years, unlocked in three waves.
 
 | Name | Role | Links |
 |---|---|---|
-| _Name_ | Backend: data, simulation engine, API | _GitHub / LinkedIn_ |
-| _Name_ | Frontend: game, art direction, UI | _GitHub / LinkedIn_ |
+| Annie | Backend: data, simulation engine, API | _GitHub / LinkedIn_ |
+| Valentina | Frontend: game, art direction, UI | _GitHub / LinkedIn_ |
