@@ -2709,8 +2709,18 @@ input.dial:focus-visible {
   height: 24px;
   line-height: 24px;
   text-align: center;
-  font-size: 14px;
+  font-size: 20px;
   color: var(--glorp);
+}
+.diversity-fallback.small {
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  font-size: 14px;
+}
+.diversity-label {
+  font-size: 8px;
+  color: var(--dim);
 }
 
 /* Species portraits: the resident sprite, or a black silhouette (CSS filter, no extra art). */
@@ -2909,6 +2919,15 @@ a.ency-card-inner:focus-visible {
   gap: 6px;
   font-size: 8px;
   color: var(--dim);
+}
+/* "◆ 3": the species' diversity_value on its card. */
+.ency-diversity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  color: var(--glorp);
+  cursor: help;
 }
 .locked-badge {
   display: inline-flex;
