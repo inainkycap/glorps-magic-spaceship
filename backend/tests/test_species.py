@@ -122,8 +122,26 @@ def test_diversity_value_is_required():
 
 def test_diversity_follows_evolutionary_distinctiveness():
     """Lineages with no close living relatives score high; ones that live on score low."""
-    dv = {sid: s.diversity_value for sid, s in SPECIES.items()}
+    dv = {s.id: s.diversity_value for s in ALL_SPECIES_FILES()}
     for high in ("thylacine", "elephant_bird", "moa"):
         assert dv[high] == 5
     for low in ("quagga", "aurochs", "pyrenean_ibex"):
         assert dv[low] == 1
+
+
+def ALL_SPECIES_FILES():
+    """Loaded species plus the parked ones in data/species_extra/ (validated the same way)."""
+    import json
+    from app.species import DATA_DIR
+    extra = DATA_DIR.parent / "species_extra"
+    parked = [Species.model_validate(json.loads(p.read_text(encoding="utf-8"))) for p in sorted(extra.glob("*.json"))]
+    return list(SPECIES.values()) + parked
+
+
+def test_extra_species_are_valid_but_not_loaded():
+    """Parked species must stay valid (so they can be moved back) and must not be served."""
+    loaded = set(SPECIES)
+    parked = {s.id for s in ALL_SPECIES_FILES()} - loaded
+    assert parked == {"aurochs", "elephant_bird", "haasts_eagle", "moa"}
+    served = {s["id"] for s in client.get("/api/species").json()}
+    assert served == loaded and not served & parked
