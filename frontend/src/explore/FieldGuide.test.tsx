@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import dodo from "../mocks/dodo.json";
+import dodo from "../mocks/species/dodo.json";
 import type { NeedKey, Species } from "../types";
 import FieldGuide from "./FieldGuide";
 import ScanBubble from "./ScanBubble";
@@ -17,13 +17,8 @@ const bare: Species = {
   lat: 0,
   lon: 0,
   era_year: 1700,
-  hotspots: [{ id: "h", label: "Thing", sprite: "egg", x: 50, y: 50, fact: "A fact.", dna: false, unlocks: null }],
-  threats: [],
-  interventions: [],
-  goal_survival: 0.8,
-  max_interventions: 2,
+  hotspots: [{ id: "h", label: "Thing", sprite: "egg", x: 50, y: 50, fact: "A fact.", dna: false }],
   dna_required: 3,
-  sim: { model: "logistic", start_year: 1700, years: 10, start_population: 10, carrying_capacity: 10, growth_rate: 0.1 },
 };
 
 const render = (s: Species, discovered: NeedKey[] = []) =>

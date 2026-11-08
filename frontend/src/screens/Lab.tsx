@@ -4,7 +4,9 @@ import { getSpecies } from "../api";
 import GlorpSprite from "../components/GlorpSprite";
 import Status from "../components/Status";
 import { dnaDifficulty, individualsFromQuality, makeStrand, quality, type Base, type Strand } from "../game/dna";
-import { canAfford, FUEL_COSTS } from "../game/fuel";
+import { canAfford, DNA_RETRY_COST } from "../game/zorps";
+import { ZorpsPrice } from "../components/ZorpsCounter";
+import { formatYear } from "../geo";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
 import DnaGame from "../lab/DnaGame";
@@ -18,12 +20,13 @@ const plural = (n: number, name: string) => `${n} ${name.toLowerCase()}${n === 1
 /**
  * DNA Lab minigame (frontend-only): pair each base of the species' DNA against
  * the clock. Quality → individuals rescued (4–20); the best run counts and goes
- * to the Sanctuary's unplaced pool. Retrying costs fuel (fuel.ts).
+ * to the Sanctuary's unplaced pool. Retrying costs Zorps (game/zorps.ts); the
+ * first rescue of a species pays a Zorps reward (handled by the progress store).
  */
 export default function Lab() {
   const { speciesId = "" } = useParams();
   const state = useAsync(speciesId, () => getSpecies(speciesId));
-  const { scannedFor, fuel, spendFuel, recordDnaResult, progress } = useProgress();
+  const { scannedFor, zorps, spendZorps, recordDnaResult, progress } = useProgress();
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
 
   if (state.status !== "ok") return <Status state={state} />;
@@ -33,11 +36,11 @@ export default function Lab() {
   const ready = dna >= species.dna_required;
   const difficulty = dnaDifficulty(species.era_year);
   const best = progress.dnaBest?.[species.id];
-  const retryCost = best ? FUEL_COSTS.dnaRetry : 0; // first attempt is free
-  const affordable = canAfford(fuel, retryCost);
+  const retryCost = best ? DNA_RETRY_COST : 0; // first attempt is free
+  const affordable = canAfford(zorps, retryCost);
 
   const start = () => {
-    if (retryCost > 0 && !spendFuel(retryCost)) return;
+    if (retryCost > 0 && !spendZorps(retryCost)) return;
     setPhase({ kind: "play", strand: makeStrand(difficulty), key: Date.now() });
   };
 
@@ -50,7 +53,8 @@ export default function Lab() {
 
   const startButton = (label: string) => (
     <button className="px-button primary w-l" onClick={start} disabled={!affordable}>
-      {retryCost > 0 ? `${label} ⛽${retryCost}` : label}
+      {label}
+      {retryCost > 0 && <ZorpsPrice amount={retryCost} />}
     </button>
   );
 
@@ -72,7 +76,7 @@ export default function Lab() {
             <strong>C↔G</strong>.
           </p>
           <p className="small">
-            {species.era} DNA: {difficulty.bases} bases, {difficulty.degraded} degraded ("?" flashes its letter when its
+            {formatYear(species.era_year)} DNA: {difficulty.bases} bases, {difficulty.degraded} degraded ("?" flashes its letter when its
             turn comes), {difficulty.seconds} seconds.
           </p>
           <p className="small">
@@ -84,7 +88,7 @@ export default function Lab() {
             </p>
           )}
           {startButton(best ? "Try again" : "Start")}
-          {!affordable && <p className="error small">Not enough fuel to retry (you have {fuel}).</p>}
+          {!affordable && <p className="error small">Not enough Zorps to retry (you have {zorps}).</p>}
         </div>
       ) : phase.kind === "play" ? (
         <DnaGame
@@ -110,7 +114,7 @@ export default function Lab() {
               </Link>
               {startButton("Retry")}
             </div>
-            {!affordable && <p className="error small">Not enough fuel to retry (you have {fuel}).</p>}
+            {!affordable && <p className="error small">Not enough Zorps to retry (you have {zorps}).</p>}
           </div>
         </div>
       )}

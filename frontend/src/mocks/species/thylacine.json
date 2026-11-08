@@ -1,0 +1,78 @@
+{
+  "id": "thylacine",
+  "name": "Thylacine",
+  "scientific_name": "Thylacinus cynocephalus",
+  "status": "extinct",
+  "era": "1900",
+  "era_year": 1900,
+  "location": "Tasmania, Australia",
+  "lat": -42.0,
+  "lon": 146.5,
+  "kind": "mammal",
+  "intro": "Zib! Tasmania, 1900. Something like a striped dog is padding through this forest, but it carries its babies in a pouch like a kangaroo!",
+  "description": "The thylacine, often called the Tasmanian tiger, was the largest meat-eating marsupial of modern times. It looked a bit like a dog, with dark stripes across its back and a long stiff tail, but it was a marsupial: females raised their young in a pouch. It once lived across Australia and New Guinea, but by the time Europeans arrived it survived only in Tasmania. Farmers blamed it for killing sheep, and from 1888 to 1909 the government paid a bounty for every one killed; more than 2,000 were claimed. Habitat loss, dogs and disease did the rest. The last known thylacine died at Hobart's Beaumaris Zoo on 7 September 1936.",
+  "facts": {
+    "height": "~60 cm at the shoulder; ~1–1.3 m long plus a ~50–65 cm tail",
+    "weight": "~15–30 kg",
+    "diet": "Meat: wallabies, possums, birds and other small animals",
+    "lifespan": "~5–7 years in the wild?",
+    "extinct_year": 1936,
+    "cause": "Government bounties and hunting, habitat loss, dogs and disease"
+  },
+  "habitat": {
+    "biome": "Open forest, woodland and grassy clearings",
+    "climate": "Cool temperate: mild summers, cold wet winters",
+    "elevation": "Sea level to the highlands (~0–1,000 m?)"
+  },
+  "needs": {
+    "terrain": {
+      "value": "Open forest next to grassy clearings",
+      "types": ["forest", "grassland"],
+      "why": "It rested in the forest by day and hunted wallabies in nearby grassy clearings at night."
+    },
+    "temperature": {
+      "min": "~0", "max": "~25", "unit": "°C",
+      "why": "Tasmania is cool: frosty winter nights and mild summers."
+    },
+    "humidity": {
+      "min": "~55", "max": "~85", "unit": "%",
+      "why": "Tasmania's forests get plenty of rain, especially in winter."
+    },
+    "oxygen": {
+      "min": "~20", "max": "~21", "unit": "%",
+      "why": "Ordinary air, like any other mammal."
+    },
+    "pressure": {
+      "min": "~90", "max": "~102", "unit": "kPa",
+      "why": "It lived from the coast up into the highlands, so it coped with slightly thinner air too."
+    }
+  },
+  "sources": [
+    { "title": "Thylacine (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Thylacine" },
+    { "title": "Tasmania (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Tasmania" }
+  ],
+  "hotspots": [
+    { "id": "log", "label": "Hollow log", "sprite": "log", "x": 22, "y": 74,
+      "fact": "A den in a hollow log at the forest edge. Thylacines rested by day and hunted in the clearings at night.",
+      "dna": false, "reveals": "terrain" },
+    { "id": "frost", "label": "Frosty grass", "sprite": "snowflake", "x": 56, "y": 84,
+      "fact": "Frost on the grass this morning! Tasmania is cool, with cold winter nights and mild summers.",
+      "dna": false, "reveals": "temperature" },
+    { "id": "ferns", "label": "Dripping ferns", "sprite": "fern", "x": 12, "y": 52,
+      "fact": "Tree ferns love the damp. Tasmania's forests get plenty of rain, especially in winter.",
+      "dna": false, "reveals": "humidity" },
+    { "id": "hills", "label": "Distant highlands", "sprite": "mountain", "x": 84, "y": 30,
+      "fact": "Thylacines roamed from the coast up into these highlands, where the air is a little thinner.",
+      "dna": false, "reveals": ["oxygen", "pressure"] },
+    { "id": "pawprints", "label": "Paw prints", "sprite": "pawprints", "x": 42, "y": 66,
+      "fact": "Prints a bit like a dog's. Thylacines walked with a stiff tail held straight out behind.",
+      "dna": true },
+    { "id": "fur", "label": "Striped fur", "sprite": "fur", "x": 66, "y": 62,
+      "fact": "A tuft of fur with dark stripes. Females carried their babies in a pouch, like kangaroos do.",
+      "dna": true },
+    { "id": "poster", "label": "Bounty notice", "sprite": "poster", "x": 88, "y": 64,
+      "fact": "From 1888 to 1909 the government paid £1 for every adult killed, and over 2,000 were claimed. The last known thylacine died in Hobart Zoo in 1936.",
+      "dna": true }
+  ],
+  "dna_required": 3
+}

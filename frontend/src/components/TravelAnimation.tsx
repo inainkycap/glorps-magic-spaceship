@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useState } from "react";
+import { lerpEra } from "../game/time";
 import { formatYear } from "../geo";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import {
@@ -58,7 +59,9 @@ export default function TravelAnimation({ from, to, onDone, onEraChange }: Trave
   const flightTime = (tt: number) => Math.min(1, Math.max(0, (tt - FLY_START) / (FLY_END - FLY_START)));
   /** Flight progress (0–1, eased) at trip time tt. */
   const flightAt = (tt: number) => easeInOut(flightTime(tt));
-  const yearAt = (f: number) => Math.round(from.era_year + (to.era_year - from.era_year) * f);
+  // Year counter moves in LOG time, so a jump to deep time ticks smoothly through
+  // 10, 100, 1,000… years ago instead of leaping past everything recent.
+  const yearAt = (f: number) => lerpEra(from.era_year, to.era_year, f);
 
   const finish = useEffectEvent(() => onDone());
   const tickEra = useEffectEvent((year: number) => onEraChange?.(year));

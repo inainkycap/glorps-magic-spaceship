@@ -1,46 +1,110 @@
+// The backend API, with the mocks as a fallback.
+//
+// - Default: call the real API (Vite proxies /api to :8000). If it can't be
+//   reached (network error, 5xx), or an endpoint the backend hasn't built yet
+//   answers 404, fall back to the mocks in src/mocks/ and say so via onFallback().
+// - The sanctuary sim is special: Forecast and Advance must use the same model, so
+//   simRouter.ts picks the backend for both or the mock for both (onSimSource()).
+// - VITE_USE_MOCKS=true: mocks only, never touch the network.
+// Real errors (a 404 for an unknown species, a 422) are thrown, not hidden.
+
 import type {
+  Economy,
+  SanctuaryAdvanceRequest,
+  SanctuaryAdvanceResponse,
   SanctuarySimRequest,
   SanctuarySimResponse,
   Species,
   SpeciesSummary,
-  SimulateRequest,
-  SimulateResponse,
 } from "./types";
-import dodo from "./mocks/dodo.json";
-import { mockSanctuarySimulate } from "./mocks/mockSanctuarySim";
-import passengerPigeon from "./mocks/passenger_pigeon.json";
-import simNone from "./mocks/simulate_none.json";
-import simGood from "./mocks/simulate_good.json";
+import { mockSanctuaryAdvance, mockSanctuarySimulate } from "./mocks/mockSanctuarySim";
+import { eraMultiplier, FALLBACK_ECONOMY, travelCost } from "./game/zorps";
+import { formatEra, PRESENT_YEAR } from "./game/time";
+import { createSimRouter, type SimSource } from "./simRouter";
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
 
-// JSON imports infer narrow literal types, so go through unknown.
-const mockSpecies = [dodo, passengerPigeon] as unknown as Species[];
+// Copies of backend/data/species/*.json (the backend files are the source of truth).
+const mockModules = import.meta.glob("./mocks/species/*.json", { eager: true, import: "default" });
+const mockSpecies = Object.values(mockModules) as Species[];
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+class HttpError extends Error {
+  path: string;
+  status: number;
+  constructor(path: string, status: number) {
+    super(`${path} -> ${status}`);
+    this.path = path;
+    this.status = status;
+  }
+}
+
+// --- fallback reporting ---------------------------------------------------------------
+const fallbackListeners = new Set<(what: string) => void>();
+const fellBack = new Set<string>();
+/** Subscribe to "this call is using built-in mock data". Returns an unsubscribe. */
+export function onFallback(fn: (what: string) => void) {
+  fallbackListeners.add(fn);
+  fellBack.forEach((w) => fn(w));
+  return () => {
+    fallbackListeners.delete(fn);
+  };
+}
+function reportFallback(what: string, why: unknown) {
+  if (!fellBack.has(what)) console.warn(`[api] ${what}: using built-in mock data (${String(why)})`);
+  fellBack.add(what);
+  fallbackListeners.forEach((fn) => fn(what));
+}
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(path, init);
+  if (!res.ok) throw new HttpError(path, res.status);
   return res.json();
 }
 
-export async function listSpecies(): Promise<SpeciesSummary[]> {
-  if (USE_MOCKS) {
-    return mockSpecies.map(
-      ({ id, name, scientific_name, status, era, location, kind, lat, lon, era_year }) => ({
-        id, name, scientific_name, status, era, location, kind, lat, lon, era_year,
-      }),
-    );
+/**
+ * Real first, mock second. Falls back on network errors and 5xx; on 404 only
+ * when `missingEndpoint` (the backend hasn't built it), never for "not found" data.
+ */
+async function withFallback<T>(
+  what: string,
+  real: () => Promise<T>,
+  mock: () => T | Promise<T>,
+  { missingEndpoint = false } = {},
+): Promise<T> {
+  if (USE_MOCKS) return mock();
+  try {
+    return await real();
+  } catch (e) {
+    const fallBack = !(e instanceof HttpError) || e.status >= 500 || (missingEndpoint && e.status === 404);
+    if (!fallBack) throw e;
+    reportFallback(what, e);
+    return mock();
   }
-  return get("/api/species");
+}
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const post = (body: unknown): RequestInit => ({
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+
+// --- endpoints -----------------------------------------------------------------------
+
+export async function listSpecies(): Promise<SpeciesSummary[]> {
+  return withFallback("species list", () => call("/api/species"), () =>
+    mockSpecies.map(({ id, name, scientific_name, status, era, location, kind, lat, lon, era_year }) => ({
+      id, name, scientific_name, status, era, location, kind, lat, lon, era_year,
+    })),
+  );
 }
 
 export async function getSpecies(id: string): Promise<Species> {
-  if (USE_MOCKS) {
+  return withFallback(`species ${id}`, () => call(`/api/species/${encodeURIComponent(id)}`), () => {
     const s = mockSpecies.find((x) => x.id === id);
-    if (!s) throw new Error(`no mock species ${id}`);
+    if (!s) throw new Error(`Unknown species ${id}`);
     return s;
-  }
-  return get(`/api/species/${id}`);
+  });
 }
 
 /** Full species files for several ids (unknown ids are skipped). */
@@ -49,39 +113,54 @@ export async function getSpeciesMany(ids: string[]): Promise<Species[]> {
   return results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
 }
 
-/**
- * PROPOSED: POST /api/sanctuary/simulate (see CLAUDE.md). In mock mode this runs
- * the client-side MOCK model in src/mocks/mockSanctuarySim.ts.
- */
-export async function simulateSanctuary(req: SanctuarySimRequest): Promise<SanctuarySimResponse> {
-  if (USE_MOCKS) {
-    await new Promise((r) => setTimeout(r, 400)); // feel like a real request
+// Forecast and Advance always use the same model (see simRouter.ts): the backend for
+// both once it has /api/sanctuary/advance, else the built-in mock for both.
+const sim = createSimRouter({
+  post: (path, body) => call(path, post(body)),
+  mockSimulate: async (req) => {
+    await delay(300);
     return mockSanctuarySimulate(req, mockSpecies);
-  }
-  const res = await fetch("/api/sanctuary/simulate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  if (!res.ok) throw new Error(`/api/sanctuary/simulate -> ${res.status}`);
-  return res.json();
+  },
+  mockAdvance: async (req) => {
+    await delay(300);
+    return mockSanctuaryAdvance(req, mockSpecies);
+  },
+  forceMock: USE_MOCKS,
+});
+
+/** POST /api/sanctuary/simulate (a forecast of many futures), or the mock: same model as advance. */
+export function simulateSanctuary(req: SanctuarySimRequest): Promise<SanctuarySimResponse> {
+  return sim.simulate(req);
 }
 
-/** Legacy: the old Lab's single-species sim (no longer used by the UI). */
-export async function simulate(req: SimulateRequest): Promise<SimulateResponse> {
-  if (USE_MOCKS) {
-    await new Promise((r) => setTimeout(r, 400)); // feel like a real request
-    const base = (req.interventions.length > 0 ? simGood : simNone) as SimulateResponse;
-    // The mock runs are the dodo's (from 1600); shift the years to the requested species.
-    const start = mockSpecies.find((x) => x.id === req.species_id)?.sim.start_year;
-    if (start === undefined) return base;
-    return { ...base, years: base.years.map((y) => y - base.years[0] + start) };
-  }
-  const res = await fetch("/api/simulate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  if (!res.ok) throw new Error(`/api/simulate -> ${res.status}`);
-  return res.json();
+/** PROPOSED POST /api/sanctuary/advance (one realised future), or the mock: same model as forecast. */
+export function advanceSanctuary(req: SanctuaryAdvanceRequest): Promise<SanctuaryAdvanceResponse> {
+  return sim.advance(req);
+}
+
+/** Subscribe to which model runs the sanctuary ("backend" | "mock"). Returns an unsubscribe. */
+export const onSimSource = (fn: (s: SimSource) => void) => sim.onSource(fn);
+/** Work out which model will run Forecast/Advance (so the "offline sim" badge shows before the first run). */
+export const checkSimSource = () => sim.check();
+
+/** GET /api/economy (backend-proposed Zorps numbers); offline: the same numbers, built locally. */
+export async function getEconomy(): Promise<Economy> {
+  return withFallback("economy", () => call("/api/economy"), () => ({
+    present_year: PRESENT_YEAR,
+    start_zorps: FALLBACK_ECONOMY.start_zorps,
+    zorps_per_survivor: FALLBACK_ECONOMY.zorps_per_survivor,
+    habitat_cost: FALLBACK_ECONOMY.habitat_cost,
+    travel_base_cost: 0,
+    era_multiplier_per_decade_of_age: FALLBACK_ECONOMY.era_multiplier_per_decade_of_age,
+    travel_cost_per_decade_of_age: 0,
+    species: [...mockSpecies]
+      .sort((a, b) => a.era_year - b.era_year)
+      .map((s) => ({
+        species_id: s.id,
+        era_year: s.era_year,
+        era_label: formatEra(s.era_year),
+        era_multiplier: eraMultiplier(s.id, s.era_year),
+        travel_cost_from_present: travelCost({ lat: 0, lon: 0, era_year: PRESENT_YEAR }, { lat: 1, lon: 1, era_year: s.era_year }),
+      })),
+  }), { missingEndpoint: true });
 }

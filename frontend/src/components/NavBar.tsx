@@ -1,12 +1,14 @@
 import { NavLink } from "react-router";
-import FuelGauge from "./FuelGauge";
+import ApiStatus from "./ApiStatus";
+import ZorpsCounter from "./ZorpsCounter";
 
 export default function NavBar() {
   return (
     <header className="navbar">
       <span className="brand">Glorp's Magic Spaceship</span>
       <div className="hud-right">
-        <FuelGauge />
+        <ApiStatus />
+        <ZorpsCounter />
         <nav>
           <NavLink to="/" end>
             Map
