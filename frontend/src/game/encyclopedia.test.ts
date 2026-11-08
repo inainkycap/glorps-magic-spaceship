@@ -4,6 +4,8 @@ import {
   completionOf,
   diversityScore,
   isComplete,
+  isFound,
+  isRevealed,
   isUnlocked,
   newlyUnlocked,
   overallCompletion,
@@ -52,6 +54,21 @@ describe("unlock waves", () => {
     expect(isUnlocked("quagga", w, 2)).toBe(true);
     expect(isUnlocked("woolly_mammoth", w, 2)).toBe(false);
     expect(newlyUnlocked(w, 1, 2).sort()).toEqual(["passenger_pigeon", "quagga", "thylacine"]);
+  });
+});
+
+describe("reveal: name and portrait only once visited", () => {
+  it("opening a pin finds the signal but doesn't reveal it; visiting does both", () => {
+    const opened: Progress = { scanned: {}, saved: [], found: ["dodo"] };
+    expect(isFound("dodo", opened)).toBe(true);
+    expect(isRevealed("dodo", opened)).toBe(false);
+    expect(completionOf(byId("dodo"), opened).items.find((i) => i.key === "found")!.done).toBe(1); // still counts
+
+    const visited: Progress = { scanned: {}, saved: [], visited: ["dodo"] };
+    expect(isRevealed("dodo", visited)).toBe(true);
+    expect(isFound("dodo", visited)).toBe(true); // visiting implies found
+
+    expect(isRevealed("dodo", { scanned: {}, saved: [] })).toBe(false);
   });
 });
 

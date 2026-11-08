@@ -9,6 +9,8 @@
   "lat": 50.5,
   "lon": 10.5,
   "kind": "mammal",
+  "diversity_value": 1,
+  "unlock_wave": 3,
   "intro": "Zib! Central Europe, 50 BCE, deep in an ancient forest. Something enormous is crashing through the trees: a wild bull taller than Glorp's ship!",
   "description": "The aurochs was a huge wild ox, the ancestor of every cow alive today. Bulls stood up to about 1.8 metres at the shoulder, were black with a pale stripe down the back, and had long, forward-curving horns; cows were smaller and reddish-brown. Aurochs roamed forests, river valleys and grassland across Europe, Asia and North Africa. Around 10,000 years ago people began taming them, and over thousands of years they became domestic cattle. Julius Caesar described wild aurochs in the forests of Germania as being \"a little below the elephant in size\". As forests were cleared for farms and the animals were hunted, they slowly vanished. The very last aurochs, a cow, died in Jaktorów Forest in Poland in 1627.",
   "facts": {

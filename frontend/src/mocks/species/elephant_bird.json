@@ -9,6 +9,8 @@
   "lat": -22.5,
   "lon": 45.0,
   "kind": "bird",
+  "diversity_value": 5,
+  "unlock_wave": 3,
   "intro": "Zib! Madagascar, about the year 900. Glorp just found an egg bigger than a football. Whatever laid it must be gigantic!",
   "description": "Elephant birds were giant flightless birds that lived only on Madagascar. The biggest stood about 3 metres tall and weighed several hundred kilograms, making them among the heaviest birds that ever lived. They laid the largest eggs of any known animal: about 30 cm long, holding as much as roughly 150 chicken eggs. Surprisingly, DNA shows their closest living relative is the little kiwi of New Zealand, not the ostrich. Elephant birds probably ate fruit and plants in Madagascar's forests. They died out around 1,000 years ago, most likely because of people hunting them and taking their eggs, and changes to their habitat.",
   "facts": {

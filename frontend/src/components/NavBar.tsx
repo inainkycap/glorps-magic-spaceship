@@ -1,6 +1,7 @@
 import { NavLink } from "react-router";
 import ApiStatus from "./ApiStatus";
 import DiversityCounter from "./DiversityCounter";
+import SettingsMenu from "./SettingsMenu";
 import ZorpsCounter from "./ZorpsCounter";
 
 export default function NavBar() {
@@ -18,6 +19,7 @@ export default function NavBar() {
           <NavLink to="/encyclopedia">Encyclopedia</NavLink>
           <NavLink to="/sanctuary">Sanctuary</NavLink>
         </nav>
+        <SettingsMenu />
       </div>
     </header>
   );

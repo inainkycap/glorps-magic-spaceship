@@ -9,6 +9,8 @@
   "lat": -31.55,
   "lon": 159.08,
   "kind": "insect",
+  "diversity_value": 3,
+  "unlock_wave": 1,
   "intro": "Zib! Lord Howe Island, 1915. Somewhere in this forest hide insects as long as Glorp's hand, nicknamed \"tree lobsters\". Let's find them before the rats do.",
   "description": "The Lord Howe Island stick insect (Dryococelus australis) is a large, flightless stick insect from Lord Howe Island in the Tasman Sea, between Australia and New Zealand. It's so big and heavy that locals called it the \"tree lobster\". It hides in tree hollows by day, often in pairs, and comes out at night to eat leaves. In 1918 the supply ship SS Makambo ran aground on the island and black rats came ashore; within a few years the stick insect had vanished, and it was declared extinct. In 2001 scientists climbed Ball's Pyramid, a sheer sea stack about 20 km away, and found around two dozen living under a single shrub. Zoo breeding programs have since raised thousands of them, but the wild population is still tiny.",
   "facts": {

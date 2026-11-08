@@ -9,6 +9,8 @@
   "lat": -42.0,
   "lon": 146.5,
   "kind": "mammal",
+  "diversity_value": 5,
+  "unlock_wave": 2,
   "intro": "Zib! Tasmania, 1900. Something like a striped dog is padding through this forest, but it carries its babies in a pouch like a kangaroo!",
   "description": "The thylacine, often called the Tasmanian tiger, was the largest meat-eating marsupial of modern times. It looked a bit like a dog, with dark stripes across its back and a long stiff tail, but it was a marsupial: females raised their young in a pouch. It once lived across Australia and New Guinea, but by the time Europeans arrived it survived only in Tasmania. Farmers blamed it for killing sheep, and from 1888 to 1909 the government paid a bounty for every one killed; more than 2,000 were claimed. Habitat loss, dogs and disease did the rest. The last known thylacine died at Hobart's Beaumaris Zoo on 7 September 1936.",
   "facts": {

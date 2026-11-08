@@ -39,6 +39,7 @@ function JumpText({ text }: { text: string }) {
  */
 export default function TravelBubble({
   species,
+  revealed,
   fromYear,
   cost,
   zorps,
@@ -47,6 +48,8 @@ export default function TravelBubble({
   onCancel,
 }: {
   species: SpeciesSummary;
+  /** Visited before: show its name and place; otherwise it's still an "Unknown signal". */
+  revealed: boolean;
   /** Glorp's current era, for the "1600 → 1870 · 270 years into the future" line. */
   fromYear: number;
   cost: number;
@@ -96,10 +99,10 @@ export default function TravelBubble({
         <Sprite name="bubble-tail" width={16} height={8} fallback={<span className="bubble-tail-fallback" />} />
       </span>
       <h2 id={titleId} className="bubble-title">
-        {species.name}
+        {revealed ? species.name : "Unknown signal"}
       </h2>
       <p className="bubble-sub">
-        {species.location} · {formatYear(species.era_year)}
+        {revealed ? `${species.location} · ${formatYear(species.era_year)}` : `${formatYear(species.era_year)} · travel there to find out`}
       </p>
       <p className="bubble-jump">
         <JumpText text={describeJump(fromYear, species.era_year)} />

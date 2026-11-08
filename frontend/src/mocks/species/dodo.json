@@ -6,6 +6,8 @@
   "era": "1600",
   "location": "Mauritius",
   "kind": "bird",
+  "diversity_value": 4,
+  "unlock_wave": 3,
   "lat": -20.3,
   "lon": 57.5,
   "era_year": 1600,

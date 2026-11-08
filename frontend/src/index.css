@@ -3125,3 +3125,52 @@ li.done .check {
     display: none;
   }
 }
+
+/* Settings menu in the nav (components/SettingsMenu.tsx) */
+.settings {
+  position: relative;
+}
+.px-button.settings-btn {
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 9px;
+}
+.settings-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 260px;
+  padding: 12px;
+  background: var(--space-1);
+  border: var(--px) solid var(--gold);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+}
+.settings-menu .px-button {
+  width: 100%;
+  font-size: 9px;
+}
+.settings-confirm p {
+  margin: 0 0 10px;
+  font-size: 9px;
+  line-height: 1.7;
+}
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+.settings-actions .px-button {
+  flex: 1;
+}
+/* Like .primary: the 9-slice image covers the background, so the text carries the colour. */
+.px-button.danger {
+  color: var(--danger);
+}
+/* Long resident lists (e.g. "9 lord howe island stick insect · …") wrap instead of
+   running under the neighbouring domes. */
+.dome-caption {
+  max-width: 230px;
+}

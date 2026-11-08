@@ -120,7 +120,7 @@ export function completionOf(species: Countable, progress: Progress): Completion
   const needs = needKeys.filter((k) => progress.discovered?.[id]?.includes(k)).length;
   const visited = has(progress.visited);
   const items: CompletionItem[] = [
-    { key: "found", label: "Found on the map", done: has(progress.found) || visited ? 1 : 0 },
+    { key: "found", label: "Found on the map", done: isFound(id, progress) ? 1 : 0 },
     { key: "visited", label: "Visited its world", done: visited ? 1 : 0 },
     { key: "facts", label: "Facts scanned", done: facts ? Math.min(1, scanned / facts) : 1, count: `${Math.min(scanned, facts)}/${facts}` },
     { key: "needs", label: "Needs discovered", done: needKeys.length ? needs / needKeys.length : 1, count: `${needs}/${needKeys.length}` },
@@ -137,8 +137,16 @@ export function overallCompletion(species: Countable[], progress: Progress): num
   return species.reduce((s, sp) => s + completionOf(sp, progress).fraction, 0) / species.length;
 }
 
-/** Found on the map or visited: its card is coloured in and opens. */
-export const isDiscovered = (id: string, progress: Progress) => !!progress.found?.includes(id) || !!progress.visited?.includes(id);
+/**
+ * Revealed = VISITED (Glorp arrived in its world and the intro was shown). Only then
+ * do its name and real portrait show, on the map pin and in the encyclopedia.
+ * Opening its pin ("found") counts for the checklist and Zorps but reveals nothing.
+ */
+export const isRevealed = (id: string, progress: Partial<Progress>) => !!progress.visited?.includes(id);
+
+/** Its pin has been opened (or it was visited): the "found on the map" checklist item. */
+export const isFound = (id: string, progress: Partial<Progress>) =>
+  !!progress.found?.includes(id) || isRevealed(id, progress);
 
 /** The goal: every species rescued and thriving. */
 export function isComplete(species: Pick<SpeciesSummary, "id">[], progress: Progress): boolean {
