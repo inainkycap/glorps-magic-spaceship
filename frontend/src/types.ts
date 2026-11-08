@@ -194,6 +194,12 @@ export interface AdvanceDome {
   start: Record<string, number>; // species id -> animals at the start
   end: Record<string, number>; // ... and at the end (the new populations)
   events: AdvanceEvent[];
+  /**
+   * PROPOSED (2026-11-08): yearly populations of each species in this dome, index 0 =
+   * start, last = end (years + 1 entries). Drives the recap; without it the recap
+   * interpolates from start to end (game/recap.ts).
+   */
+  history?: Record<string, number[]>;
   /** PROPOSED: the outbreak still running at the end (send it back next time), or null. */
   outbreak?: Outbreak | null;
 }

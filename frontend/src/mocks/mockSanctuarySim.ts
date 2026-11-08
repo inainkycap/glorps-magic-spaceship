@@ -308,7 +308,8 @@ export function mockSanctuarySimulate(
  * run at random as what really happened, and report how lucky it was:
  * luck_percentile = fraction of runs whose outcome (species alive at the end, then
  * total animals) was worse than or equal to the chosen one. Each dome's outbreak
- * state at the end comes back so the frontend can send it next time.
+ * state at the end comes back so the frontend can send it next time, and so do the
+ * chosen run's yearly populations (`history`, PROPOSED) for the recap.
  */
 export function mockSanctuaryAdvance(
   req: SanctuaryAdvanceRequest,
@@ -323,6 +324,7 @@ export function mockSanctuaryAdvance(
   const chosen = Math.floor(rand() * runs);
   const outcomes: [number, number][] = [];
   let chosenRun: ReturnType<typeof startRun> | null = null;
+  const history: number[][][] = []; // the chosen run, per year: [dome][species]
   const events: AdvanceEvent[][] = req.domes.map(() => []);
   const currentOutbreak: (AdvanceEvent | null)[] = req.domes.map(() => null);
   let y = 0; // the year being stepped (for event records)
@@ -345,9 +347,13 @@ export function mockSanctuaryAdvance(
 
   for (let r = 0; r < runs; r++) {
     const run = startRun(setup, rand);
+    if (r === chosen) history.push(run.N.map((row) => [...row]));
     for (y = 1; y <= req.years; y++) {
       stepYear(setup, run, y, rand, r === chosen ? record : undefined);
-      if (r === chosen) run.ob.forEach((o, d) => !o && (currentOutbreak[d] = null));
+      if (r === chosen) {
+        run.ob.forEach((o, d) => !o && (currentOutbreak[d] = null));
+        history.push(run.N.map((row) => [...row]));
+      }
     }
     outcomes.push([aliveSpecies(run.N, S), sum(run.N.flat())]);
     if (r === chosen) chosenRun = run;
@@ -365,6 +371,9 @@ export function mockSanctuaryAdvance(
     start: toRecord(start[di], (s) => start[di][s] > 0),
     end: toRecord(chosenRun!.N[di], (s) => start[di][s] > 0),
     events: events[di],
+    history: Object.fromEntries(
+      ids.map((id, s) => [id, s] as const).filter(([, s]) => start[di][s] > 0).map(([id, s]) => [id, history.map((N) => N[di][s])]),
+    ),
     outbreak: chosenRun!.ob[di] ? { ...chosenRun!.ob[di]! } : null,
   }));
   return {
