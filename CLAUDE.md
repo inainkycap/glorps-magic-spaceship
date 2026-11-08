@@ -33,6 +33,11 @@ Judged on: Technical Challenge, Innovation, Presentation.
 ## Stack
 - `frontend/`: React + Vite + TypeScript. Dev server on :5173, `/api` proxied to :8000.
 - `backend/`: FastAPI (Python). Runs on :8000.
+- Root `package.json` (no dependencies): `npm run setup` (creates `backend/.venv`, installs
+  backend requirements and frontend packages) and `npm run dev` (both servers, labelled
+  output, waits for `/api/health`, Ctrl+C stops both). Plain Node scripts in `scripts/`,
+  so they work in PowerShell, macOS and Linux; the backend runs on the venv's Python with
+  `PYTHONUTF8=1`.
 
 ## Ownership — IMPORTANT
 - Person A owns `backend/` (data, sim engine, API).
@@ -647,6 +652,20 @@ change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
   `needs` with `why` and `terrain.types`, `sources`, hotspots with `reveals` covering every
   need) plus `lat`, `lon`, `era_year`. Copy new files to `frontend/src/mocks/species/` too
   (or tell the frontend).
+
+**PROPOSAL (2026-11-08, optional, not implemented): one process for the demo.** For judging,
+FastAPI could also serve the built frontend, so the whole game runs as **one process at one
+URL** (e.g. http://localhost:8000), with no Vite and no proxy:
+- Backend: after all the `/api` routes, mount `frontend/dist` as static files with an SPA
+  fallback (any non-`/api` path that isn't a file returns `index.html`, so client routes like
+  `/sanctuary/dome-1` survive a reload), e.g. `StaticFiles(directory=..., html=True)` plus a
+  catch-all route. Only when `frontend/dist` exists, so `npm run dev` is unaffected.
+- Root: `npm run demo` = `npm --prefix frontend run build`, then start uvicorn **without**
+  `--reload` on :8000 (with `PYTHONUTF8=1`), and print the one URL. The frontend already calls
+  relative `/api/...` paths, so nothing changes there.
+- Nice side effects: one port to open, no CORS, and the production build hides the dev-only
+  "offline sim" badge.
+Frontend can add the `demo` script once the backend serves `dist`.
 
 ## Git workflow
 - `main` is protected. Never commit to it directly.
