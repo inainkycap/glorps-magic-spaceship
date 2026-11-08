@@ -9,6 +9,8 @@
   "lat": 42.65,
   "lon": -0.03,
   "kind": "mammal",
+  "diversity_value": 1,
+  "unlock_wave": 1,
   "intro": "Zib! The Pyrenees mountains, 1910. Glorp's ears are popping! Up on these cliffs lives a wild goat with huge curved horns: the bucardo.",
   "description": "The Pyrenean ibex, or bucardo, was a wild mountain goat from the Pyrenees, the mountains between Spain and France. Males had thick horns that curved back in a wide sweep. It climbed steep, rocky slopes and grazed alpine meadows, moving lower in winter. Hunters prized its horns as trophies, and by the early 1900s only a small group was left. The very last one, a female named Celia, died in 2000 when a tree fell on her. Scientists had saved some of her cells, and in 2003 they cloned her: the baby was born alive but lived only a few minutes. It was the first time an extinct animal had ever been brought back, even briefly.",
   "facts": {

@@ -6,6 +6,8 @@
   "era": "1870",
   "location": "Michigan, USA",
   "kind": "bird",
+  "diversity_value": 3,
+  "unlock_wave": 2,
   "lat": 44.5,
   "lon": -84.7,
   "era_year": 1870,

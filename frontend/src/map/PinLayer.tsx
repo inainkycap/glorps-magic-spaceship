@@ -12,8 +12,8 @@ const SPARKS = 8;
  * every visible copy of the wrapping world. Only unlocked species get a pin.
  *
  * - Visited: the regular pin with the species' name.
- * - Not visited yet: the species' black silhouette; its name shows as "???"
- *   until the signal is found (the pin is opened once).
+ * - Not visited yet: the species' black silhouette, "Unknown signal · <era>". Its name
+ *   and portrait are revealed only once visited (opening the pin just "finds" it).
  * - Newly unlocked (`newIds`): pops in with a sparkle burst (not under reduced motion).
  *
  * Layout note: the positioned element is a zero-size anchor at the pin tip;
@@ -26,7 +26,6 @@ export default function PinLayer({
   species,
   currentEra,
   saved,
-  found,
   visited,
   newIds,
   animate,
@@ -38,7 +37,6 @@ export default function PinLayer({
   species: SpeciesSummary[];
   currentEra: number;
   saved: string[];
-  found: string[];
   visited: string[];
   newIds: string[];
   /** false under reduced motion: no pop-in or sparkles. */
@@ -57,10 +55,9 @@ export default function PinLayer({
         const y = view.toScreen(s.lon, s.lat).y;
         const isSaved = saved.includes(s.id);
         const isVisited = visited.includes(s.id);
-        const isFound = isVisited || found.includes(s.id);
         const isNew = animate && newIds.includes(s.id);
         const inEra = s.era_year === currentEra;
-        const name = isFound ? s.name : "???";
+        const name = isVisited ? s.name : "Unknown signal";
         return view.screenXs(s.lon).map((x, k) => (
           <div key={`${s.id}:${k}`} className="pin-anchor" style={{ left: x, top: y }}>
             <button
@@ -73,9 +70,9 @@ export default function PinLayer({
               onBlur={() => onHover(null)}
               disabled={disabled}
               aria-label={
-                isFound
+                isVisited
                   ? `Travel to ${s.name}, ${s.location}, ${formatYear(s.era_year)}${isSaved ? " (saved)" : ""}`
-                  : `Unknown signal, ${formatYear(s.era_year)}: open to find out what it is`
+                  : `Unknown signal, ${formatYear(s.era_year)}: travel there to find out what it is`
               }
             >
               <span className={`pin-body ${isNew ? "pin-new" : ""}`}>

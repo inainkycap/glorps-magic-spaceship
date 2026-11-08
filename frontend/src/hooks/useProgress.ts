@@ -424,6 +424,22 @@ const applyAdvance = (adv: StoredAdvance) => {
 
 const reset = () => setState(() => EMPTY);
 
+/** Settings → "Reset game": delete the saved progress (the caller reloads the page). */
+export function clearSavedProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // storage blocked: nothing saved to clear
+  }
+  setState(() => EMPTY);
+}
+
+/** Settings → "Load demo save": replace the saved progress (the caller reloads the page). */
+export function replaceSavedProgress(p: Progress) {
+  persist(p);
+  setState(() => p);
+}
+
 /**
  * Player progress (scans, needs, Glorp's location, Zorps, rescued animals,
  * sanctuary domes), persisted to localStorage and shared by every component.

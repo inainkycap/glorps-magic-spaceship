@@ -6,7 +6,8 @@ import Sprite from "../components/Sprite";
 import Status from "../components/Status";
 import {
   completionOf,
-  isDiscovered,
+  isFound,
+  isRevealed,
   isUnlocked,
   newlyUnlocked,
   overallCompletion,
@@ -46,7 +47,7 @@ export default function Encyclopedia() {
   const ordered = [...ok.list].sort((a, b) => ok.waves[a.id] - ok.waves[b.id] || b.era_year - a.era_year || a.id.localeCompare(b.id));
   const full = ordered.map((s) => ok.byId[s.id]).filter(Boolean);
   const overall = overallCompletion(full, progress);
-  const discovered = ordered.filter((s) => isDiscovered(s.id, progress)).length;
+  const discovered = ordered.filter((s) => isRevealed(s.id, progress)).length;
   const nextAt = UNLOCK_AFTER_RESCUES[unlock.wave]; // rescues needed for the next wave (undefined: all unlocked)
   const toGo = nextAt === undefined ? 0 : Math.max(0, nextAt - progress.saved.length);
 
@@ -75,7 +76,7 @@ export default function Encyclopedia() {
       <ul className="ency-grid">
         {ordered.map((s) => {
           const locked = !isUnlocked(s.id, ok.waves, unlock.wave);
-          const found = !locked && isDiscovered(s.id, progress);
+          const found = !locked && isRevealed(s.id, progress);
           const isNew = newIds.includes(s.id);
           const full1 = ok.byId[s.id];
           const pct = found && full1 ? completionOf(full1, progress).fraction : 0;
@@ -99,7 +100,9 @@ export default function Encyclopedia() {
                   {pctText(pct)}
                 </span>
               ) : (
-                <span className="ency-hint">{isNew ? "New signal!" : "Signal on the map"}</span>
+                <span className="ency-hint">
+                  {isNew ? "New signal!" : isFound(s.id, progress) ? "Signal found: travel there" : "Signal on the map"}
+                </span>
               )}
             </>
           );
@@ -112,7 +115,7 @@ export default function Encyclopedia() {
               ) : (
                 <div
                   className="ency-card-inner"
-                  aria-label={locked ? "Locked species: rescue more species to detect its signal" : "Undiscovered species: find its signal on the map"}
+                  aria-label={locked ? "Locked species: rescue more species to detect its signal" : "Undiscovered species: travel to its signal on the map"}
                   role="img"
                 >
                   {inner}

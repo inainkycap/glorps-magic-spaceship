@@ -9,6 +9,8 @@
   "lat": 55.0,
   "lon": 166.2,
   "kind": "mammal",
+  "diversity_value": 4,
+  "unlock_wave": 3,
   "intro": "Zib! Bering Island, 1741, in the freezing North Pacific. Those huge dark backs in the kelp aren't rocks: they're sea cows as long as a bus!",
   "description": "Steller's sea cow was a giant relative of manatees and dugongs, far bigger than either: up to about 8 metres long. It lived in shallow, cold coastal water around the Commander Islands in the Bering Sea, grazing on kelp. It had no teeth, only rough plates for crushing seaweed, and thick, bark-like skin. The naturalist Georg Steller described it in 1741, after his ship, Vitus Bering's St. Peter, was wrecked on the island. Fur hunters who followed killed sea cows for meat to feed their crews. Only 27 years after Steller first described it, the sea cow was gone.",
   "facts": {

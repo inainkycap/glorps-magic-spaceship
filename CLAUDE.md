@@ -67,12 +67,11 @@ Adding a species = adding one file. Fields:
   cow); **3** ~10–20 (stick insect, passenger pigeon); **2** ~1–10 (great auk, golden toad,
   woolly mammoth); **1** < 1 Myr or its line lives on (quagga, aurochs, Pyrenean ibex,
   Haast's eagle). Divergence times are approximate published estimates; check a figure
-  before quoting it.: how much keeping this species
-  alive adds to the diversity score (e.g. 1 common, 2–3 for rarer or more distinct
-  lineages). Optional `unlock_wave` (1, 2 or 3): which unlock wave the species belongs to
-  (absent: the frontend orders by era, newest first). **Both must also be in the
-  `/api/species` summaries** (the map and HUD use the list): add them to `SpeciesSummary` in
-  `backend/app/schemas.py`, because the response models drop any field they don't declare.
+  before quoting it. It's what keeping this species alive adds to the diversity score.
+- `unlock_wave` (optional, 1, 2 or 3): which unlock wave the species belongs to (absent: the
+  frontend orders by era, newest first). Today's values match that era order.
+- Both are also in the `/api/species` summaries (`SpeciesSummary`; the map and HUD use the
+  list).
 - Content fields (`intro`, `description`, `facts`, `habitat`, `needs`, `sources`): see
   "Species content + needs".
 - **Legacy, optional** (from the dropped "protect it in the past" Lab; nothing uses them):
@@ -136,7 +135,8 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 - **Forecast and Advance always use the same model** (`frontend/src/simRouter.ts`, tested
   in `simRouter.test.ts`): the frontend probes `POST /api/sanctuary/advance` once; if it
   exists (any answer but 404), both use the backend; if it's missing or the backend is
-  unreachable, both use the mock (`mockSanctuarySim.ts`) and the HUD shows "offline sim".
+  unreachable, both use the mock (`mockSanctuarySim.ts`) and the HUD shows "offline sim"
+  (dev builds only: hidden when `import.meta.env.DEV` is false).
   A backend failure mid-session switches both to the mock; it re-checks after 60 s.
 - Progress (scanned hotspots, DNA, rescued animals, Zorps, domes, sanctuary clock) persists
   in localStorage; wrap reads/writes in try/catch. Old saves are migrated on load
@@ -144,17 +144,23 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 - Eras are formatted one way everywhere (`formatEra` in `game/time.ts`): "today", "1987",
   "900 CE", "1,000 BC", "14,025 yrs ago", "66 million yrs ago".
 - Screens (pixel art: `image-rendering: pixelated`):
-  - Encyclopedia `/encyclopedia` (in the nav): a card per species; undiscovered ones are
+  - **Reveal rule:** a species' name and real portrait show only once it's **visited**
+    (Explore opened and the intro shown; `markVisited` runs there), on both the map pin and
+    the encyclopedia (`isRevealed` in `game/encyclopedia.ts`). Opening its pin counts as
+    "found" (checklist + Zorps) but it stays "Unknown signal · <era>" with a silhouette.
+  - Encyclopedia `/encyclopedia` (in the nav): a card per species; unvisited ones are
     black silhouettes of the resident sprite (CSS `brightness(0)`, no extra art) named
     "???", locked ones are marked "locked"; overall completion % in the header.
-    `/encyclopedia/:speciesId` (discovered species only): the completion checklist, the
+    `/encyclopedia/:speciesId` (visited species only): the completion checklist, the
     field guide content (`FieldGuideBody`), and "From Wikipedia" (`GET /api/wiki/{title}`,
     title from the species' Wikipedia source; with attribution and a link; hidden if it
     fails or in mock mode).
-  - HUD everywhere: Zorps, diversity score, offline badges. The end screen
+  - HUD everywhere: Zorps, diversity score, offline badges, and **Settings** ("Load demo
+    save": the mid-game preset in `game/demoSave.ts`, tested in `demoSave.test.ts`;
+    "Reset game"; both confirm first, then reload at the map). The end screen
     (`components/GameComplete.tsx`) appears once when the goal is reached.
-  - Map `/`: only unlocked species have pins (unvisited: a silhouette named "???" until
-    found); world map + era timeline + Zorps counter; clicking a pin opens a travel bubble
+  - Map `/`: only unlocked species have pins (unvisited: a silhouette, "Unknown signal ·
+    <era>", in the pin and its travel bubble); world map + era timeline + Zorps counter; clicking a pin opens a travel bubble
     (jump, Zorps cost), and confirming plays the travel animation. The timeline scales to
     the species: oldest era to today plus padding, log scale when the span is over ~1,000
     years (`buildEraScale` in `game/time.ts`), with ticks like "today", "100 yrs ago",
@@ -247,7 +253,7 @@ with 3 species; rescuing 3 (in all) unlocks the next 3; rescuing 6 unlocks the r
 order comes from each species' `unlock_wave` (1–3) if the data has it (species without one
 go last); otherwise by era, most recent first. Locked species have no map pin, can't be
 explored, and stay "locked" silhouettes in the encyclopedia. Unlocked but unvisited species
-show a silhouette pin named "???" until found. A new wave plays a reveal once on the map
+show a silhouette pin ("Unknown signal · <era>") until visited (see the reveal rule). A new wave plays a reveal once on the map
 (pins pop in with a sparkle burst, Glorp: "New signals detected!") and once in the
 encyclopedia (the silhouettes light up); reduced motion skips the animation. Unlock state
 (`Progress.unlock`: wave + where the reveal has played) persists.

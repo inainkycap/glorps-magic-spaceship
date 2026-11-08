@@ -17,7 +17,7 @@ export default function DiversityCounter() {
       className="diversity-counter"
       role="status"
       aria-label={`Diversity score ${fmt(score)}`}
-      title="Diversity score: the species alive in your domes (rarer species count more). The goal: complete the encyclopedia with the highest score."
+      title="Diversity score: species alive in your domes, weighted by how evolutionarily unique they are"
     >
       <Sprite name="diversity-icon" width={16} height={16} fallback={<span className="diversity-fallback" aria-hidden="true">◆</span>} />
       <span className="diversity-value" aria-hidden="true">

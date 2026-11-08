@@ -4,9 +4,10 @@ import EraTimeline, { type TimePreview } from "../components/EraTimeline";
 import ApiStatus from "../components/ApiStatus";
 import DiversityCounter from "../components/DiversityCounter";
 import GlorpSprite from "../components/GlorpSprite";
+import SettingsMenu from "../components/SettingsMenu";
 import Status from "../components/Status";
 import TravelAnimation from "../components/TravelAnimation";
-import { isUnlocked, newlyUnlocked } from "../game/encyclopedia";
+import { isRevealed, isUnlocked, newlyUnlocked } from "../game/encyclopedia";
 import { buildEraScale } from "../game/time";
 import { travelCost } from "../game/zorps";
 import ZorpsCounter from "../components/ZorpsCounter";
@@ -36,7 +37,7 @@ const REVEAL_MS = 4500;
 
 export default function MapScreen() {
   const state = useSpeciesData();
-  const { progress, glorp, zorps, unlock, setGlorp, spendZorps, markFound, markVisited, markRevealSeen } = useProgress();
+  const { progress, glorp, zorps, unlock, setGlorp, spendZorps, markFound, markRevealSeen } = useProgress();
   const reduced = useReducedMotion();
   const navigate = useNavigate();
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -51,7 +52,7 @@ export default function MapScreen() {
   // Until the backend adds lat/lon/era_year (contract 2026-11-07), skip species without them.
   const species = all.filter((s) => isPlace(placeOf(s)));
   const missing = all.length - species.length;
-  const isFound = (id: string) => !!progress.found?.includes(id) || !!progress.visited?.includes(id);
+  const revealed = (id: string) => isRevealed(id, progress);
 
   // New signals: species unlocked since the map last showed them pop in, then it's marked as seen.
   const newIds = state.status === "ok" && unlock.seenMap < unlock.wave ? newlyUnlocked(waves, unlock.seenMap, unlock.wave) : [];
@@ -79,7 +80,7 @@ export default function MapScreen() {
   /** Open the travel bubble for a species (pin or timeline marker). */
   const select = (s: SpeciesSummary, bringIntoView = false) => {
     if (trip) return;
-    markFound(s.id); // opening its pin finds the signal (pays once)
+    markFound(s.id); // opening its pin "finds" the signal (checklist + Zorps once); it's revealed only when visited
     setSelectedId(s.id);
     if (bringIntoView) setFocus((f) => ({ lon: s.lon, lat: s.lat, seq: (f?.seq ?? 0) + 1 }));
   };
@@ -89,7 +90,6 @@ export default function MapScreen() {
     const to = placeOf(selected);
     setSelectedId(null);
     if (samePlace(glorp, to)) {
-      markVisited(selected.id);
       navigate(`/explore/${selected.id}`);
       return;
     }
@@ -109,7 +109,6 @@ export default function MapScreen() {
   const arrive = () => {
     if (!trip) return;
     setGlorp(trip.to);
-    markVisited(trip.speciesId); // pays once
     setTrip(null);
     setTripEra(null);
     navigate(`/explore/${trip.speciesId}`);
@@ -137,7 +136,6 @@ export default function MapScreen() {
           species={species}
           currentEra={currentEra}
           saved={progress.saved}
-          found={progress.found ?? []}
           visited={progress.visited ?? []}
           newIds={newIds}
           animate={!reduced}
@@ -154,6 +152,7 @@ export default function MapScreen() {
         {selected && !trip && (
           <TravelBubble
             species={selected}
+            revealed={revealed(selected.id)}
             fromYear={glorp.era_year}
             cost={travelCost(glorp, placeOf(selected))}
             zorps={zorps}
@@ -177,6 +176,7 @@ export default function MapScreen() {
           <Link className="px-button w-s" to="/sanctuary">
             Sanctuary
           </Link>
+          <SettingsMenu />
         </div>
       </header>
 
@@ -200,7 +200,7 @@ export default function MapScreen() {
           const s = species.find((x) => x.id === id);
           if (s) select(s, true);
         }}
-        markers={species.map((s) => ({ id: s.id, year: s.era_year, label: isFound(s.id) ? s.name : "???" }))}
+        markers={species.map((s) => ({ id: s.id, year: s.era_year, label: revealed(s.id) ? s.name : "Unknown signal" }))}
       />
 
       {newIds.length > 0 && (

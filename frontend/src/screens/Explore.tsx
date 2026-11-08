@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router";
 import { getSpecies } from "../api";
 import GlorpSprite from "../components/GlorpSprite";
@@ -27,14 +27,21 @@ const spriteUrl = (name: string) => `${import.meta.env.BASE_URL}sprites/${name}.
 export default function Explore() {
   const { speciesId = "" } = useParams();
   const state = useAsync(speciesId, () => getSpecies(speciesId));
-  const { scannedFor, discoveredFor, markScanned, discoverNeed, markDnaComplete, unlock } = useProgress();
+  const { scannedFor, discoveredFor, markScanned, discoverNeed, markDnaComplete, markVisited, unlock } = useProgress();
   const all = useSpeciesData();
+  const locked = all.status === "ok" && all.data.waves[speciesId] !== undefined && !isUnlocked(speciesId, all.data.waves, unlock.wave);
+  const loadedId = state.status === "ok" ? state.data.id : null;
+  // Visited = arrived here and the intro is shown: the species is now revealed (name,
+  // portrait) on the map and in the encyclopedia. Pays its Zorps once.
+  useEffect(() => {
+    if (loadedId && !locked) markVisited(loadedId);
+  }, [loadedId, locked, markVisited]);
   const [scan, setScan] = useState<ActiveScan | null>(null);
   const [arrivalOpen, setArrivalOpen] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
 
   // A locked species (not unlocked by rescues yet) can't be explored, even by URL.
-  if (all.status === "ok" && all.data.waves[speciesId] !== undefined && !isUnlocked(speciesId, all.data.waves, unlock.wave)) {
+  if (locked) {
     return (
       <section className="explore-locked">
         <h1>No signal yet</h1>

@@ -9,6 +9,8 @@
   "lat": -43.5,
   "lon": 171.7,
   "kind": "bird",
+  "diversity_value": 5,
+  "unlock_wave": 3,
   "intro": "Zib! New Zealand, 1350. That bird is browsing leaves higher than a basketball hoop. Meet the giant moa!",
   "description": "Moa were giant flightless birds found only in New Zealand, and the South Island giant moa was the biggest. Females, much larger than males, could reach about 3.6 metres with their necks stretched up and weighed around 230 kilograms. Moa had no wings at all, not even tiny ones. They browsed leaves, twigs and fruit, and swallowed stones to help grind food in their gizzards. With no land mammals on the islands, their only predator was Haast's eagle. Polynesian settlers, the ancestors of Māori, arrived around 1300. Moa bred slowly, and within roughly 150 years hunting and forest fires had wiped out every species.",
   "facts": {

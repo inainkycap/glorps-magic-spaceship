@@ -9,6 +9,8 @@
   "lat": -32.3,
   "lon": 22.5,
   "kind": "mammal",
+  "diversity_value": 1,
+  "unlock_wave": 2,
   "intro": "Zib! The Karoo, South Africa, 1870. Out on this dry grassland lives a zebra that forgot to finish its stripes: the quagga.",
   "description": "The quagga was a kind of plains zebra from the dry grasslands of South Africa. It had bold stripes on its head and neck that faded away along its body, leaving its back half plain brown. Its name is thought to come from its call, a sound like \"kwa-ha\". European settlers hunted it for meat and hides and cleared its grazing land for sheep and cattle. The last wild quaggas were shot in the 1870s, and the very last one died in a zoo in Amsterdam in 1883. In 1984 the quagga became the first extinct animal to have its DNA studied, which showed it was a zebra, not a separate species.",
   "facts": {

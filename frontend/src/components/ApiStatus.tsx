@@ -24,9 +24,10 @@ export default function ApiStatus() {
   );
 }
 
-/** "offline sim": Forecast and Advance both run on the built-in model (the backend's isn't complete or reachable). */
+/** "offline sim" (dev builds only): Forecast and Advance both run on the built-in model. */
 export function SimBadge({ source }: { source: SimSource | null }) {
-  if (source !== "mock") return null;
+  // A developer hint only: hidden in production builds.
+  if (!import.meta.env.DEV || source !== "mock") return null;
   return (
     <span
       className="api-status"

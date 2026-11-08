@@ -3,7 +3,7 @@ import { getWiki, wikiTitleOf } from "../api";
 import SpeciesPortrait from "../components/SpeciesPortrait";
 import Status from "../components/Status";
 import { FieldGuideBody } from "../explore/FieldGuide";
-import { completionOf, isDiscovered, isUnlocked, pctText } from "../game/encyclopedia";
+import { completionOf, isRevealed, isUnlocked, pctText } from "../game/encyclopedia";
 import { formatYear } from "../geo";
 import { useAsync } from "../hooks/useAsync";
 import { useProgress } from "../hooks/useProgress";
@@ -52,12 +52,12 @@ export default function EncyclopediaEntry() {
       Back to the encyclopedia
     </Link>
   );
-  if (!species || !isUnlocked(speciesId, data.data.waves, unlock.wave) || !isDiscovered(speciesId, progress)) {
+  if (!species || !isUnlocked(speciesId, data.data.waves, unlock.wave) || !isRevealed(speciesId, progress)) {
     return (
       <section className="ency-entry">
         {back}
         <h1>???</h1>
-        <p className="muted">{species ? "Glorp hasn't found this species yet. Look for its signal on the map." : "No such species."}</p>
+        <p className="muted">{species ? "Glorp hasn't visited this species yet. Travel to its signal on the map." : "No such species."}</p>
       </section>
     );
   }
