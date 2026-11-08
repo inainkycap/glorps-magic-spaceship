@@ -16,6 +16,7 @@ import type {
   SanctuarySimResponse,
   Species,
   SpeciesSummary,
+  WikiSummary,
 } from "./types";
 import { mockSanctuaryAdvance, mockSanctuarySimulate } from "./mocks/mockSanctuarySim";
 import { eraMultiplier, FALLBACK_ECONOMY, travelCost } from "./game/zorps";
@@ -163,4 +164,33 @@ export async function getEconomy(): Promise<Economy> {
         travel_cost_from_present: travelCost({ lat: 0, lon: 0, era_year: PRESENT_YEAR }, { lat: 1, lon: 1, era_year: s.era_year }),
       })),
   }), { missingEndpoint: true });
+}
+
+/**
+ * GET /api/wiki/{title}: a Wikipedia summary (the backend caches it). Optional
+ * extra: any failure (offline, 404, mock mode) gives null and the UI hides it.
+ */
+export async function getWiki(title: string): Promise<WikiSummary | null> {
+  if (USE_MOCKS || !title.trim()) return null;
+  try {
+    const w = await call<WikiSummary>(`/api/wiki/${encodeURIComponent(title)}`);
+    return typeof w?.summary === "string" && w.summary.trim() ? w : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The Wikipedia article title from a species' sources (the part after /wiki/), if any. */
+export function wikiTitleOf(sources: { url: string }[] | undefined): string | null {
+  for (const s of sources ?? []) {
+    const m = /^https?:\/\/[a-z-]+\.wikipedia\.org\/wiki\/([^?#]+)/i.exec(s.url ?? "");
+    if (m) {
+      try {
+        return decodeURIComponent(m[1]);
+      } catch {
+        return m[1];
+      }
+    }
+  }
+  return null;
 }

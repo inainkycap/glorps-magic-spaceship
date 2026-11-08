@@ -31,6 +31,22 @@ describe("saved-progress migration", () => {
   });
 });
 
+describe("unlock state in saves", () => {
+  it("old saves unlock what their rescues earned, with no reveal to replay", () => {
+    const save: Record<string, unknown> = { scanned: {}, saved: ["dodo", "moa", "quagga", "aurochs"] };
+    migrate(save);
+    expect(save.unlock).toEqual({ wave: 2, seenMap: 2, seenGuide: 2 });
+  });
+
+  it("drops a broken unlock state or progress lists, and rebuilds the unlock", () => {
+    const save: Record<string, unknown> = { scanned: {}, saved: [], unlock: { wave: 9 }, found: "dodo", visited: ["dodo"] };
+    migrate(save);
+    expect(save.unlock).toEqual({ wave: 1, seenMap: 1, seenGuide: 1 });
+    expect(save).not.toHaveProperty("found");
+    expect(save.visited).toEqual(["dodo"]);
+  });
+});
+
 describe("capacity, outbreaks and chart labels", () => {
   it("capacity bar levels: crowded from 80%, full at 100%", () => {
     expect(capacityLevel(47, 60)).toBe("ok");

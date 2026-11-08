@@ -57,6 +57,13 @@ Adding a species = adding one file. Fields:
   - `dna`: boolean — scanning it gives a DNA fragment
   - `reveals`: need key or array of need keys (see "Species content + needs")
 - `dna_required` (e.g. 3): DNA fragments needed before the DNA Lab opens
+- **PROPOSED (2026-11-08, frontend)** `diversity_value` (number ≥ 0, **required for
+  scoring**; the frontend defaults it to 1 until it's there): how much keeping this species
+  alive adds to the diversity score (e.g. 1 common, 2–3 for rarer or more distinct
+  lineages). Optional `unlock_wave` (1, 2 or 3): which unlock wave the species belongs to
+  (absent: the frontend orders by era, newest first). **Both must also be in the
+  `/api/species` summaries** (the map and HUD use the list): add them to `SpeciesSummary` in
+  `backend/app/schemas.py`, because the response models drop any field they don't declare.
 - Content fields (`intro`, `description`, `facts`, `habitat`, `needs`, `sources`): see
   "Species content + needs".
 - **Legacy, optional** (from the dropped "protect it in the past" Lab; nothing uses them):
@@ -128,7 +135,17 @@ TypeScript mirror of all of this: `frontend/src/types.ts`. Keep them in sync.
 - Eras are formatted one way everywhere (`formatEra` in `game/time.ts`): "today", "1987",
   "900 CE", "1,000 BC", "14,025 yrs ago", "66 million yrs ago".
 - Screens (pixel art: `image-rendering: pixelated`):
-  - Map `/`: world map + era timeline + Zorps counter; clicking a pin opens a travel bubble
+  - Encyclopedia `/encyclopedia` (in the nav): a card per species; undiscovered ones are
+    black silhouettes of the resident sprite (CSS `brightness(0)`, no extra art) named
+    "???", locked ones are marked "locked"; overall completion % in the header.
+    `/encyclopedia/:speciesId` (discovered species only): the completion checklist, the
+    field guide content (`FieldGuideBody`), and "From Wikipedia" (`GET /api/wiki/{title}`,
+    title from the species' Wikipedia source; with attribution and a link; hidden if it
+    fails or in mock mode).
+  - HUD everywhere: Zorps, diversity score, offline badges. The end screen
+    (`components/GameComplete.tsx`) appears once when the goal is reached.
+  - Map `/`: only unlocked species have pins (unvisited: a silhouette named "???" until
+    found); world map + era timeline + Zorps counter; clicking a pin opens a travel bubble
     (jump, Zorps cost), and confirming plays the travel animation. The timeline scales to
     the species: oldest era to today plus padding, log scale when the span is over ~1,000
     years (`buildEraScale` in `game/time.ts`), with ticks like "today", "100 yrs ago",
@@ -191,24 +208,50 @@ HUD; every gain pops up "+N Zorps"). Where each number comes from:
 | Travel | formula below | **frontend** `game/zorps.ts`; the backend's `/api/travel-cost` uses the same formula and gives the same numbers |
 | DNA Lab retry | 5 (first attempt per species free) | **frontend** `DNA_RETRY_COST` |
 | Dome capacity upgrade (+20, up to 200) | 10, then +5 per upgrade of the same dome (10, 15, 20, …) | **frontend** `capacityUpgradeCost` |
-| New fact (first scan of a hotspot) | +1 | **frontend** `REWARDS.newFact` |
-| New need discovered | +2 each | **frontend** `REWARDS.newNeed` |
-| DNA complete (all fragments) | +3 | **frontend** `REWARDS.dnaComplete` |
-| Species rescued (first DNA Lab result) | +5 | **frontend** `REWARDS.rescue` |
+| Encyclopedia: found on the map (pin opened) | +1 | **frontend** `REWARDS.foundOnMap` |
+| Encyclopedia: visited its world | +1 | **frontend** `REWARDS.visited` |
+| Encyclopedia: new fact (first scan of a hotspot) | +1 | **frontend** `REWARDS.newFact` |
+| Encyclopedia: new need discovered | +1 each | **frontend** `REWARDS.newNeed` |
+| Encyclopedia: DNA complete (all fragments) | +2 | **frontend** `REWARDS.dnaComplete` |
+| Encyclopedia: rescued (first DNA Lab result) | +5 | **frontend** `REWARDS.rescue` |
+| Encyclopedia: thriving (first time, after an Advance) | +5 | **frontend** `REWARDS.thriving` |
 
-Discovery rewards are paid once each (per hotspot, need, species). If the backend is down,
+Encyclopedia rewards are paid once each (per species, hotspot, need), with a "+N Zorps"
+popup; the backend has no reward values yet (it would be the source of truth if it added
+them). About 21 Zorps per species come without advancing time, a little less than a trip,
+so exploring alone can't fund the game (tuned for the budget target below). If the backend is down,
 `FALLBACK_ECONOMY` in `zorps.ts` (a copy of `backend/data/economy.json`) stands in. The
 forecast's `zorps` field (what a run *would* earn) is not paid out: only Advance pays,
 because it actually happens (so the anti-farming question doesn't arise; see "Proposed:
 zorps").
 
 **Budget target** (enforced by the "early-game Zorps budget" tests in `zorps.test.ts`).
-From a fresh start (100 Zorps at home in 2026), the first wave is the stick insect (1915),
-the passenger pigeon (1870) and the dodo (1600), newest first:
+From a fresh start (100 Zorps at home in 2026), the first wave (unlock wave 1, see below;
+today the golden toad 1987, stick insect 1915 and Pyrenean ibex 1910), newest first:
 - affordable: rescue all 3 **and build 2 domes** with a DNA retry each, or **3 domes**
   without retries
 - not affordable: the remaining species from discoveries alone, or the mammoth right
   after wave 1. Later waves need Advance payouts.
+
+**Unlock waves** (`game/encyclopedia.ts`, tests in `encyclopedia.test.ts`). The player starts
+with 3 species; rescuing 3 (in all) unlocks the next 3; rescuing 6 unlocks the rest. The
+order comes from each species' `unlock_wave` (1–3) if the data has it (species without one
+go last); otherwise by era, most recent first. Locked species have no map pin, can't be
+explored, and stay "locked" silhouettes in the encyclopedia. Unlocked but unvisited species
+show a silhouette pin named "???" until found. A new wave plays a reveal once on the map
+(pins pop in with a sparkle burst, Glorp: "New signals detected!") and once in the
+encyclopedia (the silhouettes light up); reduced motion skips the animation. Unlock state
+(`Progress.unlock`: wave + where the reveal has played) persists.
+
+**Encyclopedia completion** per species = the average of 7 items: found on the map, visited,
+facts scanned (n/total hotspots), needs discovered (n/5), DNA complete, rescued, thriving
+(≥ 2 alive after the last "Advance 10 years" and still in a dome). Facts and needs count
+partly. Overall completion = the average over **all** species (locked ones count 0).
+
+**Diversity score** (the goal) = the sum of `diversity_value` (default 1 if missing) of
+species alive in the domes right now. Shown in the HUD next to Zorps. When every species is
+rescued and thriving, an end screen shows the final diversity score, completion %, sanctuary
+year and species saved, with "Keep playing" (shown once).
 
 **Travel cost.** Clicking a pin (or its timeline diamond) opens a bubble showing the jump
 ("today → 2,000 BC · 4,025 years into the past") and the Zorps it costs ("Costs 62 (you
@@ -494,23 +537,29 @@ TypeScript: `SpeciesForecast`, `SanctuaryAdvanceRequest`, `SanctuaryAdvanceRespo
 For Annie's Claude Code. Written 2026-11-07 by the frontend; nothing here changes the agreed
 contract until the backend accepts it (move items into the contract above as you do).
 
-**Where the game is going.** The target is **10 species**, **6 domes** and **unlock
-waves**: the player starts with a first wave (currently stick insect 1915, passenger
-pigeon 1870, dodo 1600) and has to grow a sanctuary (Forecast → Advance 10 years → Report)
-to earn the Zorps for later, older waves. main has 14 species now; pick the 10 that make
-the best set (see below) or tell the frontend to plan for 14. Unlock waves aren't
-implemented yet in either half (only the Zorps budget enforces them).
+**Where the game is going.** **6 domes**, **unlock waves** and an **encyclopedia** whose goal
+is to complete it with the highest diversity score: the player starts with 3 species,
+rescuing 3 unlocks 3 more, rescuing 6 unlocks the rest, and has to grow a sanctuary
+(Forecast → Advance 10 years → Report) to earn the Zorps for later, older waves. The
+frontend implements all of it (Game rules → Unlock waves) and works with any number of
+species; main has 14 (fine, no cut to 10 needed).
 
 **Endpoints the frontend uses:**
 | Endpoint | Status | Frontend use |
 |---|---|---|
 | `GET /api/species`, `GET /api/species/{id}` | agreed | map pins, Explore, field guide |
+| `POST /api/sanctuary/simulate` | agreed | Forecast (wants `per_species[].survival_by_year`) |
+| `POST /api/sanctuary/advance` | **proposed, not built** (frontend falls back to its mock on 404) | Advance 10 years + report |
+| `GET /api/economy` | proposed by backend, used | start Zorps, habitat cost, payouts, era multipliers |
+| `GET /api/travel-cost` | proposed by backend, **not used** | see travel below |
+| `GET /api/timeline` | built, **not used** | frontend needs padding + continuous positions for Glorp; see below |
+| `GET /api/wiki/{title}` | built, used | "From Wikipedia" on encyclopedia pages (hidden if it fails) |
 | `POST /api/sanctuary/simulate` | agreed, sends `survival_by_year` | Forecast |
 | `POST /api/sanctuary/advance` | **built** (2026-11-08) | Advance 10 years + report |
 | `GET /api/economy` | agreed, used | start Zorps, habitat cost, payouts, era multipliers |
 | `GET /api/travel-cost` | built, now the frontend formula | (frontend may use it or keep its own; same numbers) |
 | `GET /api/timeline` | built, labels now `formatEra` style, **not used** | frontend needs padding + continuous positions for Glorp |
-| `GET /api/wiki/{title}` | built | not yet used |
+| `GET /api/wiki/{title}` | built, used | "From Wikipedia" on encyclopedia pages (hidden if it fails) |
 
 **To do for the backend:** items 1–5 below are **done** (backend, 2026-11-08). Remaining:
 species guidance (10 vs 14 species, `diversity_value`, `interactions`) is still open.
@@ -533,6 +582,26 @@ species guidance (10 vs 14 species, `diversity_value`, `interactions`) is still 
    66 million years ago at ≈ 5× a trip to 1600.
 5. `/api/timeline` labels say "BCE"; the frontend says "BC" and "N yrs ago" for deep time
    (`formatEra` in `game/time.ts`). Align if you keep the endpoint.
+6. **`diversity_value` and `unlock_wave`** (Contract → Species file, PROPOSED 2026-11-08):
+   add them to every species file **and** to `SpeciesSummary` in `app/schemas.py` (the
+   response models drop undeclared fields, so adding them to the JSON alone isn't enough).
+
+**What the species files are missing** (audit of `backend/data/species/*.json` and
+`frontend/public/sprites/`, 2026-11-08). All 14 have `intro`, `description`, `facts`,
+`habitat`, all 5 `needs` with `terrain.types`, `sources`, `lat`/`lon`/`era_year`, and
+hotspots whose `reveals` cover every need. Missing:
+
+| Species | `diversity_value` | `unlock_wave` | Sprites missing (frontend) |
+|---|---|---|---|
+| aurochs | missing | missing | `resident-aurochs`, `bg-explore-aurochs`, hotspot icon `scroll` |
+| elephant_bird | missing | missing | `resident-elephant_bird`, `bg-explore-elephant_bird`, hotspot icon `giant-egg` |
+| haasts_eagle | missing | missing | `resident-haasts_eagle`, `bg-explore-haasts_eagle`, hotspot icon `talon` |
+| moa | missing | missing | `resident-moa`, `bg-explore-moa`, hotspot icon `pebbles` |
+| the other 10 (dodo, golden_toad, great_auk, lord_howe_stick_insect, passenger_pigeon, pyrenean_ibex, quagga, stellers_sea_cow, thylacine, woolly_mammoth) | missing | missing | none |
+
+Without `unlock_wave` the waves are by era: **1** golden toad, stick insect, Pyrenean ibex;
+**2** thylacine, passenger pigeon, quagga; **3** the other 8. If you set `unlock_wave`, keep
+wave 1 recent and cheap to reach (the Zorps budget test assumes ~29 Zorps per trip).
 
 **Current disaster probabilities** (backend `data/sanctuary.json` as of 2026-11-08; the mock
 copies them). Per dome, per year, independent between domes; each hits every resident:
@@ -558,9 +627,9 @@ change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
   Overlap = neighbouring groups share a few degrees/percent of their ranges, so placement
   is a real choice. Check the current `needs` ranges against this; a group of one (quagga)
   means a dome for one species.
-- Add a **`diversity_value`** per species (proposed, number, ~1–3): how much saving it adds
-  to the sanctuary score (e.g. rarer lineages higher), so "species saved" isn't just a
-  count.
+- Add a **`diversity_value`** per species (proposed, number, ~1–3; now in the contract):
+  how much saving it adds to the diversity score (e.g. rarer lineages higher), so "species
+  saved" isn't just a count.
 - Optional **`interactions`**: `[{ "with": "<species id>", "effect": "helps" | "competes" |
   "preys_on", "strength": 0..1 }]`, applied only when both share a dome (e.g. Haast's eagle
   `preys_on` moa). The frontend will show them in the dome's resident rows once they exist.
@@ -646,6 +715,14 @@ change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
   disaster probabilities listed in "Notes for backend". Also fixed the doc: the advance
   `zorps_earned` is a number (as in `types.ts`). Frontend-only: capacity upgrades (+20)
   cost 10, 15, 20, … Zorps.
+- 2026-11-08: Encyclopedia + progression (frontend). PROPOSED species fields `diversity_value`
+  (required for scoring; frontend defaults to 1) and optional `unlock_wave` (1–3), both also
+  in the `/api/species` summaries (`SpeciesSummary` in `types.ts` and `app/schemas.py`).
+  Frontend-only: unlock waves (3 to start; 3 rescues unlock 3 more; 6 unlock the rest),
+  encyclopedia completion (7 items), diversity score + end screen, new Zorps rewards (found
+  +1, visited +1, thriving +5) and retuned ones (new need 2 → 1, DNA complete 3 → 2) to keep
+  the budget target. Uses `GET /api/wiki/{title}`. "Notes for backend" lists what each
+  species file is missing.
 - 2026-11-08: Backend builds Forecast → Advance (all items): `per_species[].survival_by_year`
   on `/simulate`; `POST /api/sanctuary/advance` (one future, events, luck, `zorps_earned`);
   dome `capacity` shared by all species (replaces the `dome_capacity: 30` crowding constant;

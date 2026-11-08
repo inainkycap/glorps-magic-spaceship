@@ -41,16 +41,25 @@ export function capacityUpgradeCost(capacity: number, defaultCapacity = 60, step
   return CAPACITY_UPGRADE_BASE + CAPACITY_UPGRADE_STEP_COST * done;
 }
 
-/** Encyclopedia discoveries (frontend-only; each paid once per species/hotspot/need). */
+/**
+ * Encyclopedia checklist items (frontend-only; the backend has no reward values yet).
+ * Each is paid once (per species, hotspot or need) with a "+N Zorps" popup.
+ */
 export const REWARDS = {
+  /** Finding its signal on the map (opening its pin for the first time). */
+  foundOnMap: 1,
+  /** Travelling to its world for the first time. */
+  visited: 1,
   /** Scanning a hotspot for the first time (a new fact). */
   newFact: 1,
   /** Each need discovered. */
-  newNeed: 2,
+  newNeed: 1,
   /** Collecting the species' full set of DNA fragments. */
-  dnaComplete: 3,
+  dnaComplete: 2,
   /** The species' first DNA Lab rescue. */
   rescue: 5,
+  /** Thriving in a dome after an "Advance 10 years", the first time. */
+  thriving: 5,
 } as const;
 
 // --- Travel ------------------------------------------------------------------------
@@ -124,8 +133,15 @@ export function canAfford(balance: number, cost: number): boolean {
   return balance >= cost;
 }
 
-/** Most Zorps a species' encyclopedia can pay out (all facts, needs, DNA, rescue). */
+/** Zorps a species' encyclopedia pays out WITHOUT advancing time (found, visited, facts, needs, DNA, rescue; not thriving). */
 export function discoveryRewardsFor(species: { hotspots: unknown[]; needs?: object }): number {
   const needs = Object.keys(species.needs ?? {}).length;
-  return species.hotspots.length * REWARDS.newFact + needs * REWARDS.newNeed + REWARDS.dnaComplete + REWARDS.rescue;
+  return (
+    REWARDS.foundOnMap +
+    REWARDS.visited +
+    species.hotspots.length * REWARDS.newFact +
+    needs * REWARDS.newNeed +
+    REWARDS.dnaComplete +
+    REWARDS.rescue
+  );
 }

@@ -13,6 +13,7 @@ import {
   TERRAINS,
 } from "../game/sanctuary";
 import { canAfford, capacityUpgradeCost, domeCost, REWARDS, startZorps } from "../game/zorps";
+import { unlockedWaveFor, WAVES } from "../game/encyclopedia";
 import { HOME, isPlace } from "../geo";
 import type {
   DnaResult,
@@ -25,6 +26,7 @@ import type {
   SanctuaryState,
   StoredAdvance,
   StoredRun,
+  UnlockState,
 } from "../types";
 import { currentEconomy } from "./useEconomy";
 
@@ -87,6 +89,16 @@ export function migrate(p: Record<string, unknown>) {
   if (p.pool !== undefined && !isCountMap(p.pool)) delete p.pool;
   if (p.poolExposed !== undefined && !isCountMap(p.poolExposed)) delete p.poolExposed;
   if (p.dnaComplete !== undefined && !isStringList(p.dnaComplete)) delete p.dnaComplete;
+  for (const k of ["found", "visited", "thrived"]) if (p[k] !== undefined && !isStringList(p[k])) delete p[k];
+  if (p.endSeen !== undefined && typeof p.endSeen !== "boolean") delete p.endSeen;
+  const u = p.unlock;
+  const isWave = (w: unknown) => isFiniteNum(w) && w >= 1 && w <= WAVES;
+  if (u !== undefined && !(isObject(u) && isWave(u.wave) && isWave(u.seenMap) && isWave(u.seenGuide))) delete p.unlock;
+  // Saves from before unlock waves: unlock what their rescues earned, with no reveal to replay.
+  if (p.unlock === undefined && isStringList(p.saved)) {
+    const wave = unlockedWaveFor((p.saved as string[]).length);
+    p.unlock = { wave, seenMap: wave, seenGuide: wave };
+  }
   if (
     p.dnaBest !== undefined &&
     !(isObject(p.dnaBest) && Object.values(p.dnaBest).every((r) => isObject(r) && isFiniteNum(r.quality) && isFiniteNum(r.individuals)))
@@ -249,9 +261,45 @@ const recordDnaResult = (speciesId: string, result: DnaResult): boolean => {
       saved: p.saved.includes(speciesId) ? p.saved : [...p.saved, speciesId],
     };
   });
-  if (!prev) earnZorps(REWARDS.rescue, "Species rescued");
+  if (!prev) {
+    earnZorps(REWARDS.rescue, "Species rescued");
+    // Rescuing 3 unlocks the next wave, 6 the last one (the reveal plays on the map/encyclopedia).
+    const wave = unlockedWaveFor(state.saved.length);
+    if (wave > unlockOf(state).wave) setState((p) => ({ ...p, unlock: { ...unlockOf(p), wave } }));
+  }
   return isBest;
 };
+
+// --- Encyclopedia + unlocks -----------------------------------------------------------------
+
+const unlockOf = (p: Progress): UnlockState => p.unlock ?? { wave: 1, seenMap: 1, seenGuide: 1 };
+
+/** Mark a species' signal as found on the map (pays once). Returns true if new. */
+const markFound = (speciesId: string): boolean => {
+  if (state.found?.includes(speciesId)) return false;
+  setState((p) => ({ ...p, found: [...(p.found ?? []), speciesId] }));
+  earnZorps(REWARDS.foundOnMap, "Signal found");
+  return true;
+};
+
+/** Glorp arrived in a species' world (pays once; also counts as found). */
+const markVisited = (speciesId: string): boolean => {
+  if (state.visited?.includes(speciesId)) return false;
+  markFound(speciesId);
+  setState((p) => ({ ...p, visited: [...(p.visited ?? []), speciesId] }));
+  earnZorps(REWARDS.visited, "New world visited");
+  return true;
+};
+
+/** The unlock reveal has played on the map / in the encyclopedia up to this wave. */
+const markRevealSeen = (where: "map" | "guide", wave: number) =>
+  setState((p) => {
+    const u = unlockOf(p);
+    const key = where === "map" ? "seenMap" : "seenGuide";
+    return u[key] >= wave ? p : { ...p, unlock: { ...u, [key]: wave } };
+  });
+
+const markEndSeen = () => setState((p) => (p.endSeen ? p : { ...p, endSeen: true }));
 
 // --- Sanctuary ------------------------------------------------------------------------------
 
@@ -364,6 +412,14 @@ const applyAdvance = (adv: StoredAdvance) => {
     };
   });
   earnZorps(adv.zorps, "Thriving species");
+  // Encyclopedia: each species thriving for the first time (≥ 2 alive after the advance).
+  const survived: Record<string, number> = {};
+  for (const d of adv.result.domes) for (const [id, n] of Object.entries(d.end)) survived[id] = (survived[id] ?? 0) + n;
+  const newlyThriving = Object.keys(survived).filter((id) => survived[id] >= 2 && !state.thrived?.includes(id));
+  if (newlyThriving.length > 0) {
+    setState((p) => ({ ...p, thrived: [...(p.thrived ?? []), ...newlyThriving] }));
+    for (const id of newlyThriving) earnZorps(REWARDS.thriving, `Thriving: ${id.replace(/_/g, " ")}`);
+  }
 };
 
 const reset = () => setState(() => EMPTY);
@@ -394,6 +450,8 @@ export function useProgress() {
     /** Pool animals that came out of an infected dome since the last advance. */
     poolExposed: progress.poolExposed ?? {},
     sanctuary: sanctuaryOf(progress),
+    /** Unlock waves: highest wave unlocked, and up to which wave each reveal has played. */
+    unlock: unlockOf(progress),
     scannedFor,
     discoveredFor,
     discoverNeed,
@@ -407,6 +465,10 @@ export function useProgress() {
     updateDome,
     moveResidents,
     upgradeCapacity,
+    markFound,
+    markVisited,
+    markRevealSeen,
+    markEndSeen,
     recordRun,
     applyAdvance,
     reset,

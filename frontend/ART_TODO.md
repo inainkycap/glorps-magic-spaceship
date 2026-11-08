@@ -58,13 +58,13 @@ The Explore scan bubble and Glorp's arrival bubble reuse `bubble.png` and `bubbl
 |---|---|---|---|---|---|
 | `planet-terrain.png` | **320×180** | 1 | stretched to 16:9 (~3×) | Background of the Sanctuary overview and behind the big dome in the dome screen (`.planet` in `src/index.css`) | Glorp's alien home planet: sky, moons, rocky ground. 6 domes sit on it at fixed spots (3 per row at ~30% and ~72% height), so keep those areas fairly flat and calm. |
 | `dome-glass.png` | **64×64** | 1 | scaled to the dome (132 px overview, 360 px detail) | The glass over every dome (`sanctuary/DomeView.tsx`) | Rim and highlights only: **keep the inside transparent**, because the interior (sky, ground, plants, residents) is drawn underneath. Circle fills the whole canvas. |
-| `dome-site.png` | 32×32 | 1 | 2× | Empty building site on the overview, next to the "Build ⛽15" button | Foundation ring, flag, scaffold… |
+| `dome-site.png` | 32×32 | 1 | 2× | Empty building site on the overview, next to the "Build (25 Zorps)" button | Foundation ring, flag, scaffold… |
 | `dome-ground-<terrain>.png` (`forest`, `grassland`, `wetland`, `tundra`) | 64×20 | 1 | stretched across the dome's bottom ~30% | Dome interior ground | Tiles horizontally across the dome width. A flat colour shows if missing. |
 | `dome-plants-<terrain>.png` (same 4 terrains) | 64×24 | 1 | stretched across the dome, sitting on the ground | Dome interior plants (trees / grass / reeds / shrubs) | Transparent background. The sky tint (temperature, humidity, oxygen, pressure) is done in CSS, so draw plants in neutral daylight. |
 | `control-panel.png` | 16×16 | 1 | 2× (9-slice) | Glorp's control panel in the dome screen (`.control-panel`) | **9-slice with 6 px corners.** Dark metal, light text on it. |
 | `dial-knob.png` | 16×16 | 1 | 1.5× (24 px) | The knob of each control dial (temperature, humidity, oxygen, pressure) | Used as the range-slider thumb; it slides along a straight track. |
 | `disaster-breach.png`, `disaster-power.png`, `disaster-meteor.png`, `disaster-disease.png` | 16×16 | 1 | 2× | "Dome disasters" list in the dome screen | Dome breach, power failure, meteor strike, disease outbreak. |
-| `resident-<species id>.png` (now: `resident-dodo.png`, `resident-passenger_pigeon.png`) | 16×16 | 2 (4 fps) | 1× in overview domes, 2× in the big dome; frame 1 as a still icon in lists | Animals wandering inside domes, and icons in the pool / placement / results lists | Walk cycle, facing **right**. One per species, named by species id. A small square shows if missing. |
+| `resident-<species id>.png` (10 of 14 exist; **missing: `aurochs`, `elephant_bird`, `haasts_eagle`, `moa`**) | 16×16 | 2 (4 fps) | 1× in overview domes, 2× in the big dome; frame 1 as a still icon in lists | Animals wandering inside domes, and icons in the pool / placement / results lists, encyclopedia cards and unvisited map pins (blacked out by CSS as a silhouette) | Walk cycle, facing **right**. One per species, named by species id. A small square (a blob in the encyclopedia) shows if missing. **Keep the outline readable as a pure-black silhouette**: it is the "???" card. |
 
 ### DNA Lab minigame
 
@@ -74,6 +74,19 @@ The Explore scan bubble and Glorp's arrival bubble reuse `bubble.png` and `bubbl
 | `dna-base-degraded.png` | 16×16 | 1 | 2× | A degraded base, shown as "?" until its turn (older species have more) | Cracked, faded tile with a "?". |
 
 Glorp's result speech bubble reuses `glorp-talk.png` and `bubble.png`.
+
+### Encyclopedia + progression
+
+Placeholders: none of these files exist yet; the game draws a CSS stand-in for each until they do.
+
+| File | Frame size (px) | Frames | Drawn at | Used where | Notes |
+|---|---|---|---|---|---|
+| `encyclopedia-frame.png` | 16×16 | 1 | 2× (9-slice) | The portrait frame on each encyclopedia card and the species page (`.ency-frame` in `src/index.css`) | **9-slice with 6 px corners.** Dark, like a specimen case; the portrait (or its silhouette) sits inside. Stand-in: a 2 px border. Wire it with `border-image` once drawn. |
+| `locked-badge.png` | 16×16 | 1 | 1× | The "LOCKED" tag on locked encyclopedia cards (`screens/Encyclopedia.tsx`) | A small padlock. Stand-in: the word only. |
+| `sparkle.png` | 8×8 | 1 | 1× | The sparkle burst when new map pins pop in (`map/PinLayer.tsx`, 8 per pin, flying outwards) | A 4-point star, bright parchment/sand. Stand-in: a small gold square. |
+| `diversity-icon.png` | 16×16 | 1 | 2× | Diversity score in the HUD, next to Zorps (`components/DiversityCounter.tsx`) | A gem or leaf in Glorp mint. Stand-in: a ◆ character. |
+
+Unvisited pins and "???" cards reuse `resident-<id>.png` blacked out with a CSS filter, so there is no silhouette art to draw. Glorp's "New signals detected!" bubble reuses `glorp-talk.png`.
 
 ## Nice to have later
 

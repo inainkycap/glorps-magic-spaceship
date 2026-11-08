@@ -18,6 +18,10 @@ export interface SpeciesSummary {
   lat: number; // degrees, -90 (south) to 90 (north)
   lon: number; // degrees, -180 (west) to 180 (east)
   era_year: number; // the year Glorp travels to; negative = BCE, no year 0
+  /** PROPOSED (2026-11-08): how much saving this species adds to the diversity score (default 1). */
+  diversity_value?: number;
+  /** PROPOSED (2026-11-08): unlock wave 1–3 (absent: the frontend orders by era, newest first). */
+  unlock_wave?: number;
 }
 
 export interface Hotspot {
@@ -254,6 +258,19 @@ export interface Progress {
   pool?: Record<string, number>; // species id -> rescued animals not yet in a dome
   poolExposed?: Record<string, number>; // ... of which came out of an infected dome since the last advance
   sanctuary?: SanctuaryState;
+  // Encyclopedia + progression (frontend-only)
+  found?: string[]; // species whose signal was found on the map (pin opened)
+  visited?: string[]; // species whose world Glorp has travelled to
+  thrived?: string[]; // species that have been thriving at least once (rewarded once)
+  unlock?: UnlockState;
+  endSeen?: boolean; // the "encyclopedia complete" end screen was shown
+}
+
+/** Unlock waves: `wave` = highest wave unlocked; `seenMap`/`seenGuide` = highest wave whose reveal has played there. */
+export interface UnlockState {
+  wave: number;
+  seenMap: number;
+  seenGuide: number;
 }
 
 /** A DNA Lab minigame result (frontend-only). */

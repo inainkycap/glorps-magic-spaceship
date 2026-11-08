@@ -1,6 +1,9 @@
 import { Outlet, Route, Routes } from "react-router";
 import NavBar from "./components/NavBar";
 import ZorpsToasts from "./components/ZorpsToasts";
+import GameComplete from "./components/GameComplete";
+import Encyclopedia from "./screens/Encyclopedia";
+import EncyclopediaEntry from "./screens/EncyclopediaEntry";
 import MapScreen from "./screens/MapScreen";
 import Explore from "./screens/Explore";
 import Lab from "./screens/Lab";
@@ -29,6 +32,8 @@ export default function App() {
         <Route element={<PageLayout />}>
           <Route path="/explore/:speciesId" element={<Explore />} />
           <Route path="/lab/:speciesId" element={<Lab />} />
+          <Route path="/encyclopedia" element={<Encyclopedia />} />
+          <Route path="/encyclopedia/:speciesId" element={<EncyclopediaEntry />} />
           <Route path="/sanctuary" element={<Sanctuary />} />
           <Route path="/sanctuary/:domeId" element={<SanctuaryDome />} />
           <Route path="*" element={<NotFound />} />
@@ -36,6 +41,8 @@ export default function App() {
       </Routes>
       {/* "+N Zorps" popups, on every screen */}
       <ZorpsToasts />
+      {/* The goal: shown once when every species is rescued and thriving */}
+      <GameComplete />
     </>
   );
 }
