@@ -11,7 +11,7 @@ WHACK '26 · Marshall Wace track · theme: **New Worlds**
 - 🔮 **Build domes and forecast 1,000 futures** before you commit, then live through one of them.
 - ☄️ **Learn why splitting beats concentrating**: a similar average, a much better worst case.
 
-<!-- Hero image: drag a screenshot or GIF here in the GitHub editor -->
+<img width="32" height="32" alt="glorp-idle(1)" src="https://github.com/user-attachments/assets/671d472b-04b3-49a8-9d6d-8b85d9634cae" />
 
 Glorp is a small alien with a time-travelling spaceship. You fly to the eras where species
 went extinct (the dodo in 1600, the thylacine in 1900, the woolly mammoth 4,000 years ago),
@@ -23,8 +23,12 @@ decade at a time.
 
 ## Screenshots
 
-> _Screenshots coming soon._ Planned: the world map with the era timeline, an Explore scene,
-> the DNA Lab, the Sanctuary forecast chart, an Advance report, and the encyclopedia.
+<img width="1916" height="907" alt="image" src="https://github.com/user-attachments/assets/21971391-332c-4ad0-9fc7-8ab323169608" />
+<img width="1917" height="913" alt="image" src="https://github.com/user-attachments/assets/d70292c2-3b2a-4392-9528-72ff5c606fb8" />
+<img width="1917" height="910" alt="image" src="https://github.com/user-attachments/assets/40578cd4-4a3e-4e24-9067-8f8766c7ad37" />
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/d5d23f2b-fb7f-464c-a1eb-ceeadb16aa80" />
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/cde3bf48-4820-465c-95ac-8d88a18b9b65" />
+<img width="1917" height="1078" alt="image" src="https://github.com/user-attachments/assets/dd4297d7-2e22-4bc8-aab7-1a18f5ce7876" />
 
 ---
 
