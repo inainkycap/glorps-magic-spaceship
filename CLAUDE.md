@@ -656,7 +656,7 @@ change, update this table (and `MOCK_MODEL` in the mock) so we both know them.
   need) plus `lat`, `lon`, `era_year`. Copy new files to `frontend/src/mocks/species/` too
   (or tell the frontend).
 
-**PROPOSAL (2026-11-08, optional, not implemented): one process for the demo.** For judging,
+**DONE (backend, 2026-11-08): one process for the demo.** `serve_frontend()` in `backend/app/main.py` serves `frontend/dist` (SPA fallback, unknown `/api` paths still 404, tests in `backend/tests/test_serve_frontend.py`); a root `Dockerfile` builds the frontend and runs it all on `$PORT` for hosting (Render, Railway, Fly.io). The root `npm run demo` script is still open for the frontend. Original proposal: For judging,
 FastAPI could also serve the built frontend, so the whole game runs as **one process at one
 URL** (e.g. http://localhost:8000), with no Vite and no proxy:
 - Backend: after all the `/api` routes, mount `frontend/dist` as static files with an SPA
@@ -778,3 +778,6 @@ Frontend can add the `demo` script once the backend serves `dist`.
   insect, Pyrenean ibex; 2 thylacine, passenger pigeon, quagga; 3 dodo, great auk, Steller's
   sea cow, woolly mammoth. Max diversity score 27. Frontend: the offline mocks in
   `frontend/src/mocks/species/` still hold all 14 (remove the 4 if offline mode should match).
+- 2026-11-08: Backend serves the built frontend when `frontend/dist` exists (one process, one
+  URL; no change for `npm run dev`). New root `Dockerfile` + `.dockerignore` for deploying the
+  whole game as one container. No API change.

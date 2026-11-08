@@ -1,5 +1,8 @@
 """Glorp's Magic Spaceship API. Person A owns this file."""
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .sanctuary.engine import advance as advance_sanctuary
@@ -99,3 +102,33 @@ def wiki(title: str):
         return get_summary(title)
     except WikiError as e:
         raise HTTPException(status_code=e.status, detail=str(e))
+
+
+# --- One process for the demo / deployment -------------------------------------------
+# If the frontend has been built (`npm --prefix frontend run build` → frontend/dist), serve
+# it from here too, so the whole game runs at one URL with no Vite and no proxy. Without
+# frontend/dist (normal `npm run dev`) nothing changes. Must stay after every /api route.
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+
+
+def serve_frontend(app: FastAPI, dist: Path) -> bool:
+    """Serve the built SPA from `dist`: real files as-is, any other non-/api path gets
+    index.html (so client routes like /sanctuary/dome-1 survive a reload). Unknown /api
+    paths still 404 as JSON. Returns False (and does nothing) if `dist` isn't built."""
+    dist = dist.resolve()
+    if not (dist / "index.html").is_file():
+        return False
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def frontend(path: str):
+        if path == "api" or path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        file = (dist / path).resolve()
+        if path and file.is_file() and file.is_relative_to(dist):
+            return FileResponse(file)
+        return FileResponse(dist / "index.html")
+
+    return True
+
+
+serve_frontend(app, FRONTEND_DIST)
