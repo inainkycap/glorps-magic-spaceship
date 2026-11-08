@@ -65,6 +65,6 @@ def test_title_from_url():
 
 
 def test_endpoint_serves_cached_article(temp_cache):
-    wiki.cache_path("Dodo").write_text(wiki.WikiSummary(title="Dodo", summary="Cached!").model_dump_json())
+    wiki.cache_path("Dodo").write_text(wiki.WikiSummary(title="Dodo", summary="Cached!").model_dump_json(), encoding="utf-8")
     r = client.get("/api/wiki/Dodo")
     assert r.status_code == 200 and r.json()["summary"] == "Cached!"

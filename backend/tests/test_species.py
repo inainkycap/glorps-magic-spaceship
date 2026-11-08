@@ -43,7 +43,7 @@ def test_api_matches_files_exactly():
     from app.species import DATA_DIR
 
     for path in DATA_DIR.glob("*.json"):
-        on_disk = json.loads(path.read_text())
+        on_disk = json.loads(path.read_text(encoding="utf-8"))
         served = client.get(f"/api/species/{on_disk['id']}").json()
         assert served == on_disk, path.name
 
